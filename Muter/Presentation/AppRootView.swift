@@ -11,7 +11,7 @@ struct AppRootView: View {
                     case .discovery:
                         DiscoveryView()
                     case .routeDetail(let route):
-                        Text("Route Detail: \(route.name)") // Sprint 3
+                        RouteDetailView(route: route)
                     case .walkNavigation(let route):
                         Text("Walking: \(route.name)") // Sprint 4
                     case .finishWalk(let session):
