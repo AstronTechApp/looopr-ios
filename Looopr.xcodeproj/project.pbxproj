@@ -1019,6 +1019,15 @@
 				BuildIndependentTargetsInParallel = YES;
 				LastUpgradeCheck = 1600;
 				TargetAttributes = {
+					0466A3B7308B3AD18A111086 = {
+						DevelopmentTeam = 8U8ACC3N8B;
+					};
+					55D54D1F8E6114CEBC8DBA3C = {
+						DevelopmentTeam = 8U8ACC3N8B;
+					};
+					D74E7E59DC236CFEC246AA6B = {
+						DevelopmentTeam = 8U8ACC3N8B;
+					};
 				};
 			};
 			buildConfigurationList = 34255BAC474939E97A425299 /* Build configuration list for PBXProject "Looopr" */;
@@ -1330,6 +1339,7 @@
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = 8U8ACC3N8B;
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
@@ -1387,6 +1397,7 @@
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = 8U8ACC3N8B;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
