@@ -76,6 +76,7 @@ targets:
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         MARKETING_VERSION: "1.0.0"
         CURRENT_PROJECT_VERSION: "1"
+        TARGETED_DEVICE_FAMILY: "1"
         GOOGLE_PLACES_API_KEY: $(GOOGLE_PLACES_API_KEY)
         MAPBOX_ACCESS_TOKEN: $(MAPBOX_ACCESS_TOKEN)
     dependencies:
@@ -99,6 +100,7 @@ targets:
         PRODUCT_BUNDLE_IDENTIFIER: nl.astrontech.looopr.LoooprLiveActivity
         MARKETING_VERSION: "1.0.0"
         CURRENT_PROJECT_VERSION: "1"
+        TARGETED_DEVICE_FAMILY: "1"
         SKIP_INSTALL: YES
 
   LoooprTests:
@@ -112,3 +114,4 @@ targets:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: nl.astrontech.looopr.tests
         GENERATE_INFOPLIST_FILE: true
+        TARGETED_DEVICE_FAMILY: "1"
