@@ -15,7 +15,7 @@ packages:
 settings:
   base:
     SWIFT_VERSION: "5.0"
-    TARGETED_DEVICE_FAMILY: "1,2"
+    TARGETED_DEVICE_FAMILY: "1"
     DEVELOPMENT_TEAM: 8U8ACC3N8B
 
 targets:
