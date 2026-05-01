@@ -36,3 +36,7 @@ Pods/
 # IDE
 .vscode/
 .idea/
+
+# Claude Code workspace
+.claude/worktrees/
+.claude/settings.local.json

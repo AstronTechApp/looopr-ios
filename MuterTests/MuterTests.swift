@@ -1,7 +1,7 @@
 import XCTest
-@testable import Muter
+@testable import Looopr
 
-final class MuterTests: XCTestCase {
+final class LoooprTests: XCTestCase {
     func testAppConfigurationExists() {
         let config = AppConfiguration.current
         XCTAssertEqual(config.freemium.freeRouteLimit, 1)

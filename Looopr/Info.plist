@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CFBundleDevelopmentRegion</key>
+	<string>$(DEVELOPMENT_LANGUAGE)</string>
+	<key>CFBundleDisplayName</key>
+	<string>Looopr</string>
+	<key>CFBundleExecutable</key>
+	<string>$(EXECUTABLE_NAME)</string>
+	<key>CFBundleIdentifier</key>
+	<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
+	<key>CFBundleInfoDictionaryVersion</key>
+	<string>6.0</string>
+	<key>CFBundleName</key>
+	<string>$(PRODUCT_NAME)</string>
+	<key>CFBundlePackageType</key>
+	<string>APPL</string>
+	<key>CFBundleShortVersionString</key>
+	<string>1.0</string>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>nl.astrontech.looopr</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>looopr</string>
+			</array>
+		</dict>
+	</array>
+	<key>CFBundleVersion</key>
+	<string>1</string>
+	<key>GETYOURGUIDE_API_KEY</key>
+	<string>$(GETYOURGUIDE_API_KEY)</string>
+	<key>GOOGLE_PLACES_API_KEY</key>
+	<string>$(GOOGLE_PLACES_API_KEY)</string>
+	<key>KLOOK_API_KEY</key>
+	<string>$(KLOOK_API_KEY)</string>
+	<key>MAPBOX_ACCESS_TOKEN</key>
+	<string>$(MAPBOX_ACCESS_TOKEN)</string>
+	<key>MUSEMENT_API_KEY</key>
+	<string>$(MUSEMENT_API_KEY)</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Looopr needs your location to generate walking routes nearby.</string>
+	<key>NSMotionUsageDescription</key>
+	<string>Looopr counts your steps during walks to show your activity.</string>
+	<key>NSSupportsLiveActivities</key>
+	<true/>
+	<key>NSSupportsLiveActivitiesFrequentUpdates</key>
+	<true/>
+	<key>SUPABASE_ANON_KEY</key>
+	<string>$(SUPABASE_ANON_KEY)</string>
+	<key>SUPABASE_URL</key>
+	<string>$(SUPABASE_URL)</string>
+	<key>TIQETS_API_KEY</key>
+	<string>$(TIQETS_API_KEY)</string>
+	<key>UILaunchScreen</key>
+	<dict>
+		<key>UIColorName</key>
+		<string>LaunchBackground</string>
+		<key>UIImageName</key>
+		<string>LoooprLogo</string>
+	</dict>
+	<key>UISupportedInterfaceOrientations</key>
+	<array>
+		<string>UIInterfaceOrientationPortraitUpsideDown</string>
+	</array>
+	<key>VIATOR_API_KEY</key>
+	<string>$(VIATOR_API_KEY)</string>
+</dict>
+</plist>

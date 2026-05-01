@@ -1,0 +1,81 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+  <defs>
+    <!-- Gradient for the path -->
+    <linearGradient id="pathGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#176a21"/>
+      <stop offset="100%" stop-color="#25843a"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Main looping path shape -->
+  <path d="
+    M 280,200
+    C 140,200 80,300 80,420
+    C 80,560 180,660 320,660
+    L 440,660
+    C 500,660 560,700 560,760
+    C 560,820 620,860 700,820
+    L 820,760
+    C 900,720 940,640 940,560
+    C 940,420 860,340 740,340
+    L 620,340
+    C 540,340 480,290 480,230
+    C 480,170 420,120 340,140
+    Z
+  " fill="none" stroke="url(#pathGrad)" stroke-width="72" stroke-linecap="round" stroke-linejoin="round"/>
+
+  <!-- Inner loop connection -->
+  <path d="
+    M 480,340
+    C 420,340 380,380 380,440
+    C 380,520 440,560 520,560
+    L 620,560
+    C 700,560 740,500 740,440
+    C 740,380 700,340 640,340
+  " fill="none" stroke="url(#pathGrad)" stroke-width="72" stroke-linecap="round" stroke-linejoin="round"/>
+
+  <!-- Coral/orange endpoint dot -->
+  <circle cx="820" cy="760" r="52" fill="#c45a2d"/>
+
+  <!-- Location pin icon (top right) -->
+  <g transform="translate(640, 180)">
+    <path d="M0,-36 C20,-36 36,-20 36,0 C36,20 0,52 0,52 C0,52 -36,20 -36,0 C-36,-20 -20,-36 0,-36 Z" fill="#176a21"/>
+    <circle cx="0" cy="-2" r="12" fill="white"/>
+  </g>
+
+  <!-- Fork & knife icon (top center-right) -->
+  <g transform="translate(560, 210)" fill="#176a21">
+    <rect x="-14" y="-28" width="4" height="36" rx="2"/>
+    <rect x="-4" y="-28" width="4" height="36" rx="2"/>
+    <rect x="6" y="-28" width="4" height="36" rx="2"/>
+    <rect x="-14" y="-4" width="24" height="4" rx="2"/>
+    <rect x="2" y="0" width="4" height="20" rx="2"/>
+    <!-- Knife -->
+    <path d="M22,-28 C22,-28 30,-20 30,-4 L30,8 L26,8 L26,-4 C26,-16 22,-28 22,-28 Z"/>
+  </g>
+
+  <!-- Coffee cup icon (center left) -->
+  <g transform="translate(380, 460)" fill="#176a21">
+    <rect x="-20" y="-16" width="36" height="30" rx="4"/>
+    <path d="M16,-8 C24,-8 28,-2 28,4 C28,10 24,14 16,14" fill="none" stroke="#176a21" stroke-width="4"/>
+    <rect x="-20" y="18" width="36" height="4" rx="2"/>
+  </g>
+
+  <!-- Compass/star marker (bottom left) -->
+  <g transform="translate(300, 620)">
+    <circle cx="0" cy="0" r="24" fill="#176a21"/>
+    <path d="M0,-14 L4,-4 L14,0 L4,4 L0,14 L-4,4 L-14,0 L-4,-4 Z" fill="white"/>
+  </g>
+
+  <!-- Discovery/star marker (center right) -->
+  <g transform="translate(660, 520)">
+    <circle cx="0" cy="0" r="22" fill="#176a21"/>
+    <path d="M0,-12 L3,-4 L12,0 L3,4 L0,12 L-3,4 L-12,0 L-3,-4 Z" fill="white"/>
+  </g>
+
+  <!-- Magnifying glass icon (bottom right area) -->
+  <g transform="translate(720, 620)" fill="#176a21">
+    <circle cx="0" cy="-4" r="14" fill="none" stroke="#176a21" stroke-width="5"/>
+    <rect x="8" y="8" width="5" height="14" rx="2" transform="rotate(-45 8 8)"/>
+  </g>
+</svg>

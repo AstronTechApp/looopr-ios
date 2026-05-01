@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+<title>Looopr — Explore Redesign</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap');
+
+  :root {
+    /* Forest & Stone palette */
+    --primary: #176a21;
+    --primary-light: #9df197;
+    --primary-dark: #025d16;
+    --primary-dim: #025d16;
+    --on-primary: #d1ffc8;
+
+    --secondary: #9b3f00;
+    --secondary-container: #ffc5aa;
+    --on-secondary-container: #7b3100;
+
+    --background: #f5f7f3;
+    --surface: #ffffff;
+    --surface-secondary: #eff1ed;
+    --surface-container: #e6e9e5;
+    --surface-container-high: #e0e3df;
+
+    --text-primary: #2c2f2d;
+    --text-secondary: #595c59;
+    --text-tertiary: #abaeaa;
+    --text-on-primary: #d1ffc8;
+
+    --outline-variant: #abaeaa;
+
+    --shadow-tint: rgba(144, 226, 138, 0.06);
+    --shadow-card: rgba(23, 106, 33, 0.08);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Plus Jakarta Sans', -apple-system, BlinkSystemFont, sans-serif;
+    background: var(--background);
+    color: var(--text-primary);
+    -webkit-font-smoothing: antialiased;
+    max-width: 430px;
+    margin: 0 auto;
+    min-height: 100dvh;
+    position: relative;
+    overflow-x: hidden;
+  }
+
+  /* ── Glassmorphic Header ─────────────────────── */
+  .header {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    background: rgba(255,255,255,0.7);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    padding: 12px 20px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+
+  .back-btn {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: var(--surface-secondary);
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: transform 0.15s ease;
+  }
+  .back-btn:active { transform: scale(0.92); }
+  .back-btn svg { width: 18px; height: 18px; stroke: var(--text-primary); fill: none; stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; }
+
+  .header-text { flex: 1; }
+  .header-title {
+    font-size: 20px;
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    color: var(--text-primary);
+    line-height: 1.2;
+  }
+  .header-subtitle {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--text-tertiary);
+    margin-top: 2px;
+  }
+
+  /* ── Context Chip ────────────────────────────── */
+  .context-section {
+    padding: 8px 20px 0;
+  }
+  .duration-chip {
+    display: inline-block;
+    padding: 6px 14px;
+    border-radius: 9999px;
+    background: var(--secondary-container);
+    color: var(--on-secondary-container);
+    font-size: 10px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+
+  /* ── Route Cards ─────────────────────────────── */
+  .route-list {
+    padding: 16px 20px 140px;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+  }
+
+  .route-card {
+    background: var(--surface);
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: 0 32px 64px -12px var(--shadow-card);
+    border: 1px solid rgba(171, 174, 170, 0.05);
+  }
+
+  /* Image area */
+  .card-image {
+    position: relative;
+    height: 200px;
+    overflow: hidden;
+    background: var(--surface-container);
+  }
+  .card-image .map-placeholder {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 50%, #a5d6a7 100%);
+    position: relative;
+  }
+  .map-placeholder svg {
+    width: 80%;
+    height: 80%;
+    opacity: 0.35;
+  }
+  .card-image .gradient-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to top, rgba(0,0,0,0.15) 0%, transparent 50%);
+  }
+
+  /* Difficulty badge */
+  .difficulty-badge {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    background: rgba(255,255,255,0.82);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-radius: 14px;
+    padding: 6px 14px;
+    text-align: right;
+  }
+  .difficulty-label {
+    font-size: 9px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-secondary);
+    line-height: 1;
+  }
+  .difficulty-value {
+    font-size: 13px;
+    font-weight: 800;
+    color: var(--primary);
+    line-height: 1.3;
+  }
+
+  /* Card content */
+  .card-content {
+    padding: 20px 22px 22px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .route-name {
+    font-size: 22px;
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    color: var(--text-primary);
+    line-height: 1.2;
+  }
+  .route-description {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-secondary);
+    line-height: 1.4;
+    margin-top: -8px;
+  }
+
+  /* Stats grid */
+  .stats-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 12px;
+    padding: 16px 0;
+    border-top: 1px solid rgba(171, 174, 170, 0.1);
+    border-bottom: 1px solid rgba(171, 174, 170, 0.1);
+  }
+  .stat-item { display: flex; flex-direction: column; gap: 4px; }
+  .stat-icon {
+    width: 22px;
+    height: 22px;
+    color: var(--primary);
+    opacity: 0.7;
+  }
+  .stat-label {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: -0.02em;
+    color: var(--text-secondary);
+  }
+  .stat-value {
+    font-size: 18px;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    color: var(--text-primary);
+  }
+
+  /* CTA button — matches Find My Looopr style */
+  .start-walk-btn {
+    width: 100%;
+    padding: 20px 32px;
+    border: none;
+    border-radius: 9999px;
+    background: linear-gradient(135deg, #1B5E20, #66BB6A);
+    color: white;
+    font-family: inherit;
+    font-size: 18px;
+    font-weight: 800;
+    letter-spacing: -0.01em;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    box-shadow: 0 8px 24px rgba(23, 106, 33, 0.2);
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+  }
+  .start-walk-btn:active { transform: scale(0.98); box-shadow: 0 4px 12px rgba(23, 106, 33, 0.15); }
+  .start-walk-btn svg { width: 20px; height: 20px; fill: var(--on-primary); }
+
+  /* ── Tab Bar (Glassmorphic) ──────────────────── */
+  .tab-bar {
+    position: fixed;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 100%;
+    max-width: 430px;
+    z-index: 50;
+    background: rgba(255,255,255,0.8);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border-radius: 28px 28px 0 0;
+    box-shadow: 0 -4px 24px rgba(23, 106, 33, 0.06);
+    padding: 10px 16px 34px;
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+  }
+  .tab-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+    padding: 10px 16px;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    transition: transform 0.15s ease;
+    border-radius: 9999px;
+  }
+  .tab-item:active { transform: scale(0.9); }
+  .tab-item.active {
+    background: linear-gradient(135deg, #1B5E20, #66BB6A);
+    box-shadow: 0 4px 12px rgba(23, 106, 33, 0.3);
+  }
+  .tab-item svg { width: 22px; height: 22px; }
+  .tab-item.active svg { stroke: white; fill: none; }
+  .tab-item:not(.active) svg { stroke: var(--text-tertiary); fill: none; }
+  .tab-label {
+    font-size: 9px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+  .tab-item.active .tab-label { color: white; }
+  .tab-item:not(.active) .tab-label { color: var(--text-tertiary); }
+
+  /* ── Empty State ─────────────────────────────── */
+  .empty-state {
+    display: none; /* toggle to flex to preview */
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    padding: 80px 20px;
+  }
+  .empty-state svg { width: 48px; height: 48px; stroke: var(--text-tertiary); fill: none; stroke-width: 1.5; }
+  .empty-state p { font-size: 14px; font-weight: 500; color: var(--text-secondary); }
+
+  /* ── Skeleton Loading ────────────────────────── */
+  .skeleton-card {
+    display: none; /* toggle to block to preview */
+    background: var(--surface);
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: 0 32px 64px -12px var(--shadow-card);
+  }
+  .skeleton-card .skel-image { height: 200px; background: var(--surface-container); }
+  .skeleton-card .skel-content { padding: 20px 22px 22px; display: flex; flex-direction: column; gap: 14px; }
+  .skel-line { border-radius: 8px; background: var(--surface-container); animation: shimmer 1.2s ease-in-out infinite alternate; }
+  .skel-title { width: 65%; height: 20px; }
+  .skel-chips { display: flex; gap: 8px; }
+  .skel-chip { width: 80px; height: 24px; border-radius: 9999px; background: var(--surface-container); animation: shimmer 1.2s ease-in-out infinite alternate; }
+  .skel-desc { width: 90%; height: 14px; }
+  .skel-btn { width: 100%; height: 56px; border-radius: 16px; }
+  @keyframes shimmer { 0% { opacity: 1; } 100% { opacity: 0.55; } }
+</style>
+</head>
+<body>
+
+<!-- ── Glassmorphic Header ── -->
+<header class="header">
+  <button class="back-btn">
+    <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+  </button>
+  <div class="header-text">
+    <div class="header-title">Your Routes</div>
+    <div class="header-subtitle">3 routes found · 30 min walk</div>
+  </div>
+</header>
+
+<!-- ── Duration Context ── -->
+<div class="context-section">
+  <span class="duration-chip">30 min walk</span>
+</div>
+
+<!-- ── Route Cards ── -->
+<div class="route-list">
+
+  <!-- Route Card 1 -->
+  <article class="route-card">
+    <div class="card-image">
+      <div class="map-placeholder">
+        <!-- Simulated map + route polyline -->
+        <svg viewBox="0 0 400 300" xmlns="http://www.w3.org/2000/svg">
+          <rect fill="#c8e6c9" width="400" height="300"/>
+          <path d="M60,250 Q100,200 140,220 T220,180 T300,120 T360,80" stroke="#176a21" stroke-width="4" fill="none" stroke-linecap="round" stroke-dasharray="0"/>
+          <circle cx="60" cy="250" r="8" fill="#176a21" opacity="0.7"/>
+          <circle cx="360" cy="80" r="8" fill="#c45a2d" opacity="0.7"/>
+          <!-- street grid hints -->
+          <line x1="0" y1="100" x2="400" y2="100" stroke="#a5d6a7" stroke-width="0.5" opacity="0.4"/>
+          <line x1="0" y1="200" x2="400" y2="200" stroke="#a5d6a7" stroke-width="0.5" opacity="0.4"/>
+          <line x1="100" y1="0" x2="100" y2="300" stroke="#a5d6a7" stroke-width="0.5" opacity="0.4"/>
+          <line x1="200" y1="0" x2="200" y2="300" stroke="#a5d6a7" stroke-width="0.5" opacity="0.4"/>
+          <line x1="300" y1="0" x2="300" y2="300" stroke="#a5d6a7" stroke-width="0.5" opacity="0.4"/>
+        </svg>
+      </div>
+      <div class="gradient-overlay"></div>
+      <div class="difficulty-badge">
+        <div class="difficulty-label">Difficulty</div>
+        <div class="difficulty-value">Easy</div>
+      </div>
+    </div>
+    <div class="card-content">
+      <div class="route-name">South Loop</div>
+      <div class="route-description">29 min loop</div>
+      <div class="stats-grid">
+        <div class="stat-item">
+          <svg class="stat-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 4v16"/><path d="M17 4v16"/><path d="M19 4H9.5a4.5 4.5 0 0 0 0 9H13"/></svg>
+          <div class="stat-label">Distance</div>
+          <div class="stat-value">2.4 km</div>
+        </div>
+        <div class="stat-item">
+          <svg class="stat-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          <div class="stat-label">Time</div>
+          <div class="stat-value">29 min</div>
+        </div>
+        <div class="stat-item">
+          <svg class="stat-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
+          <div class="stat-label">Elevation</div>
+          <div class="stat-value">+19 m</div>
+        </div>
+      </div>
+      <button class="start-walk-btn">
+        <span>Start Walk</span>
+        <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+      </button>
+    </div>
+  </article>
+
+  <!-- Route Card 2 -->
+  <article class="route-card">
+    <div class="card-image">
+      <div class="map-placeholder">
+        <svg viewBox="0 0 400 300" xmlns="http://www.w3.org/2000/svg">
+          <rect fill="#dcedc8" width="400" height="300"/>
+          <path d="M50,80 Q120,120 160,90 T260,160 T340,240" stroke="#176a21" stroke-width="4" fill="none" stroke-linecap="round"/>
+          <circle cx="50" cy="80" r="8" fill="#176a21" opacity="0.7"/>
+          <circle cx="340" cy="240" r="8" fill="#c45a2d" opacity="0.7"/>
+          <line x1="0" y1="100" x2="400" y2="100" stroke="#aed581" stroke-width="0.5" opacity="0.4"/>
+          <line x1="0" y1="200" x2="400" y2="200" stroke="#aed581" stroke-width="0.5" opacity="0.4"/>
+          <line x1="130" y1="0" x2="130" y2="300" stroke="#aed581" stroke-width="0.5" opacity="0.4"/>
+          <line x1="260" y1="0" x2="260" y2="300" stroke="#aed581" stroke-width="0.5" opacity="0.4"/>
+        </svg>
+      </div>
+      <div class="gradient-overlay"></div>
+      <div class="difficulty-badge">
+        <div class="difficulty-label">Difficulty</div>
+        <div class="difficulty-value">Moderate</div>
+      </div>
+    </div>
+    <div class="card-content">
+      <div class="route-name">Meadow Way</div>
+      <div class="route-description">34 min loop</div>
+      <div class="stats-grid">
+        <div class="stat-item">
+          <svg class="stat-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 4v16"/><path d="M17 4v16"/><path d="M19 4H9.5a4.5 4.5 0 0 0 0 9H13"/></svg>
+          <div class="stat-label">Distance</div>
+          <div class="stat-value">3.1 km</div>
+        </div>
+        <div class="stat-item">
+          <svg class="stat-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          <div class="stat-label">Time</div>
+          <div class="stat-value">34 min</div>
+        </div>
+        <div class="stat-item">
+          <svg class="stat-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
+          <div class="stat-label">Elevation</div>
+          <div class="stat-value">+56 m</div>
+        </div>
+      </div>
+      <button class="start-walk-btn">
+        <span>Start Walk</span>
+        <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+      </button>
+    </div>
+  </article>
+
+  <!-- Route Card 3 -->
+  <article class="route-card">
+    <div class="card-image">
+      <div class="map-placeholder">
+        <svg viewBox="0 0 400 300" xmlns="http://www.w3.org/2000/svg">
+          <rect fill="#e8f5e9" width="400" height="300"/>
+          <path d="M340,60 Q280,100 240,80 T160,150 T80,240 T40,260" stroke="#176a21" stroke-width="4" fill="none" stroke-linecap="round"/>
+          <circle cx="340" cy="60" r="8" fill="#176a21" opacity="0.7"/>
+          <circle cx="40" cy="260" r="8" fill="#c45a2d" opacity="0.7"/>
+          <line x1="0" y1="150" x2="400" y2="150" stroke="#c8e6c9" stroke-width="0.5" opacity="0.4"/>
+          <line x1="200" y1="0" x2="200" y2="300" stroke="#c8e6c9" stroke-width="0.5" opacity="0.4"/>
+        </svg>
+      </div>
+      <div class="gradient-overlay"></div>
+      <div class="difficulty-badge">
+        <div class="difficulty-label">Difficulty</div>
+        <div class="difficulty-value">Challenging</div>
+      </div>
+    </div>
+    <div class="card-content">
+      <div class="route-name">Ridge Trail</div>
+      <div class="route-description">32 min loop</div>
+      <div class="stats-grid">
+        <div class="stat-item">
+          <svg class="stat-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 4v16"/><path d="M17 4v16"/><path d="M19 4H9.5a4.5 4.5 0 0 0 0 9H13"/></svg>
+          <div class="stat-label">Distance</div>
+          <div class="stat-value">2.8 km</div>
+        </div>
+        <div class="stat-item">
+          <svg class="stat-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          <div class="stat-label">Time</div>
+          <div class="stat-value">32 min</div>
+        </div>
+        <div class="stat-item">
+          <svg class="stat-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
+          <div class="stat-label">Elevation</div>
+          <div class="stat-value">+84 m</div>
+        </div>
+      </div>
+      <button class="start-walk-btn">
+        <span>Start Walk</span>
+        <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+      </button>
+    </div>
+  </article>
+
+</div>
+
+<!-- ── Tab Bar (Glassmorphic) ── -->
+<nav class="tab-bar">
+  <button class="tab-item">
+    <svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+    <span class="tab-label">Home</span>
+  </button>
+  <button class="tab-item active">
+    <svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+    <span class="tab-label">Explore</span>
+  </button>
+  <button class="tab-item">
+    <svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+    <span class="tab-label">Memories</span>
+  </button>
+  <button class="tab-item">
+    <svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+    <span class="tab-label">Profile</span>
+  </button>
+</nav>
+
+</body>
+</html>

@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0"/>
+<title>Looopr — Walk Navigation</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;1,800&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<script>
+tailwind.config = {
+  theme: {
+    extend: {
+      colors: {
+        "primary": "#176a21", "primary-container": "#9df197", "primary-dim": "#025d16",
+        "on-primary": "#d1ffc8",
+        "secondary": "#9b3f00", "secondary-container": "#ffc5aa",
+        "surface": "#f5f7f3", "surface-container-lowest": "#ffffff", "surface-container-low": "#eff1ed",
+        "surface-container": "#e6e9e5", "surface-variant": "#daded9",
+        "on-surface": "#2c2f2d", "on-surface-variant": "#595c59",
+        "error": "#b02500",
+      },
+      fontFamily: { "sans": ["Plus Jakarta Sans", "system-ui"] },
+      borderRadius: { "DEFAULT": "1rem", "lg": "2rem", "xl": "3rem", "full": "9999px" },
+    },
+  },
+}
+</script>
+<style>
+  .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+  .filled { font-variation-settings: 'FILL' 1; }
+  body { font-family: 'Plus Jakarta Sans', sans-serif; max-width: 430px; margin: 0 auto; height: 100dvh; overflow: hidden; }
+  .glass { backdrop-filter: blur(20px); background: rgba(245,247,243,0.75); }
+  .glass-dark { backdrop-filter: blur(20px); background: rgba(44,47,45,0.85); }
+  .gradient-cta { background: linear-gradient(135deg, #176a21, #9df197); }
+  @keyframes pulse-ring { 0% { transform: scale(1); opacity: 0.6; } 100% { transform: scale(2.5); opacity: 0; } }
+  .pulse-ring { animation: pulse-ring 2s ease-out infinite; }
+</style>
+</head>
+<body class="bg-[#d4e8d0] text-on-surface relative">
+
+<!-- Full-screen Map Background -->
+<div class="absolute inset-0 bg-gradient-to-b from-[#c8dfc4] to-[#dce8d8]">
+  <!-- Grid pattern -->
+  <div class="absolute inset-0 opacity-[0.07]" style="background-image: repeating-linear-gradient(0deg, #176a21 0px, transparent 1px, transparent 35px), repeating-linear-gradient(90deg, #176a21 0px, transparent 1px, transparent 35px);"></div>
+  <!-- Route path -->
+  <svg class="absolute inset-0 w-full h-full" viewBox="0 0 430 932">
+    <!-- Route polyline -->
+    <path d="M215,200 C320,220 350,350 300,450 C250,550 150,550 120,450 C90,350 130,220 215,200" fill="none" stroke="#176a21" stroke-width="5" stroke-linecap="round" stroke-dasharray="0" opacity="0.3"/>
+    <!-- Walked portion -->
+    <path d="M215,200 C320,220 350,350 300,450" fill="none" stroke="#176a21" stroke-width="5" stroke-linecap="round"/>
+    <!-- Direction arrows -->
+    <circle cx="280" cy="500" r="4" fill="#176a21" opacity="0.4"/>
+    <circle cx="200" cy="530" r="4" fill="#176a21" opacity="0.4"/>
+    <circle cx="140" cy="490" r="4" fill="#176a21" opacity="0.4"/>
+    <!-- POI markers -->
+    <circle cx="330" cy="380" r="8" fill="#9b3f00" stroke="white" stroke-width="2"/>
+    <circle cx="140" cy="420" r="8" fill="#176a21" stroke="white" stroke-width="2"/>
+  </svg>
+  <!-- User location dot -->
+  <div class="absolute" style="left: 290px; top: 440px;">
+    <div class="w-5 h-5 bg-primary rounded-full border-[3px] border-white shadow-lg relative z-10"></div>
+    <div class="absolute inset-0 w-5 h-5 bg-primary/40 rounded-full pulse-ring"></div>
+  </div>
+</div>
+
+<!-- Top HUD -->
+<div class="absolute top-0 left-0 right-0 z-40 pt-14 px-5">
+  <div class="glass rounded-xl p-4 editorial-shadow flex items-center justify-center gap-6">
+    <div class="text-center">
+      <span class="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant block">Time</span>
+      <span class="text-2xl font-extrabold tracking-tighter">18:42</span>
+    </div>
+    <div class="w-px h-8 bg-outline-variant/30"></div>
+    <div class="text-center">
+      <span class="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant block">Distance</span>
+      <span class="text-2xl font-extrabold tracking-tighter text-primary">1.4 <span class="text-sm font-bold text-on-surface-variant">km</span></span>
+    </div>
+    <div class="w-px h-8 bg-outline-variant/30"></div>
+    <div class="text-center">
+      <span class="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant block">Steps</span>
+      <span class="text-2xl font-extrabold tracking-tighter">1,847</span>
+    </div>
+  </div>
+</div>
+
+<!-- Navigation Instruction Card -->
+<div class="absolute top-[140px] left-5 right-5 z-30">
+  <div class="bg-surface-container-lowest rounded-xl p-4 editorial-shadow flex items-center gap-4">
+    <div class="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center shrink-0">
+      <span class="material-symbols-outlined text-primary text-2xl filled">turn_right</span>
+    </div>
+    <div class="flex-1">
+      <p class="font-bold text-[15px]">Turn right onto Vondelstraat</p>
+      <p class="text-on-surface-variant text-sm mt-0.5">In <span class="font-bold text-primary">50m</span> &middot; Step 4 of 12</p>
+    </div>
+  </div>
+</div>
+
+<!-- POI Proximity Banner -->
+<div class="absolute top-[220px] left-5 right-5 z-30 mt-3">
+  <div class="bg-secondary-container rounded-xl p-3.5 flex items-center gap-3">
+    <div class="w-9 h-9 bg-white/50 rounded-lg flex items-center justify-center shrink-0">
+      <span class="material-symbols-outlined text-secondary text-lg">restaurant</span>
+    </div>
+    <div class="flex-1 min-w-0">
+      <p class="font-bold text-sm text-on-secondary-container">Caf&eacute; Vertigo nearby</p>
+      <p class="text-[12px] text-on-secondary-container/70">80m away &middot; On your route</p>
+    </div>
+    <button class="bg-white/60 text-on-secondary-container px-3 py-1.5 rounded-lg text-[11px] font-bold uppercase tracking-wider shrink-0">Check in</button>
+  </div>
+</div>
+
+<!-- Map Controls -->
+<div class="absolute right-5 bottom-[260px] z-30 flex flex-col gap-3">
+  <button class="w-11 h-11 glass rounded-xl flex items-center justify-center shadow-sm">
+    <span class="material-symbols-outlined text-on-surface">my_location</span>
+  </button>
+  <button class="w-11 h-11 glass rounded-xl flex items-center justify-center shadow-sm">
+    <span class="material-symbols-outlined text-on-surface">explore</span>
+  </button>
+</div>
+
+<!-- Bottom Control Panel -->
+<div class="absolute bottom-0 left-0 right-0 z-40">
+  <div class="glass rounded-t-[1.5rem] p-5 pb-10 space-y-4">
+    <!-- Progress bar -->
+    <div class="space-y-2">
+      <div class="h-2 bg-surface-container rounded-full overflow-hidden">
+        <div class="h-full w-[44%] bg-gradient-to-r from-primary to-primary-container rounded-full transition-all"></div>
+      </div>
+      <div class="flex justify-between">
+        <span class="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">44% complete</span>
+        <span class="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">1.8 km remaining</span>
+      </div>
+    </div>
+
+    <!-- Action buttons -->
+    <div class="flex items-center gap-3">
+      <!-- Camera -->
+      <button class="relative w-14 h-14 bg-surface-container-lowest rounded-xl flex items-center justify-center shadow-sm">
+        <span class="material-symbols-outlined text-on-surface text-xl">photo_camera</span>
+        <span class="absolute -top-1 -right-1 w-5 h-5 bg-primary text-white text-[10px] font-bold rounded-full flex items-center justify-center">3</span>
+      </button>
+
+      <!-- Finish Walk -->
+      <button class="flex-1 h-14 gradient-cta text-on-primary rounded-xl font-bold text-base flex items-center justify-center gap-2 shadow-[0_8px_24px_rgba(23,106,33,0.25)]">
+        <span class="material-symbols-outlined filled">flag</span>
+        Finish Walk
+      </button>
+
+      <!-- End Walk -->
+      <button class="w-14 h-14 bg-error/10 rounded-xl flex items-center justify-center">
+        <span class="material-symbols-outlined text-error text-xl">close</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>
