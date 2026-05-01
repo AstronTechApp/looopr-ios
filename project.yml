@@ -44,6 +44,8 @@ targets:
         NSMotionUsageDescription: "Looopr counts your steps during walks to show your activity."
         NSSupportsLiveActivities: true
         NSSupportsLiveActivitiesFrequentUpdates: true
+        UISupportedInterfaceOrientations:
+          - UIInterfaceOrientationPortrait
         CFBundleURLTypes:
           - CFBundleURLName: nl.astrontech.looopr
             CFBundleURLSchemes:
@@ -102,7 +104,7 @@ targets:
     type: bundle.unit-test
     platform: iOS
     sources:
-      - MuterTests
+      - LoooprTests
     dependencies:
       - target: Looopr
     settings:

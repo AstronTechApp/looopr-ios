@@ -64,7 +64,7 @@
 	</dict>
 	<key>UISupportedInterfaceOrientations</key>
 	<array>
-		<string>UIInterfaceOrientationPortraitUpsideDown</string>
+		<string>UIInterfaceOrientationPortrait</string>
 	</array>
 	<key>VIATOR_API_KEY</key>
 	<string>$(VIATOR_API_KEY)</string>
