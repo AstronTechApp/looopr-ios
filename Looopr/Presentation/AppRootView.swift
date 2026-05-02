@@ -33,6 +33,12 @@ struct AppRootView: View {
             hasCheckedSession = true
         }
         .environment(\.locale, localization.currentLocale)
+        // Force light color scheme app-wide.
+        // The LoooprTheme palette uses hardcoded hex colors that don't adapt to dark mode,
+        // which causes invisible system components (e.g. wheel DatePicker) and tab-bar flicker
+        // when iOS is in dark mode. Until the theme is refactored with dynamic colors,
+        // we lock the app to light mode for visual consistency.
+        .preferredColorScheme(.light)
     }
 
     // MARK: - Main Content (version branching)
