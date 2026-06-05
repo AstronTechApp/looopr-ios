@@ -1,5 +1,4 @@
 import Foundation
-import CoreGraphics
 
 struct AppConfiguration: Sendable {
 
@@ -96,14 +95,6 @@ struct AppConfiguration: Sendable {
     }
     let navigation: Navigation
 
-    // MARK: - Photo
-
-    struct Photo: Sendable {
-        let jpegCompressionQuality: CGFloat
-        let maxPhotosPerRoute: Int
-    }
-    let photo: Photo
-
     // MARK: - Freemium
 
     struct Freemium: Sendable {
@@ -175,7 +166,6 @@ struct AppConfiguration: Sendable {
             wrongWayTriggerMeters: 12,
             wrongWayMaxFlips: 1
         ),
-        photo: Photo(jpegCompressionQuality: 0.8, maxPhotosPerRoute: 50),
         freemium: Freemium(freeRouteLimit: 2, paidRouteLimit: 8)
     )
 

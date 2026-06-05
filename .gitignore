@@ -3,6 +3,7 @@
 *.xcodeproj/project.xcworkspace/xcuserdata/
 *.xcworkspace/xcuserdata/
 DerivedData/
+.derivedData/
 build/
 *.pbxuser
 *.mode1v3
@@ -37,6 +38,5 @@ Pods/
 .vscode/
 .idea/
 
-# Claude Code workspace
-.claude/worktrees/
-.claude/settings.local.json
+# Local assistant workspace
+.claude/

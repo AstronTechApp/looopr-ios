@@ -4,7 +4,7 @@ import XCTest
 final class LoooprTests: XCTestCase {
     func testAppConfigurationExists() {
         let config = AppConfiguration.current
-        XCTAssertEqual(config.freemium.freeRouteLimit, 1)
+        XCTAssertEqual(config.freemium.freeRouteLimit, 2)
         XCTAssertEqual(config.freemium.paidRouteLimit, 8)
     }
 

@@ -7,8 +7,6 @@ enum AnalyticsEvent: Sendable {
     case walkCompleted(routeId: UUID, durationSeconds: TimeInterval)
     case poiViewed(poiId: UUID, category: String)
     case bookingLinkTapped(poiId: UUID, partner: String)
-    case photoTaken(routeId: UUID)
-    case collageCreated(template: String)
     case routeShared(routeId: UUID, platform: String)
     case feedbackSubmitted
     case paywallShown

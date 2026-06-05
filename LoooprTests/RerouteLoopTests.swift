@@ -265,20 +265,14 @@ final class RerouteLoopTests: XCTestCase {
         // On a 500m-radius loop, points are ~78m apart, so index ~3 in remaining ≈ 234m ahead.
         let reentryPointOnRoute = remaining[3]
 
-        // The BUGGY approach: search the full polyline for the closest vertex
-        // to the re-entry coordinate. On a loop, the end of the route curves
-        // back near the start, so this can match a late-route vertex.
-        let buggyIdx = closestPolylineIndex(to: reentryPointOnRoute, in: loop)
-
         // The CORRECT approach: offset from the remaining slice
         let correctIdx = closestIdx + 1 + 3  // = 9
 
         // On a loop, the correct index is near the start of the array (9 out of 41)
         XCTAssertEqual(correctIdx, 9)
 
-        // The buggy index MIGHT match the correct one if lucky, but on loops it
-        // often doesn't. Either way, the correct approach is deterministic:
-        // it always gives closestIdx + 1 + candidate.polylineIndex.
+        // The correct approach is deterministic: it always gives closestIdx + 1
+        // + candidate.polylineIndex.
         // We verify the correct index points at the right coordinate.
         let epsilon = 0.000001
         XCTAssertEqual(loop[correctIdx].latitude, reentryPointOnRoute.latitude, accuracy: epsilon)

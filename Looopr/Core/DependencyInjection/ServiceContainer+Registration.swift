@@ -111,7 +111,7 @@ extension ServiceContainer {
         registerSingleton(TicketAggregating.self, instance: ticketAggregator)
 
         // Sharing
-        if let supabaseProvider {
+        if supabaseProvider != nil {
             let routeShareService = RouteShareService()
             registerSingleton(RouteShareService.self, instance: routeShareService)
         }

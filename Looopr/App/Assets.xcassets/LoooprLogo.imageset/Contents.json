@@ -1,17 +1,17 @@
 {
   "images" : [
     {
-      "filename" : "Infinite Step.PNG",
+      "filename" : "Infinite Step.png",
       "idiom" : "universal",
       "scale" : "1x"
     },
     {
-      "filename" : "Infinite Step 1.PNG",
+      "filename" : "Infinite Step 1.png",
       "idiom" : "universal",
       "scale" : "2x"
     },
     {
-      "filename" : "Infinite Step 2.PNG",
+      "filename" : "Infinite Step 2.png",
       "idiom" : "universal",
       "scale" : "3x"
     }

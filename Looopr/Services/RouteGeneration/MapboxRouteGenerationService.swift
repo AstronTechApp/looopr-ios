@@ -220,16 +220,6 @@ final class MapboxRouteGenerationService: RouteGenerating, @unchecked Sendable {
                 CLLocationCoordinate2D(latitude: $0[1], longitude: $0[0])
             }
 
-            // --- Overlap & backtrack detection (per-leg and full-route) ---
-            let legPolylines: [[CLLocationCoordinate2D]] = response.legs.map { leg in
-                leg.steps.flatMap { step -> [CLLocationCoordinate2D] in
-                    // Each step's geometry starts at the maneuver location;
-                    // reconstruct approximate leg polylines from step positions.
-                    [CLLocationCoordinate2D(latitude: step.maneuver.location[1],
-                                           longitude: step.maneuver.location[0])]
-                }
-            }
-
             // Check adjacent-leg and wrap-around-leg overlap (5 legs: 0-1, 1-2, 2-3, 3-4, 4-0)
             // Plus cross-leg pairs most likely to overlap: leg0↔leg4 (both touch start)
             var maxLegOverlap = 0.0
