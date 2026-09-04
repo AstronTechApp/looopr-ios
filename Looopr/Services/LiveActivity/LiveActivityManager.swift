@@ -50,6 +50,19 @@ final class LiveActivityManager {
     /// Holds the most recent state so we can push it once the throttle window reopens.
     private var pendingState: WalkActivityAttributes.ContentState?
 
+    /// Distance (m) at which an approaching turn raises an alerting update.
+    private let turnAlertDistance: Double = 50
+
+    /// Past this distance the next approach counts as a fresh turn, so a
+    /// repeated instruction ("Turn right" twice in a loop) can alert again.
+    private let turnAlertResetDistance: Double = 120
+
+    /// The instruction we last alerted on, so one turn only buzzes once.
+    private var lastAlertedInstruction: String?
+
+    /// Set when the next push should interrupt rather than update quietly.
+    private var pendingAlert: AlertConfiguration?
+
     // MARK: - Public API
 
     /// Starts a new Live Activity for a walk session.
@@ -103,6 +116,8 @@ final class LiveActivityManager {
             lastUpdateTime = Date()
             isUpdating = false
             pendingState = nil
+            pendingAlert = nil
+            lastAlertedInstruction = nil
             logger.info("Live Activity started — id: \(activity.id)")
         } catch {
             logger.error("Failed to start Live Activity: \(error)")
@@ -145,6 +160,18 @@ final class LiveActivityManager {
         // Always store the latest state
         pendingState = newState
 
+        // A turn coming up deserves to interrupt the throttle — an 8-second-late
+        // "turn right" is a wrong turn. Everything else waits its turn.
+        if let alert = alertConfiguration(
+            arrow: nextDirectionArrow,
+            text: nextDirectionText,
+            distance: nextDirectionDistanceMeters
+        ) {
+            pendingAlert = alert
+            if !isUpdating { pushPendingState() }
+            return
+        }
+
         // Skip if an update is already in-flight
         guard !isUpdating else { return }
 
@@ -157,6 +184,42 @@ final class LiveActivityManager {
         pushPendingState()
     }
 
+    /// Builds an alert for a turn the walker is closing in on and hasn't been
+    /// warned about yet. Returns nil — meaning "update quietly" — for everything
+    /// else, so the Lock Screen only interrupts when it has something to say.
+    ///
+    /// Straight-ahead steps never alert: on a loop most steps are "continue
+    /// straight", and buzzing for those would train the user to ignore it.
+    private func alertConfiguration(
+        arrow: String?,
+        text: String?,
+        distance: Double?
+    ) -> AlertConfiguration? {
+        guard let text, let distance else { return nil }
+
+        // Far from the next turn — clear the bookkeeping so an identical
+        // instruction later in the loop is still treated as a new turn.
+        if distance > turnAlertResetDistance {
+            lastAlertedInstruction = nil
+            return nil
+        }
+
+        guard distance <= turnAlertDistance else { return nil }
+        guard text != lastAlertedInstruction else { return nil }
+
+        // "↑" is continue-straight; not worth a haptic.
+        guard let arrow, arrow != "\u{2191}" else { return nil }
+
+        lastAlertedInstruction = text
+        logger.info("Turn alert at \(Int(distance))m: \(text)")
+
+        return AlertConfiguration(
+            title: LocalizedStringResource(stringLiteral: L10n.LiveActivity.turnAhead),
+            body: LocalizedStringResource(stringLiteral: text),
+            sound: .default
+        )
+    }
+
     /// Ends the current Live Activity. Called when the walk finishes.
     func endActivity() {
         guard let activity = currentActivity else { return }
@@ -165,6 +228,8 @@ final class LiveActivityManager {
         let activityToEnd = activity
         currentActivity = nil
         pendingState = nil
+        pendingAlert = nil
+        lastAlertedInstruction = nil
         isUpdating = false
         lastUpdateTime = nil
 
@@ -246,13 +311,20 @@ final class LiveActivityManager {
         isUpdating = true
         pendingState = nil
 
+        let alert = pendingAlert
+        pendingAlert = nil
+
         // Reset the stale date with each update so the activity stays fresh
         // as long as the app is actively pushing. If the app dies, iOS will
         // dim/dismiss the activity after staleDateInterval.
         let content = ActivityContent(state: state, staleDate: Date().addingTimeInterval(staleDateInterval))
 
         Task { [weak self] in
-            await activity.update(content)
+            if let alert {
+                await activity.update(content, alertConfiguration: alert)
+            } else {
+                await activity.update(content)
+            }
             guard let self else { return }
             await MainActor.run {
                 self.isUpdating = false

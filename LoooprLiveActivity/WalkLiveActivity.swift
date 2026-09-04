@@ -92,10 +92,40 @@ private func formattedPace(_ metersPerSecond: Double) -> String {
     }
 }
 
+/// Maps the arrow character the app sends to a proper SF Symbol, so the Lock
+/// Screen reads like Apple Maps rather than a text arrow.
+private func directionSymbol(for arrow: String) -> String {
+    switch arrow {
+    case "\u{2190}": return "arrow.turn.up.left"      // turn left
+    case "\u{2192}": return "arrow.turn.up.right"     // turn right
+    case "\u{2196}": return "arrow.up.left"           // slight left
+    case "\u{2197}": return "arrow.up.right"          // slight right
+    case "\u{2199}": return "arrow.turn.left.down"    // sharp left
+    case "\u{2198}": return "arrow.turn.right.down"   // sharp right
+    case "\u{21A9}": return "arrow.uturn.left"        // u-turn
+    case "\u{1F4CD}": return "mappin.and.ellipse"     // arrival
+    default: return "arrow.up"                          // continue straight
+    }
+}
+
+/// How close a turn has to be before the Lock Screen promotes it over the
+/// next-POI row. Matches the walking-speed reaction window: ~2 minutes out.
+private let turnPromotionDistance: Double = 150
+
 // MARK: - Lock Screen View
 
 private struct LockScreenView: View {
     let context: ActivityViewContext<WalkActivityAttributes>
+
+    /// The next turn, but only once it's within acting distance. Nil the rest
+    /// of the time so the card falls back to its normal stats row.
+    private var upcomingTurn: (arrow: String, text: String, distance: Double)? {
+        guard let arrow = context.state.nextDirectionArrow,
+              let text = context.state.nextDirectionText,
+              let distance = context.state.nextDirectionDistanceMeters,
+              distance <= turnPromotionDistance else { return nil }
+        return (arrow, text, distance)
+    }
 
     var body: some View {
         VStack(spacing: 12) {
@@ -119,21 +149,32 @@ private struct LockScreenView: View {
             // Progress bar
             ProgressBarView(progress: context.state.progressFraction)
 
-            // Stats row
-            HStack {
-                StatItem(
-                    icon: "mappin.and.ellipse",
-                    value: formattedDistance(context.state.distanceWalkedMeters),
-                    label: String(localized: "liveActivity.walked", defaultValue: "walked")
+            // Bottom row — the upcoming turn takes over from the next-POI
+            // readout once it's close enough to act on, so the card stays the
+            // same height but shows whichever is actually useful right now.
+            if let turn = upcomingTurn {
+                TurnRowView(
+                    symbol: directionSymbol(for: turn.arrow),
+                    instruction: turn.text,
+                    distanceMeters: turn.distance,
+                    walkedMeters: context.state.distanceWalkedMeters
                 )
-                Spacer()
-                if let poiName = context.state.nextPOIName,
-                   let poiDist = context.state.nextPOIDistanceMeters {
+            } else {
+                HStack {
                     StatItem(
-                        icon: "star.fill",
-                        value: poiName,
-                        label: formattedDistance(poiDist) + " " + String(localized: "liveActivity.ahead", defaultValue: "ahead")
+                        icon: "mappin.and.ellipse",
+                        value: formattedDistance(context.state.distanceWalkedMeters),
+                        label: String(localized: "liveActivity.walked", defaultValue: "walked")
                     )
+                    Spacer()
+                    if let poiName = context.state.nextPOIName,
+                       let poiDist = context.state.nextPOIDistanceMeters {
+                        StatItem(
+                            icon: "star.fill",
+                            value: poiName,
+                            label: formattedDistance(poiDist) + " " + String(localized: "liveActivity.ahead", defaultValue: "ahead")
+                        )
+                    }
                 }
             }
         }
@@ -146,6 +187,49 @@ private struct LockScreenView: View {
             )
         )
         .foregroundStyle(.white)
+    }
+}
+
+// MARK: - Turn Row
+
+/// The "act now" row: big direction glyph, the street-level instruction from
+/// MapKit, and how far out the turn is — with distance walked kept on the
+/// right so the card doesn't lose it entirely while navigating.
+private struct TurnRowView: View {
+    let symbol: String
+    let instruction: String
+    let distanceMeters: Double
+    let walkedMeters: Double
+
+    var body: some View {
+        HStack(spacing: 10) {
+            Image(systemName: symbol)
+                .font(.system(size: 22, weight: .semibold))
+                .foregroundStyle(.white)
+                .frame(width: 26)
+
+            VStack(alignment: .leading, spacing: 1) {
+                Text(instruction)
+                    .font(.caption)
+                    .fontWeight(.semibold)
+                    .foregroundStyle(.white)
+                    .lineLimit(2)
+                    .multilineTextAlignment(.leading)
+                    .minimumScaleFactor(0.8)
+
+                Text("\(String(localized: "liveActivity.inDistance", defaultValue: "in")) \(formattedDistance(distanceMeters))")
+                    .font(.caption2)
+                    .foregroundStyle(.white.opacity(0.75))
+            }
+
+            Spacer(minLength: 4)
+
+            StatItem(
+                icon: "mappin.and.ellipse",
+                value: formattedDistance(walkedMeters),
+                label: String(localized: "liveActivity.walked", defaultValue: "walked")
+            )
+        }
     }
 }
 
@@ -244,8 +328,8 @@ private struct CompactTrailingView: View {
         if let arrow = context.state.nextDirectionArrow,
            let dist = context.state.nextDirectionDistanceMeters,
            dist < 100 {
-            Text(arrow)
-                .font(.system(size: 14))
+            Image(systemName: directionSymbol(for: arrow))
+                .font(.system(size: 13, weight: .semibold))
                 .foregroundStyle(Color.loooprGreenLight)
         } else {
             Text(compactDistance(context.state.distanceWalkedMeters))
@@ -352,8 +436,8 @@ private struct ExpandedBottomView: View {
             if let arrow = context.state.nextDirectionArrow,
                let text = context.state.nextDirectionText {
                 HStack(spacing: 6) {
-                    Text(arrow)
-                        .font(.title3)
+                    Image(systemName: directionSymbol(for: arrow))
+                        .font(.system(size: 17, weight: .semibold))
                         .foregroundStyle(Color.loooprGreenLight)
                     Text(text)
                         .font(.caption2)
