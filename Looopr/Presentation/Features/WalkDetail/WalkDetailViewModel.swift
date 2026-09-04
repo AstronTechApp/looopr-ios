@@ -6,24 +6,88 @@ final class WalkDetailViewModel {
 
     // MARK: - State
 
-    let session: WalkSession
+    private(set) var session: WalkSession
 
     private(set) var isSharing = false
     private(set) var shareURL: URL?
     private(set) var shareError: String?
+    private(set) var gpxFileURL: URL?
+    private(set) var gpxError: String?
+
+    /// Whether this walk has a recorded GPS track that can be exported.
+    var canExportGPX: Bool { session.hasTrack }
+
+    // Apple Health
+    private(set) var healthSaveState: HealthSaveState
+
+    /// Whether the "Save to Apple Health" action makes sense for this walk on
+    /// this device. Permission is requested on tap if still undecided.
+    var canSaveToHealth: Bool {
+        guard let healthService, healthService.isAvailable else { return false }
+        return session.distanceWalkedMeters > 0 || session.hasTrack
+    }
+
+    /// Writes the walk to Apple Health, asking for permission first if the
+    /// user hasn't decided yet. Already-saved walks report `.saved` at once.
+    func saveToHealth() async {
+        guard let healthService else { return }
+        if session.healthKitWorkoutID != nil {
+            healthSaveState = .saved
+            return
+        }
+
+        var authorization = healthService.authorization
+        if authorization == .notDetermined {
+            authorization = (try? await healthService.requestAuthorization()) ?? .denied
+        }
+        guard authorization == .authorized else {
+            healthSaveState = .failed(L10n.Health.notAuthorized)
+            return
+        }
+
+        healthSaveState = .saving
+        do {
+            let workoutID = try await healthService.saveWalk(session)
+            session.healthKitWorkoutID = workoutID
+            try? walkHistoryRepository.save(session)
+            healthSaveState = .saved
+        } catch {
+            healthSaveState = .failed(error.localizedDescription)
+        }
+    }
+
+    /// Writes the walked track to a temporary `.gpx` file for the share sheet.
+    func exportGPX() -> URL? {
+        gpxError = nil
+        do {
+            let url = try GPXExporter.writeTemporaryFile(for: session)
+            gpxFileURL = url
+            return url
+        } catch {
+            gpxError = error.localizedDescription
+            return nil
+        }
+    }
 
     // MARK: - Dependencies
 
     private let routeShareService: RouteShareService
+    private let healthService: HealthWorkoutSaving?
+    private let walkHistoryRepository: WalkHistoryRepository
 
     init(
         session: WalkSession,
-        routeShareService: RouteShareService? = nil
+        routeShareService: RouteShareService? = nil,
+        healthService: HealthWorkoutSaving? = ServiceContainer.shared.resolveOptional(HealthWorkoutSaving.self),
+        walkHistoryRepository: WalkHistoryRepository = ServiceContainer.shared.resolve(WalkHistoryRepository.self)
     ) {
         self.session = session
         self.routeShareService = routeShareService
             ?? ServiceContainer.shared.resolveOptional(RouteShareService.self)
             ?? RouteShareService()
+        self.healthService = healthService
+        self.walkHistoryRepository = walkHistoryRepository
+        self.healthSaveState = session.healthKitWorkoutID == nil ? .idle : .saved
     }
 
     // MARK: - Computed

@@ -32,6 +32,10 @@ final class ProfileViewModel {
     // Tab
     var selectedTab: ProfileTab = .progress
 
+    // Deletion
+    var walkPendingDeletion: WalkSession?
+    var deleteFailedWarning = false
+
     // Dependencies
     private let walkHistoryRepository: WalkHistoryRepository
 
@@ -44,6 +48,19 @@ final class ProfileViewModel {
     // MARK: - Load
 
     func loadData() {
+        reloadFromLocalStore()
+
+        // Background two-way cloud sync (throttled inside the repository);
+        // refresh the UI if walks from another device/install came down.
+        let repository = walkHistoryRepository
+        Task { [weak self] in
+            if await repository.syncWithCloudIfNeeded() {
+                self?.reloadFromLocalStore()
+            }
+        }
+    }
+
+    private func reloadFromLocalStore() {
         guard let sessions = try? walkHistoryRepository.loadAll() else { return }
 
         // Only completed walks, sorted most recent first
@@ -57,6 +74,33 @@ final class ProfileViewModel {
         computeWeeklyDistances()
         computeStreak()
 
+    }
+
+    // MARK: - Deletion
+
+    /// Stages a walk for deletion; the view confirms before it is removed.
+    func requestDelete(_ session: WalkSession) {
+        walkPendingDeletion = session
+    }
+
+    /// Deletes the staged walk locally and in the cloud, then refreshes.
+    ///
+    /// The local removal always happens, so the card disappears immediately.
+    /// A cloud failure only raises a warning — the walk could come back at
+    /// the next sync if the row survived on the server.
+    func confirmPendingDeletion() {
+        guard let session = walkPendingDeletion else { return }
+        walkPendingDeletion = nil
+
+        let repository = walkHistoryRepository
+        Task { [weak self] in
+            do {
+                try await repository.deleteEverywhere(id: session.id)
+            } catch {
+                self?.deleteFailedWarning = true
+            }
+            self?.reloadFromLocalStore()
+        }
     }
 
     // MARK: - This Week Stats

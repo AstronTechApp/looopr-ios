@@ -6,6 +6,8 @@ struct FinishWalkView: View {
     @State private var viewModel: FinishWalkViewModel
     @State private var showShareSheet = false
     @State private var showShareError = false
+    @State private var showGPXShareSheet = false
+    @State private var showGPXError = false
     @State private var appear = false
     @State private var statsAppeared = false
 
@@ -91,6 +93,10 @@ struct FinishWalkView: View {
         }
         .navigationBarBackButtonHidden()
         .toolbar(.hidden, for: .navigationBar, .tabBar)
+        // Save immediately — a swipe-back, crash, or force-quit on this
+        // screen must never lose the walk.
+        .onAppear { viewModel.persistWalkIfNeeded() }
+        .onDisappear { viewModel.finalizeFeedbackIfNeeded() }
         .task {
             withAnimation(.spring(response: 0.6, dampingFraction: 0.7)) {
                 appear = true
@@ -114,6 +120,16 @@ struct FinishWalkView: View {
             Button("OK", role: .cancel) {}
         } message: {
             Text(viewModel.shareError ?? "Something went wrong. Please try again.")
+        }
+        .sheet(isPresented: $showGPXShareSheet) {
+            if let url = viewModel.gpxFileURL {
+                ShareSheetView(items: [url])
+            }
+        }
+        .alert(L10n.GPX.exportFailed, isPresented: $showGPXError) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text(viewModel.gpxError ?? L10n.GPX.noTrack)
         }
     }
 
@@ -214,12 +230,26 @@ struct FinishWalkView: View {
 
     // MARK: - Route Map Preview
 
+    /// Draws the GPS track that was actually walked, with the planned loop
+    /// dashed faintly beneath it for comparison. Walks with no recorded
+    /// track (before track recording existed) show the planned loop alone.
     private var routeMapSection: some View {
-        Map {
-            MapPolyline(coordinates: viewModel.route.pathCoordinates)
+        let planned = viewModel.route.pathCoordinates
+        let shown = viewModel.session.displayCoordinates
+
+        return Map {
+            if viewModel.session.hasTrack, planned.count >= 2 {
+                MapPolyline(coordinates: planned)
+                    .stroke(
+                        viewModel.routeColor.opacity(0.35),
+                        style: StrokeStyle(lineWidth: 3, lineCap: .round, dash: [6, 6])
+                    )
+            }
+
+            MapPolyline(coordinates: shown)
                 .stroke(viewModel.routeColor, lineWidth: 3)
 
-            if let start = viewModel.route.pathCoordinates.first {
+            if let start = shown.first {
                 Annotation("", coordinate: start) {
                     Circle()
                         .fill(LoooprTheme.Colors.primary)
@@ -314,9 +344,28 @@ struct FinishWalkView: View {
             .buttonStyle(.loooprSecondary)
             .disabled(viewModel.isSharingRoute)
 
-            // Go Home (persists walk to history on exit)
+            // Export the walked GPS track as GPX (Strava, Komoot, Files …).
+            // Only offered when a track was actually recorded.
+            if viewModel.canExportGPX {
+                Button {
+                    if viewModel.exportGPX() != nil {
+                        showGPXShareSheet = true
+                    } else {
+                        showGPXError = true
+                    }
+                } label: {
+                    Label(L10n.FinishWalk.exportGPX, systemImage: "point.topleft.down.to.point.bottomright.curvepath")
+                }
+                .buttonStyle(.loooprSecondary)
+            }
+
+            // Apple Health — only shown once an automatic save has happened
+            // (or failed), so the screen stays quiet for users who have it off.
+            healthStatusLine
+
+            // Go Home (feedback is attached to the already-saved walk here)
             Button {
-                viewModel.persistWalkIfNeeded()
+                viewModel.finalizeFeedbackIfNeeded()
                 router.popToRoot()
             } label: {
                 Text(L10n.FinishWalk.goHome)
@@ -324,6 +373,29 @@ struct FinishWalkView: View {
                     .foregroundStyle(LoooprTheme.Colors.textSecondary)
             }
             .padding(.top, LoooprTheme.Spacing.xs)
+        }
+    }
+
+    // MARK: - Apple Health status
+
+    @ViewBuilder
+    private var healthStatusLine: some View {
+        switch viewModel.healthSaveState {
+        case .idle:
+            EmptyView()
+        case .saving:
+            Label(L10n.Health.saving, systemImage: "heart")
+                .font(LoooprTheme.Typography.caption)
+                .foregroundStyle(LoooprTheme.Colors.textTertiary)
+        case .saved:
+            Label(L10n.Health.savedTitle, systemImage: "heart.fill")
+                .font(LoooprTheme.Typography.caption)
+                .foregroundStyle(LoooprTheme.Colors.textSecondary)
+        case .failed(let message):
+            Label(message, systemImage: "heart.slash")
+                .font(LoooprTheme.Typography.caption)
+                .foregroundStyle(LoooprTheme.Colors.textTertiary)
+                .multilineTextAlignment(.center)
         }
     }
 }

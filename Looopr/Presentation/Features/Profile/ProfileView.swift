@@ -57,6 +57,26 @@ struct ProfileView: View {
         } // ZStack
         .navigationBarBackButtonHidden()
         .toolbar(.hidden, for: .navigationBar)
+        .alert(L10n.Profile.deleteWalkQuestion,
+               isPresented: Binding(
+                   get: { viewModel.walkPendingDeletion != nil },
+                   set: { if !$0 { viewModel.walkPendingDeletion = nil } }
+               ),
+               presenting: viewModel.walkPendingDeletion) { _ in
+            Button(L10n.Profile.deleteWalk, role: .destructive) {
+                viewModel.confirmPendingDeletion()
+            }
+            Button(L10n.Profile.cancel, role: .cancel) {
+                viewModel.walkPendingDeletion = nil
+            }
+        } message: { session in
+            Text(L10n.Profile.willBeDeleted(session.routeName ?? L10n.Misc.walk))
+        }
+        .alert(L10n.Profile.deleteFailedTitle, isPresented: $viewModel.deleteFailedWarning) {
+            Button(L10n.Misc.okay, role: .cancel) {}
+        } message: {
+            Text(L10n.Profile.deleteFailedMessage)
+        }
     }
 
     // MARK: - Profile Header
@@ -302,10 +322,11 @@ struct ProfileView: View {
                     .padding(.top, LoooprTheme.Spacing.huge)
             } else {
                 ForEach(viewModel.completedWalks) { session in
-                    NavigationLink(value: AppRoute.walkDetail(session)) {
-                        ActivityCard(session: session, viewModel: viewModel)
-                    }
-                    .buttonStyle(.plain)
+                    ActivityCard(
+                        session: session,
+                        viewModel: viewModel,
+                        onDelete: { viewModel.requestDelete(session) }
+                    )
                 }
             }
         }
@@ -374,6 +395,7 @@ private struct StatCell: View {
 private struct ActivityCard: View {
     let session: WalkSession
     let viewModel: ProfileViewModel
+    let onDelete: () -> Void
 
     @State private var isShowingShare = false
 
@@ -415,60 +437,110 @@ private struct ActivityCard: View {
         return LoooprTheme.Colors.primary
     }
 
+    private var healthBadge: some View {
+        HStack(spacing: 4) {
+            Image(systemName: "heart.fill")
+                .font(.system(size: 9, weight: .semibold))
+
+            Text(L10n.Profile.inAppleHealth)
+                .font(LoooprTheme.Typography.caption)
+        }
+        .foregroundStyle(LoooprTheme.Colors.primary)
+        .padding(.horizontal, 8)
+        .padding(.vertical, 3)
+        .background(LoooprTheme.Colors.primaryLight.opacity(0.35))
+        .clipShape(Capsule())
+        .padding(.top, 2)
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            // Route map preview or placeholder
-            Group {
-                if let coordinates = session.routeCoordinates, !coordinates.isEmpty {
-                    ActivityMapPreview(
-                        coordinates: coordinates.map(\.clCoordinate),
-                        color: activityColor
+            // Tappable area — map, name and date open the walk detail.
+            // The action row below sits *outside* this link, otherwise the
+            // NavigationLink swallows the share and delete taps.
+            NavigationLink(value: AppRoute.walkDetail(session)) {
+                VStack(alignment: .leading, spacing: 0) {
+                    // Route map preview or placeholder
+                    Group {
+                        let coordinates = session.displayCoordinates
+                        if !coordinates.isEmpty {
+                            ActivityMapPreview(
+                                coordinates: coordinates,
+                                color: activityColor
+                            )
+                        } else {
+                            ZStack {
+                                LoooprTheme.Colors.primaryLight
+                                Image(systemName: "map")
+                                    .font(.system(size: 32))
+                                    .foregroundStyle(LoooprTheme.Colors.primary.opacity(0.5))
+                            }
+                        }
+                    }
+                    .frame(height: 140)
+                    .frame(maxWidth: .infinity)
+                    .clipShape(
+                        UnevenRoundedRectangle(
+                            topLeadingRadius: LoooprTheme.Radius.card,
+                            topTrailingRadius: LoooprTheme.Radius.card
+                        )
                     )
-                } else {
-                    ZStack {
-                        LoooprTheme.Colors.primaryLight
-                        Image(systemName: "map")
-                            .font(.system(size: 32))
-                            .foregroundStyle(LoooprTheme.Colors.primary.opacity(0.5))
+
+                    VStack(alignment: .leading, spacing: LoooprTheme.Spacing.xs) {
+                        Text(session.routeName ?? L10n.Misc.walk)
+                            .font(LoooprTheme.Typography.headline)
+                            .foregroundStyle(LoooprTheme.Colors.textPrimary)
+                            .multilineTextAlignment(.leading)
+
+                        Text(walkDate)
+                            .font(LoooprTheme.Typography.subheadline)
+                            .foregroundStyle(LoooprTheme.Colors.textSecondary)
+
+                        // Only set once the workout actually landed in HealthKit.
+                        if session.healthKitWorkoutID != nil {
+                            healthBadge
+                        }
                     }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.horizontal, LoooprTheme.Spacing.md)
+                    .padding(.top, LoooprTheme.Spacing.md)
                 }
+                .contentShape(Rectangle())
             }
-            .frame(height: 140)
-            .frame(maxWidth: .infinity)
-            .clipShape(
-                UnevenRoundedRectangle(
-                    topLeadingRadius: LoooprTheme.Radius.card,
-                    topTrailingRadius: LoooprTheme.Radius.card
-                )
-            )
+            .buttonStyle(.plain)
 
-            // Details section
-            VStack(alignment: .leading, spacing: LoooprTheme.Spacing.xs) {
-                Text(session.routeName ?? L10n.Misc.walk)
-                    .font(LoooprTheme.Typography.headline)
-                    .foregroundStyle(LoooprTheme.Colors.textPrimary)
+            // Stats + actions
+            HStack {
+                Text(statsLine)
+                    .font(LoooprTheme.Typography.caption)
+                    .foregroundStyle(LoooprTheme.Colors.textTertiary)
 
-                Text(walkDate)
-                    .font(LoooprTheme.Typography.subheadline)
-                    .foregroundStyle(LoooprTheme.Colors.textSecondary)
+                Spacer()
 
-                HStack {
-                    Text(statsLine)
-                        .font(LoooprTheme.Typography.caption)
-                        .foregroundStyle(LoooprTheme.Colors.textTertiary)
-
-                    Spacer()
-
-                    Button {
-                        isShowingShare = true
-                    } label: {
-                        Image(systemName: "square.and.arrow.up")
-                            .font(.system(size: LoooprTheme.Typography.md))
-                            .foregroundStyle(LoooprTheme.Colors.primary)
-                    }
+                Button {
+                    isShowingShare = true
+                } label: {
+                    Image(systemName: "square.and.arrow.up")
+                        .font(.system(size: LoooprTheme.Typography.md))
+                        .foregroundStyle(LoooprTheme.Colors.primary)
+                        .frame(width: 44, height: 32)
+                        .contentShape(Rectangle())
                 }
+                .buttonStyle(.plain)
+
+                Button(action: onDelete) {
+                    Image(systemName: "trash")
+                        .font(.system(size: LoooprTheme.Typography.md))
+                        .foregroundStyle(LoooprTheme.Colors.error)
+                        .frame(width: 44, height: 32)
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel(L10n.Profile.deleteWalk)
             }
-            .padding(LoooprTheme.Spacing.md)
+            .padding(.horizontal, LoooprTheme.Spacing.md)
+            .padding(.top, LoooprTheme.Spacing.xs)
+            .padding(.bottom, LoooprTheme.Spacing.md)
         }
         .background(LoooprTheme.Colors.surface)
         .clipShape(RoundedRectangle(cornerRadius: LoooprTheme.Radius.card))
