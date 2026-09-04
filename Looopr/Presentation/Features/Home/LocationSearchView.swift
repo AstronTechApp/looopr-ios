@@ -13,6 +13,11 @@ struct LocationSearchView: View {
     @State private var completer = SearchCompleterCoordinator()
     @State private var recentLocations = RecentLocationStore.load()
 
+    /// The result currently being turned into a coordinate. Drives a spinner
+    /// on its row and disables the others, so a tap is never silent.
+    @State private var resolvingCompletion: MKLocalSearchCompletion?
+    @State private var showResolveError = false
+
     var body: some View {
         NavigationStack {
             List {
@@ -89,10 +94,17 @@ struct LocationSearchView: View {
                                 resolveCompletion(completion)
                             } label: {
                                 HStack(spacing: LoooprTheme.Spacing.sm) {
-                                    Image(systemName: "mappin")
-                                        .font(.system(size: 14))
-                                        .foregroundStyle(LoooprTheme.Colors.routeDot)
-                                        .frame(width: 28)
+                                    Group {
+                                        if resolvingCompletion == completion {
+                                            ProgressView()
+                                                .tint(LoooprTheme.Colors.primary)
+                                        } else {
+                                            Image(systemName: "mappin")
+                                                .font(.system(size: 14))
+                                                .foregroundStyle(LoooprTheme.Colors.routeDot)
+                                        }
+                                    }
+                                    .frame(width: 28)
 
                                     VStack(alignment: .leading, spacing: 2) {
                                         Text(completion.title)
@@ -112,7 +124,11 @@ struct LocationSearchView: View {
                                 }
                                 .contentShape(Rectangle())
                             }
-                            .buttonStyle(.plain)
+                            // Borderless, not plain: in a List this makes the
+                            // whole row the hit target *and* highlights it on
+                            // press, so the user sees the tap land.
+                            .buttonStyle(.borderless)
+                            .disabled(resolvingCompletion != nil)
                         }
                     } header: {
                         Text(L10n.LocationSearch.results)
@@ -140,56 +156,77 @@ struct LocationSearchView: View {
             }
             .toolbarBackground(LoooprTheme.Colors.surface, for: .navigationBar)
             .toolbarBackground(.visible, for: .navigationBar)
+            .alert(L10n.LocationSearch.resolveFailedTitle, isPresented: $showResolveError) {
+                Button(L10n.Misc.okay, role: .cancel) {}
+            } message: {
+                Text(L10n.LocationSearch.resolveFailedMessage)
+            }
         }
         .preferredColorScheme(.light)
     }
 
     private func resolveCompletion(_ completion: MKLocalSearchCompletion) {
-        // Primary path: resolve via the MKLocalSearchCompletion directly.
-        let primaryRequest = MKLocalSearch.Request(completion: completion)
-        MKLocalSearch(request: primaryRequest).start { response, _ in
-            if let item = response?.mapItems.first {
-                applyResolved(item: item, completion: completion)
+        guard resolvingCompletion == nil else { return }
+        resolvingCompletion = completion
+
+        Task { @MainActor in
+            let item = await resolve(completion)
+            resolvingCompletion = nil
+
+            guard let item else {
+                showResolveError = true
                 return
             }
-
-            // Fallback: some generic completions (e.g. just a city name) don't
-            // resolve to a mapItem when used directly. Retry with a free-text
-            // naturalLanguageQuery built from title + subtitle so the user's
-            // tap is never silently swallowed.
-            let fallbackQuery = completion.subtitle.isEmpty
-                ? completion.title
-                : "\(completion.title), \(completion.subtitle)"
-            let fallbackRequest = MKLocalSearch.Request()
-            fallbackRequest.naturalLanguageQuery = fallbackQuery
-            MKLocalSearch(request: fallbackRequest).start { fallback, error in
-                if let item = fallback?.mapItems.first {
-                    applyResolved(item: item, completion: completion)
-                } else {
-                    AppLogger(category: "LocationSearch")
-                        .warning("Could not resolve completion '\(completion.title)': \(error?.localizedDescription ?? "no mapItems")")
-                }
-            }
+            applyResolved(item: item, completion: completion)
         }
     }
 
-    /// Propagates a resolved map item back to the caller on the main queue.
+    /// Turns a completion into a map item. Tries the completion directly first;
+    /// generic completions (a bare city name) sometimes come back empty that
+    /// way, so it retries as a free-text query built from title and subtitle.
+    /// Returns nil only when both fail, and says so in the log.
+    private func resolve(_ completion: MKLocalSearchCompletion) async -> MKMapItem? {
+        let logger = AppLogger(category: "LocationSearch")
+
+        do {
+            let response = try await MKLocalSearch(request: MKLocalSearch.Request(completion: completion)).start()
+            if let item = response.mapItems.first { return item }
+            logger.info("Completion '\(completion.title)' resolved to no map items; retrying as text")
+        } catch {
+            logger.info("Completion '\(completion.title)' failed directly: \(error.localizedDescription); retrying as text")
+        }
+
+        let request = MKLocalSearch.Request()
+        request.naturalLanguageQuery = completion.subtitle.isEmpty
+            ? completion.title
+            : "\(completion.title), \(completion.subtitle)"
+
+        do {
+            let response = try await MKLocalSearch(request: request).start()
+            if let item = response.mapItems.first { return item }
+            logger.warning("Could not resolve '\(completion.title)': no map items from either path")
+        } catch {
+            logger.warning("Could not resolve '\(completion.title)': \(error.localizedDescription)")
+        }
+        return nil
+    }
+
+    /// Hands a resolved map item back to the caller and closes the sheet.
     private func applyResolved(item: MKMapItem, completion: MKLocalSearchCompletion) {
         let displayName = item.name ?? completion.title
-        let selected = SelectedLocation(
-            latitude: item.placemark.coordinate.latitude,
-            longitude: item.placemark.coordinate.longitude,
+        let coordinate = item.placemark.coordinate
+
+        RecentLocationStore.save(RecentLocation(
+            displayName: displayName,
+            latitude: coordinate.latitude,
+            longitude: coordinate.longitude
+        ))
+        onSelectLocation(SelectedLocation(
+            latitude: coordinate.latitude,
+            longitude: coordinate.longitude,
             displayName: displayName
-        )
-        DispatchQueue.main.async {
-            RecentLocationStore.save(RecentLocation(
-                displayName: displayName,
-                latitude: item.placemark.coordinate.latitude,
-                longitude: item.placemark.coordinate.longitude
-            ))
-            onSelectLocation(selected)
-            dismiss()
-        }
+        ))
+        dismiss()
     }
 }
 
@@ -218,7 +255,8 @@ final class SearchCompleterCoordinator: NSObject, MKLocalSearchCompleterDelegate
     }
 
     func completer(_ completer: MKLocalSearchCompleter, didFailWithError error: Error) {
-        // Silently fail — empty results shown
+        // Empty results are the right UI, but the reason belongs in the log.
+        AppLogger(category: "LocationSearch").warning("Completer failed: \(error.localizedDescription)")
     }
 }
 

@@ -452,6 +452,8 @@ enum L10n {
         static var recent: String { String(localized: "locationSearch.recent", defaultValue: "Recent", bundle: LocalizationManager.shared.localizedBundle) }
         static var results: String { String(localized: "locationSearch.results", defaultValue: "Results", bundle: LocalizationManager.shared.localizedBundle) }
         static var cancel: String { String(localized: "locationSearch.cancel", defaultValue: "Cancel", bundle: LocalizationManager.shared.localizedBundle) }
+        static var resolveFailedTitle: String { String(localized: "locationSearch.resolveFailedTitle", defaultValue: "Couldn't find that place", bundle: LocalizationManager.shared.localizedBundle) }
+        static var resolveFailedMessage: String { String(localized: "locationSearch.resolveFailedMessage", defaultValue: "Maps didn't return a location for it. Check your connection or try a more specific search.", bundle: LocalizationManager.shared.localizedBundle) }
         static var searchLocation: String { String(localized: "locationSearch.searchLocation", defaultValue: "Search Location", bundle: LocalizationManager.shared.localizedBundle) }
     }
 
