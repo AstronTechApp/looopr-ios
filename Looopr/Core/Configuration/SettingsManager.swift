@@ -25,6 +25,7 @@ final class SettingsManager {
         }
 
         _weeklyProgressEnabled = UserDefaults.standard.bool(forKey: Keys.weeklyProgressEnabled)
+        _saveWalksToHealth = UserDefaults.standard.bool(forKey: Keys.saveWalksToHealth)
     }
 
     // MARK: - Keys
@@ -37,6 +38,7 @@ final class SettingsManager {
         static let walkReminderEnabled = "settings.walkReminderEnabled"
         static let walkReminderTime = "settings.walkReminderTime"
         static let weeklyProgressEnabled = "settings.weeklyProgressEnabled"
+        static let saveWalksToHealth = "settings.saveWalksToHealth"
     }
 
     // MARK: - Units
@@ -139,6 +141,15 @@ final class SettingsManager {
             if walkReminderEnabled {
                 scheduleWalkReminder()
             }
+        }
+    }
+
+    /// When on, every finished walk is written to Apple Health as a walking
+    /// workout (distance + GPS route). Only takes effect once the user has
+    /// granted Health write access; the Health settings screen handles that.
+    var saveWalksToHealth: Bool {
+        didSet {
+            UserDefaults.standard.set(saveWalksToHealth, forKey: Keys.saveWalksToHealth)
         }
     }
 

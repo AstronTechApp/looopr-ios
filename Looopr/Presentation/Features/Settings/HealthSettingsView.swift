@@ -1,8 +1,20 @@
 import SwiftUI
 
+/// Apple Health connection screen. Write-only: the single permission asked
+/// for is to add walks as workouts, and once granted a toggle controls
+/// whether every finished walk is saved automatically.
 struct HealthSettingsView: View {
     @Environment(\.dismiss) private var dismiss
-    @State private var showingComingSoon = false
+    @Environment(\.scenePhase) private var scenePhase
+    @Environment(\.openURL) private var openURL
+
+    @State private var settings = SettingsManager.shared
+    @State private var authorization: HealthAuthorization = .notDetermined
+    @State private var isRequesting = false
+    @State private var showPermissionError = false
+
+    private let healthService: HealthWorkoutSaving? =
+        ServiceContainer.shared.resolveOptional(HealthWorkoutSaving.self)
 
     var body: some View {
         ZStack {
@@ -36,29 +48,9 @@ struct HealthSettingsView: View {
 
                 ScrollView {
                     VStack(spacing: LoooprTheme.Spacing.lg) {
-                        // Illustration card
                         illustrationCard
-
-                        // Features list
                         featuresCard
-
-                        // Connect button
-                        Button {
-                            showingComingSoon = true
-                        } label: {
-                            HStack {
-                                Image(systemName: "heart.fill")
-                                Text(L10n.HealthSettings.connectAppleHealth)
-                            }
-                            .font(LoooprTheme.Typography.body.bold())
-                            .foregroundStyle(.white)
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, LoooprTheme.Spacing.md)
-                            .background(LoooprTheme.Colors.primary)
-                            .clipShape(RoundedRectangle(cornerRadius: LoooprTheme.Radius.button))
-                        }
-
-                        // Privacy note
+                        connectionCard
                         privacyNote
                     }
                     .padding(.horizontal, LoooprTheme.Spacing.screenHorizontal)
@@ -68,10 +60,128 @@ struct HealthSettingsView: View {
         }
         .navigationBarBackButtonHidden()
         .toolbar(.hidden, for: .navigationBar)
-        .alert(L10n.HealthSettings.comingSoon, isPresented: $showingComingSoon) {
+        .task { refreshAuthorization() }
+        // Permission can be changed in the Health app; re-read it when the
+        // user comes back to Looopr.
+        .onChange(of: scenePhase) { _, phase in
+            if phase == .active { refreshAuthorization() }
+        }
+        .alert(L10n.HealthSettings.permissionFailed, isPresented: $showPermissionError) {
             Button(L10n.HealthSettings.ok, role: .cancel) {}
-        } message: {
-            Text(L10n.HealthSettings.comingSoon)
+        }
+    }
+
+    // MARK: - Connection Card
+
+    @ViewBuilder
+    private var connectionCard: some View {
+        switch authorization {
+        case .unavailable:
+            messageCard(icon: "heart.slash", message: L10n.HealthSettings.unavailableMessage)
+
+        case .authorized:
+            VStack(alignment: .leading, spacing: LoooprTheme.Spacing.sm) {
+                Toggle(isOn: $settings.saveWalksToHealth) {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(L10n.HealthSettings.saveWalksToggle)
+                            .font(LoooprTheme.Typography.body.bold())
+                            .foregroundStyle(LoooprTheme.Colors.textPrimary)
+                        Text(L10n.HealthSettings.saveWalksSubtitle)
+                            .font(LoooprTheme.Typography.caption)
+                            .foregroundStyle(LoooprTheme.Colors.textSecondary)
+                    }
+                }
+                .tint(LoooprTheme.Colors.primary)
+
+                Label(L10n.HealthSettings.connectedMessage, systemImage: "checkmark.circle.fill")
+                    .font(LoooprTheme.Typography.caption)
+                    .foregroundStyle(LoooprTheme.Colors.textTertiary)
+            }
+            .padding(LoooprTheme.Spacing.md)
+            .background(LoooprTheme.Colors.surface)
+            .clipShape(RoundedRectangle(cornerRadius: LoooprTheme.Radius.card))
+            .loooprShadow(LoooprTheme.Shadows.sm)
+
+        case .denied:
+            VStack(spacing: LoooprTheme.Spacing.md) {
+                messageCard(icon: "heart.slash", message: L10n.HealthSettings.deniedMessage)
+
+                Button {
+                    if let url = URL(string: "x-apple-health://") { openURL(url) }
+                } label: {
+                    HStack {
+                        Image(systemName: "arrow.up.forward.app")
+                        Text(L10n.HealthSettings.openHealthApp)
+                    }
+                    .font(LoooprTheme.Typography.body.bold())
+                    .foregroundStyle(LoooprTheme.Colors.primary)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, LoooprTheme.Spacing.md)
+                    .background(LoooprTheme.Colors.primary.opacity(0.10))
+                    .clipShape(RoundedRectangle(cornerRadius: LoooprTheme.Radius.button))
+                }
+            }
+
+        case .notDetermined:
+            Button {
+                Task { await connect() }
+            } label: {
+                HStack {
+                    if isRequesting {
+                        ProgressView().tint(.white)
+                    } else {
+                        Image(systemName: "heart.fill")
+                    }
+                    Text(L10n.HealthSettings.connectAppleHealth)
+                }
+                .font(LoooprTheme.Typography.body.bold())
+                .foregroundStyle(.white)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, LoooprTheme.Spacing.md)
+                .background(LoooprTheme.Colors.primary)
+                .clipShape(RoundedRectangle(cornerRadius: LoooprTheme.Radius.button))
+            }
+            .disabled(isRequesting)
+        }
+    }
+
+    private func messageCard(icon: String, message: String) -> some View {
+        HStack(alignment: .top, spacing: LoooprTheme.Spacing.sm) {
+            Image(systemName: icon)
+                .font(.system(size: LoooprTheme.Typography.md))
+                .foregroundStyle(LoooprTheme.Colors.textTertiary)
+                .frame(width: 28)
+                .padding(.top, 2)
+            Text(message)
+                .font(LoooprTheme.Typography.body)
+                .foregroundStyle(LoooprTheme.Colors.textSecondary)
+            Spacer(minLength: 0)
+        }
+        .padding(LoooprTheme.Spacing.md)
+        .frame(maxWidth: .infinity)
+        .background(LoooprTheme.Colors.surface)
+        .clipShape(RoundedRectangle(cornerRadius: LoooprTheme.Radius.card))
+        .loooprShadow(LoooprTheme.Shadows.sm)
+    }
+
+    // MARK: - Actions
+
+    private func refreshAuthorization() {
+        authorization = healthService?.authorization ?? .unavailable
+    }
+
+    private func connect() async {
+        guard let healthService else { return }
+        isRequesting = true
+        defer { isRequesting = false }
+        do {
+            let result = try await healthService.requestAuthorization()
+            authorization = result
+            // Connecting is the intent; turn the auto-save on so the user
+            // doesn't have to find a second switch.
+            if result == .authorized { settings.saveWalksToHealth = true }
+        } catch {
+            showPermissionError = true
         }
     }
 
@@ -107,32 +217,24 @@ struct HealthSettingsView: View {
         VStack(alignment: .leading, spacing: 0) {
             featureRow(
                 icon: "figure.walk",
-                title: "Walking Workouts",
-                description: "Automatically save completed walks as workouts"
+                title: L10n.HealthSettings.featureWorkoutsTitle,
+                description: L10n.HealthSettings.featureWorkoutsDescription
             )
 
             Divider().padding(.leading, 52)
 
             featureRow(
-                icon: "flame.fill",
-                title: "Calories & Distance",
-                description: "Track calories burned and distance walked"
-            )
-
-            Divider().padding(.leading, 52)
-
-            featureRow(
-                icon: "chart.line.uptrend.xyaxis",
-                title: "Step Count",
-                description: "Enrich your progress stats with health data"
+                icon: "point.topleft.down.to.point.bottomright.curvepath",
+                title: L10n.HealthSettings.featureDistanceTitle,
+                description: L10n.HealthSettings.featureDistanceDescription
             )
 
             Divider().padding(.leading, 52)
 
             featureRow(
                 icon: "map.fill",
-                title: "Route Tracking",
-                description: "Save GPS routes with your walk history"
+                title: L10n.HealthSettings.featureRouteTitle,
+                description: L10n.HealthSettings.featureRouteDescription
             )
         }
         .background(LoooprTheme.Colors.surface)
