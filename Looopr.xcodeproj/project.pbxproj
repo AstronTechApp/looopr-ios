@@ -9,12 +9,15 @@
 /* Begin PBXBuildFile section */
 		C2E82D9C0FE37A0871B760ED /* FileStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0B93AB80F2F329EBC07E252 /* FileStore.swift */; };
 		385716D03C52F431761161F9 /* SubscriptionGateTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F733303B3AA9C49AB0C989F1 /* SubscriptionGateTests.swift */; };
+		61DFCCECF3E34A32E9D17906 /* ElevationCalculatorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4381EF1A2AC40F2B2240741C /* ElevationCalculatorTests.swift */; };
 		C7D60B47D7DF2C99E82D181D /* PaywallViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 92B4CBE2BB017C99788126C0 /* PaywallViewModel.swift */; };
 		F03DFF06A781764EEF310E2C /* PaywallView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B408867899B09AA3E1A8F25E /* PaywallView.swift */; };
 		A4CBDEF8E8397BB3850C4083 /* RevenueCatSubscriptionService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6D161999A47A06C3A2A4AD44 /* RevenueCatSubscriptionService.swift */; };
 		85731EE4374252F66D970CE7 /* GPXExporterTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C455E080FDCE543ED81280B9 /* GPXExporterTests.swift */; };
 		389701F163F0982637C84B3B /* GPXExporter.swift in Sources */ = {isa = PBXBuildFile; fileRef = D389605B7D6FD3555C7AD063 /* GPXExporter.swift */; };
 		B1F6727466704CB9991FDC45 /* HealthWorkoutSaving.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2EE064F9D1824012AA6D1827 /* HealthWorkoutSaving.swift */; };
+		EDA764805B3BFF7DE324C10C /* ElevationProviding.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1B03B10A8621A015D8EE828 /* ElevationProviding.swift */; };
+		B7C1C730A36E356A5AAA463B /* LiveElevationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2AF154437C5A4B4DF7D81FB /* LiveElevationService.swift */; };
 		CE7695A9C02645D1BBB8A3FA /* LiveHealthWorkoutService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3B5104E0B7DE4929B732AB70 /* LiveHealthWorkoutService.swift */; };
 		9E00CB7F89AFF64AFD589A89 /* TrackPoint.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2D0E0938DF13A326610E0F5 /* TrackPoint.swift */; };
 		0109717E969E772B34657EA8 /* KlookTicketProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9580173DC549C455621737BA /* KlookTicketProvider.swift */; };
@@ -68,6 +71,7 @@
 		42422B3BFCC4CA18F1A2D52D /* GooglePlacesNewFoodService.swift in Sources */ = {isa = PBXBuildFile; fileRef = DFCFC27701576DAC8BD89482 /* GooglePlacesNewFoodService.swift */; };
 		428C5E273F4AA6EB2115C918 /* FoodStopVisit.swift in Sources */ = {isa = PBXBuildFile; fileRef = 417930A92AEEBC777B4FF5A3 /* FoodStopVisit.swift */; };
 		43AAB198B7BB334F19433C86 /* POIHelpers.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8EACE961596F0A251629FC28 /* POIHelpers.swift */; };
+		6AB452254EA903D3313CC6CA /* ElevationCalculator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B45A8545589C8B6EBE267C6 /* ElevationCalculator.swift */; };
 		43E7C43F85A4214C5533826F /* MusementAPI.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7F4B202892493172324A7C4F /* MusementAPI.swift */; };
 		4AEB9772AF7098467896B2B0 /* OverpassPOIDiscoveryService.swift in Sources */ = {isa = PBXBuildFile; fileRef = C68292DD8A6946A6EB177CAB /* OverpassPOIDiscoveryService.swift */; };
 		4C2CDA31F197224127E096D2 /* TicketProviding.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2AC521AA619F830F5D6B195B /* TicketProviding.swift */; };
@@ -205,12 +209,15 @@
 /* Begin PBXFileReference section */
 		A0B93AB80F2F329EBC07E252 /* FileStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileStore.swift; sourceTree = "<group>"; };
 		F733303B3AA9C49AB0C989F1 /* SubscriptionGateTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SubscriptionGateTests.swift; sourceTree = "<group>"; };
+		4381EF1A2AC40F2B2240741C /* ElevationCalculatorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ElevationCalculatorTests.swift; sourceTree = "<group>"; };
 		92B4CBE2BB017C99788126C0 /* PaywallViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaywallViewModel.swift; sourceTree = "<group>"; };
 		B408867899B09AA3E1A8F25E /* PaywallView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaywallView.swift; sourceTree = "<group>"; };
 		6D161999A47A06C3A2A4AD44 /* RevenueCatSubscriptionService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RevenueCatSubscriptionService.swift; sourceTree = "<group>"; };
 		C455E080FDCE543ED81280B9 /* GPXExporterTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GPXExporterTests.swift; sourceTree = "<group>"; };
 		D389605B7D6FD3555C7AD063 /* GPXExporter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GPXExporter.swift; sourceTree = "<group>"; };
 		2EE064F9D1824012AA6D1827 /* HealthWorkoutSaving.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HealthWorkoutSaving.swift; sourceTree = "<group>"; };
+		C1B03B10A8621A015D8EE828 /* ElevationProviding.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ElevationProviding.swift; sourceTree = "<group>"; };
+		A2AF154437C5A4B4DF7D81FB /* LiveElevationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiveElevationService.swift; sourceTree = "<group>"; };
 		3B5104E0B7DE4929B732AB70 /* LiveHealthWorkoutService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiveHealthWorkoutService.swift; sourceTree = "<group>"; };
 		B2D0E0938DF13A326610E0F5 /* TrackPoint.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrackPoint.swift; sourceTree = "<group>"; };
 		0186C0838B6F292D1AE8DD48 /* LoooprTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = LoooprTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -291,6 +298,7 @@
 		88B0CB72017B7FC353EB615E /* ShareSheetView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShareSheetView.swift; sourceTree = "<group>"; };
 		8B6A09DF10B0720F69D92102 /* DebugNavigationOverlay.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DebugNavigationOverlay.swift; sourceTree = "<group>"; };
 		8EACE961596F0A251629FC28 /* POIHelpers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = POIHelpers.swift; sourceTree = "<group>"; };
+		7B45A8545589C8B6EBE267C6 /* ElevationCalculator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ElevationCalculator.swift; sourceTree = "<group>"; };
 		8F8093285F9B129F1C5D39B3 /* AuthView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthView.swift; sourceTree = "<group>"; };
 		8F9F3F30F61D8E84CC620C37 /* POIError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = POIError.swift; sourceTree = "<group>"; };
 		932CA0366246995E1DC46C40 /* POIOpeningHoursTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = POIOpeningHoursTests.swift; sourceTree = "<group>"; };
@@ -635,6 +643,7 @@
 				3ED831A4A72E2BC4FBC06310 /* AnalyticsTracking.swift */,
 				CAF4EF06A76F5C3F0F7E57A1 /* AuthProviding.swift */,
 				2EE064F9D1824012AA6D1827 /* HealthWorkoutSaving.swift */,
+				C1B03B10A8621A015D8EE828 /* ElevationProviding.swift */,
 				526DB4727286105D8FBA8DCD /* LocationProviding.swift */,
 				9BB27B3B9F6F8C843175DE5E /* NavigationDirecting.swift */,
 				59CA15D19CE95F05FC76BD53 /* PedometerProviding.swift */,
@@ -698,6 +707,7 @@
 			isa = PBXGroup;
 			children = (
 				8EACE961596F0A251629FC28 /* POIHelpers.swift */,
+				7B45A8545589C8B6EBE267C6 /* ElevationCalculator.swift */,
 			);
 			path = Helpers;
 			sourceTree = "<group>";
@@ -710,11 +720,20 @@
 			path = Health;
 			sourceTree = "<group>";
 		};
+		BFCCF4DAA3B44F9A58968A94 /* Elevation */ = {
+			isa = PBXGroup;
+			children = (
+				A2AF154437C5A4B4DF7D81FB /* LiveElevationService.swift */,
+			);
+			path = Elevation;
+			sourceTree = "<group>";
+		};
 		9F73D78A2AC6FFA73E729777 /* Services */ = {
 			isa = PBXGroup;
 			children = (
 				A35293ECA4D339BAC4C3E836 /* Analytics */,
 				6A2078E2FBACED31F18C78DD /* Auth */,
+				BFCCF4DAA3B44F9A58968A94 /* Elevation */,
 				7C20CFE6CD57F66997BFF40C /* Experiences */,
 				82DF42D7794E40949D80E836 /* Health */,
 				BEAEEEAFABC2379085B71EC8 /* LiveActivity */,
@@ -845,6 +864,7 @@
 				932CA0366246995E1DC46C40 /* POIOpeningHoursTests.swift */,
 				E498E2984E49683D65FAEC5E /* RerouteLoopTests.swift */,
 				F733303B3AA9C49AB0C989F1 /* SubscriptionGateTests.swift */,
+				4381EF1A2AC40F2B2240741C /* ElevationCalculatorTests.swift */,
 			);
 			path = LoooprTests;
 			sourceTree = "<group>";
@@ -1174,6 +1194,7 @@
 				8F99566954DE62BBD63A431C /* POIOpeningHoursTests.swift in Sources */,
 				AB7134DB198F2C0AC4ACAA72 /* RerouteLoopTests.swift in Sources */,
 				385716D03C52F431761161F9 /* SubscriptionGateTests.swift in Sources */,
+				61DFCCECF3E34A32E9D17906 /* ElevationCalculatorTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1192,6 +1213,8 @@
 			buildActionMask = 2147483647;
 			files = (
 				B1F6727466704CB9991FDC45 /* HealthWorkoutSaving.swift in Sources */,
+				EDA764805B3BFF7DE324C10C /* ElevationProviding.swift in Sources */,
+				B7C1C730A36E356A5AAA463B /* LiveElevationService.swift in Sources */,
 				CE7695A9C02645D1BBB8A3FA /* LiveHealthWorkoutService.swift in Sources */,
 				3B311595188C724E24A036B4 /* APIClient.swift in Sources */,
 				F163810238F19054827396C0 /* AnalyticsEvent.swift in Sources */,
@@ -1273,6 +1296,7 @@
 				D825C12BF42CE1A0547D9C3B /* POIError.swift in Sources */,
 				226EF7C286F87B4D7E4FE2A5 /* POIFilteringService.swift in Sources */,
 				43AAB198B7BB334F19433C86 /* POIHelpers.swift in Sources */,
+				6AB452254EA903D3313CC6CA /* ElevationCalculator.swift in Sources */,
 				ACF24939C2A336D90EC3D679 /* POIListView.swift in Sources */,
 				58B6BA4477F1C1B3D6C7DEE8 /* PedometerProviding.swift in Sources */,
 				D8D6AF193B063FA29FBB2745 /* PersistenceStoring.swift in Sources */,

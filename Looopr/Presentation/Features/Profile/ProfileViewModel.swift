@@ -114,7 +114,9 @@ final class ProfileViewModel {
         weekDistance = thisWeekWalks.reduce(0) { $0 + $1.distanceKilometers }
         weekSteps = thisWeekWalks.reduce(0) { $0 + $1.stepCount }
         weekDurationSeconds = thisWeekWalks.reduce(0) { $0 + $1.durationSeconds }
-        weekElevation = thisWeekWalks.reduce(0) { $0 + ($1.elevationGainMeters ?? 0) }
+        // Walks with no usable altitude data contribute nothing rather than
+        // being counted as flat — the total is over what we could measure.
+        weekElevation = thisWeekWalks.compactMap(\.elevationGainMeters).reduce(0, +)
     }
 
     // MARK: - Weekly Distances (Past 8 Weeks)

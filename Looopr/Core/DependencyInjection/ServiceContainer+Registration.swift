@@ -142,6 +142,11 @@ extension ServiceContainer {
         let pedometerService = LivePedometerService()
         registerSingleton(PedometerProviding.self, instance: pedometerService)
 
+        // Elevation — barometric, not GPS. GPS altitude drifts by 5-10 m in a
+        // way that is indistinguishable from gentle terrain, so it cannot
+        // measure a climb; the barometer is accurate to about a metre.
+        registerSingleton(ElevationProviding.self, instance: LiveElevationService())
+
         // Apple Health — write-only export of finished walks as workouts
         // (distance + GPS route). Never reads health data.
         registerSingleton(HealthWorkoutSaving.self, instance: LiveHealthWorkoutService())

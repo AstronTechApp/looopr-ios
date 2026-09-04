@@ -112,7 +112,11 @@ final class FinishWalkViewModel {
 
         // Attach route metadata for profile/history display
         session.routeName = route.baseName
-        session.elevationGainMeters = Double(RouteSelectionViewModel.estimatedElevation(for: route))
+        // Elevation is measured by the barometer during the walk and already
+        // sits on the session — deliberately not recomputed or defaulted here.
+        // It stays nil on hardware without a barometer, and the UI shows a
+        // dash rather than inventing a number, which is what the old
+        // planned-route estimate did.
         session.routeColorIndex = route.colorIndex
         session.routeCoordinates = route.coordinates
 

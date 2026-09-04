@@ -172,6 +172,7 @@ final class WalkNavigationViewModel {
     private let locationService: LocationProviding
     private let directionsService: NavigationDirecting
     private let pedometerService: PedometerProviding
+    private let elevationService: ElevationProviding
     private let analytics: AnalyticsTracking
 
     // Per-walk analytics counters, reported on walk_completed.
@@ -216,6 +217,7 @@ final class WalkNavigationViewModel {
         locationService: LocationProviding = ServiceContainer.shared.resolve(LocationProviding.self),
         directionsService: NavigationDirecting = ServiceContainer.shared.resolve(NavigationDirecting.self),
         pedometerService: PedometerProviding = ServiceContainer.shared.resolve(PedometerProviding.self),
+        elevationService: ElevationProviding = ServiceContainer.shared.resolve(ElevationProviding.self),
         analytics: AnalyticsTracking = ServiceContainer.shared.resolve(AnalyticsTracking.self),
         configuration: AppConfiguration = .current
     ) {
@@ -223,6 +225,7 @@ final class WalkNavigationViewModel {
         self.locationService = locationService
         self.directionsService = directionsService
         self.pedometerService = pedometerService
+        self.elevationService = elevationService
         self.analytics = analytics
         self.config = configuration
         self.stepTracker = StepTracker(configuration: configuration)
@@ -271,6 +274,7 @@ final class WalkNavigationViewModel {
         syncWrongWayDebug()
         locationService.startUpdating()
         pedometerService.startCounting()
+        elevationService.startTracking()
 
         // Seed blue dot from an existing GPS fix immediately
         if let existing = locationService.currentCoordinate {
@@ -308,9 +312,13 @@ final class WalkNavigationViewModel {
         headingCancellable?.cancel()
         elapsedTimer?.invalidate()
         pedometerService.stopCounting()
+        elevationService.stopTracking()
         session.finishedAt = Date()
         session.durationSeconds = Date().timeIntervalSince(startTime)
         session.stepCount = stepCount
+        // Read the barometer *after* stopping it, so the figure covers the
+        // whole walk. Stays nil on a device without one.
+        session.elevationGainMeters = measuredElevationGain
 
         // End Live Activity and its dedicated timer
         liveActivityTimer?.invalidate()
@@ -504,6 +512,12 @@ final class WalkNavigationViewModel {
 
     /// Appends the fix to the session's walked track (used for GPX export /
     /// Strava). Keeps every reasonably accurate fix in chronological order.
+    /// Metres climbed during this walk, or nil on a device with no barometer
+    /// — a dash is honest there, zero is not.
+    var measuredElevationGain: Double? {
+        elevationService.isAvailable ? elevationService.elevationGainMeters : nil
+    }
+
     private func recordTrackPoint(_ location: CLLocation) {
         guard location.horizontalAccuracy >= 0,
               location.horizontalAccuracy <= Self.trackAccuracyLimitMeters,

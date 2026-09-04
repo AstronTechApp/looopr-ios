@@ -33,8 +33,12 @@ struct FinishWalkView: View {
         return String(format: "%d:%02d /\(Double.distanceUnit)", paceMinutes, paceSeconds)
     }
 
+    /// Elevation measured by the barometer during this walk. An em dash on
+    /// hardware without one — better than a number nobody measured, which is
+    /// what this showed before.
     private var elevationLabel: String {
-        Double(RouteSelectionViewModel.estimatedElevation(for: viewModel.route)).formattedElevation()
+        guard let gain = viewModel.session.elevationGainMeters else { return "—" }
+        return gain.formattedElevation()
     }
 
     // MARK: - Body
