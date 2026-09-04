@@ -69,14 +69,22 @@ final class RouteSelectionViewModel {
     private let subscriptionService: SubscriptionProviding
     private let locationService: LocationProviding
     private let configuration: AppConfiguration
+    private let analytics: AnalyticsTracking
     private let logger = AppLogger(category: "RouteSelection")
 
+    /// Mapbox for every tier — the free/paid line is how many routes you
+    /// see, not which engine draws them. A Mapbox search costs roughly a
+    /// cent, so giving free users the good generator is cheap; the
+    /// MKDirections loop builder is now only a fallback when no Mapbox
+    /// token is configured.
     private var activeRouteService: RouteGenerating {
-        if subscriptionService.isPaidSubscriber, let mapbox = mapboxGeneration {
-            return mapbox
-        }
+        if let mapbox = mapboxGeneration { return mapbox }
         return routeGeneration
     }
+
+    /// True when the free-tier limit applies. While the paywall master switch
+    /// is off every user is treated as paid, so this is false pre-launch.
+    var isFreeTier: Bool { !subscriptionService.isPaidSubscriber }
 
     private var maxRoutes: Int {
         subscriptionService.isPaidSubscriber
@@ -97,6 +105,7 @@ final class RouteSelectionViewModel {
         mapboxGeneration: MapboxRouteGenerationService? = nil,
         subscriptionService: SubscriptionProviding? = nil,
         locationService: LocationProviding? = nil,
+        analytics: AnalyticsTracking? = nil,
         configuration: AppConfiguration = .current
     ) {
         self.walkDurationMinutes = walkDurationMinutes
@@ -105,6 +114,7 @@ final class RouteSelectionViewModel {
         self.mapboxGeneration    = mapboxGeneration     ?? ServiceContainer.shared.resolveOptional(MapboxRouteGenerationService.self)
         self.subscriptionService = subscriptionService  ?? ServiceContainer.shared.resolve(SubscriptionProviding.self)
         self.locationService     = locationService      ?? ServiceContainer.shared.resolve(LocationProviding.self)
+        self.analytics           = analytics            ?? ServiceContainer.shared.resolve(AnalyticsTracking.self)
         self.configuration       = configuration
     }
 
@@ -112,6 +122,10 @@ final class RouteSelectionViewModel {
 
     func loadRoutes() async {
         isLoading = true
+        analytics.track(.routeSearchStarted(
+            minutes: walkDurationMinutes,
+            usingCustomLocation: customLocation != nil
+        ))
 
         // Use custom location if provided, otherwise wait for GPS
         if let custom = customLocation {
@@ -163,6 +177,7 @@ final class RouteSelectionViewModel {
                 routes = collected
             }
             logger.info("Loaded \(collected.count) routes for \(walkDurationMinutes) min walk")
+            analytics.track(.routeGenerated(count: collected.count, minutes: walkDurationMinutes))
         } catch {
             logger.error("Route generation failed: \(error)")
         }

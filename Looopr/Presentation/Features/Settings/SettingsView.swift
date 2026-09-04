@@ -1,13 +1,19 @@
 import SwiftUI
 import SafariServices
+import RevenueCatUI
 
 struct SettingsView: View {
+    @Environment(AppRouter.self) private var router
     @Environment(\.dismiss) private var dismiss
     @State private var settings = SettingsManager.shared
     @State private var localization = LocalizationManager.shared
     @State private var showingNotificationDenied = false
     @State private var showingShareSheet = false
     @State private var showingPrivacyPolicy = false
+    @State private var showingTermsOfService = false
+    @State private var showingSupport = false
+    @State private var showingCustomerCenter = false
+    @State private var isPremiumSubscriber = false
 
     var body: some View {
         ZStack {
@@ -43,6 +49,9 @@ struct SettingsView: View {
                 ScrollView {
                     VStack(spacing: LoooprTheme.Spacing.lg) {
                         accountSection
+                        if Secrets.hasRevenueCatKey {
+                            premiumSection
+                        }
                         walkPreferencesSection
                         healthSection
                         notificationsSection
@@ -73,8 +82,29 @@ struct SettingsView: View {
             ShareSheet(items: [message, appURL])
         }
         .sheet(isPresented: $showingPrivacyPolicy) {
-            // Replace with actual URL when available
-            SafariView(url: URL(string: "https://looopr.app/privacy")!)
+            SafariView(url: URL(string: "https://looopr.app/privacy.html")!)
+        }
+        .sheet(isPresented: $showingTermsOfService) {
+            SafariView(url: URL(string: "https://looopr.app/terms.html")!)
+        }
+        .sheet(isPresented: $showingSupport) {
+            SafariView(url: URL(string: "https://looopr.app/support.html")!)
+        }
+        .sheet(isPresented: $showingCustomerCenter, onDismiss: {
+            // The user may have cancelled or changed plan inside Customer
+            // Center — re-read entitlement state so the row updates.
+            Task { await refreshPremiumState() }
+        }) {
+            CustomerCenterView()
+        }
+        .task { await refreshPremiumState() }
+        // The paywall is a full-screen cover owned by the router, so its
+        // dismissal doesn't reach this view's own sheet callbacks — watch
+        // the flag instead, or a purchase leaves "Upgrade" on screen.
+        .onChange(of: router.isPaywallPresented) { _, presented in
+            if !presented {
+                Task { await refreshPremiumState() }
+            }
         }
         .alert(L10n.LanguageRestart.title, isPresented: $localization.showRestartAlert) {
             Button(L10n.LanguageRestart.restart) { }
@@ -93,6 +123,65 @@ struct SettingsView: View {
                 text: $settings.displayName
             )
         }
+    }
+
+    // MARK: - Premium Section
+
+    private var premiumSection: some View {
+        SettingsSectionCard(title: L10n.Paywall.title) {
+            VStack(spacing: 0) {
+                if isPremiumSubscriber {
+                    // Already subscribed: confirm the status rather than
+                    // selling again. Opening the paywall here would flash
+                    // and close instantly, since it dismisses itself the
+                    // moment the entitlement is seen as active.
+                    SettingsRow(icon: "crown.fill", title: L10n.Paywall.statusRow) {
+                        Text(L10n.Paywall.statusActive)
+                            .font(LoooprTheme.Typography.subheadline)
+                            .foregroundStyle(LoooprTheme.Colors.primary)
+                    }
+
+                    Divider().padding(.leading, LoooprTheme.Spacing.xxl)
+
+                    Button {
+                        showingCustomerCenter = true
+                    } label: {
+                        SettingsRow(icon: "gearshape.fill", title: L10n.Paywall.manageSubscription) {
+                            Image(systemName: "chevron.right")
+                                .font(.system(size: 12, weight: .semibold))
+                                .foregroundStyle(LoooprTheme.Colors.textTertiary)
+                        }
+                    }
+                    .buttonStyle(.plain)
+                } else {
+                    Button {
+                        router.presentPaywall()
+                    } label: {
+                        SettingsRow(icon: "crown.fill", title: L10n.Paywall.settingsRow) {
+                            Image(systemName: "chevron.right")
+                                .font(.system(size: 12, weight: .semibold))
+                                .foregroundStyle(LoooprTheme.Colors.textTertiary)
+                        }
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+        }
+    }
+
+    /// Reads whether RevenueCat has confirmed the `looopr_pro` entitlement
+    /// is active — independent of `AppConfiguration.freemium.paywallEnabled`,
+    /// since Customer Center is about managing a *real* subscription, not
+    /// the pre-launch "everyone is premium" gate. Refreshes from RevenueCat's
+    /// cache (network only if stale) so a purchase made moments ago, or a
+    /// cancellation made on another device, is reflected here.
+    private func refreshPremiumState() async {
+        guard let service = ServiceContainer.shared.resolveOptional(RevenueCatSubscriptionService.self) else {
+            isPremiumSubscriber = false
+            return
+        }
+        await service.refreshCustomerInfo()
+        isPremiumSubscriber = service.hasActiveEntitlement
     }
 
     // MARK: - Walk Preferences Section
@@ -182,6 +271,13 @@ struct SettingsView: View {
 
     // MARK: - Health Section
 
+    /// "Connected" means both halves are in place: the user turned saving on
+    /// *and* Apple Health actually lets us write.
+    private var isHealthConnected: Bool {
+        settings.saveWalksToHealth
+            && ServiceContainer.shared.resolveOptional(HealthWorkoutSaving.self)?.authorization == .authorized
+    }
+
     private var healthSection: some View {
         SettingsSectionCard(title: L10n.Settings.health) {
             NavigationLink {
@@ -189,7 +285,7 @@ struct SettingsView: View {
             } label: {
                 SettingsRow(icon: "heart.fill", title: L10n.Settings.appleHealth) {
                     HStack(spacing: LoooprTheme.Spacing.xxs) {
-                        Text(L10n.Settings.notConnected)
+                        Text(isHealthConnected ? L10n.Settings.connected : L10n.Settings.notConnected)
                             .font(LoooprTheme.Typography.body)
                             .foregroundStyle(LoooprTheme.Colors.textSecondary)
                         Image(systemName: "chevron.right")
@@ -400,6 +496,36 @@ struct SettingsView: View {
                     showingPrivacyPolicy = true
                 } label: {
                     SettingsRow(icon: "lock.shield", title: L10n.Settings.privacyPolicy) {
+                        Image(systemName: "chevron.right")
+                            .font(.system(size: 12, weight: .semibold))
+                            .foregroundStyle(LoooprTheme.Colors.textTertiary)
+                    }
+                }
+                .buttonStyle(.plain)
+
+                Divider()
+                    .padding(.leading, 44)
+
+                // Terms of Service
+                Button {
+                    showingTermsOfService = true
+                } label: {
+                    SettingsRow(icon: "doc.text", title: L10n.Settings.termsOfService) {
+                        Image(systemName: "chevron.right")
+                            .font(.system(size: 12, weight: .semibold))
+                            .foregroundStyle(LoooprTheme.Colors.textTertiary)
+                    }
+                }
+                .buttonStyle(.plain)
+
+                Divider()
+                    .padding(.leading, 44)
+
+                // Support
+                Button {
+                    showingSupport = true
+                } label: {
+                    SettingsRow(icon: "questionmark.circle", title: L10n.Settings.support) {
                         Image(systemName: "chevron.right")
                             .font(.system(size: 12, weight: .semibold))
                             .foregroundStyle(LoooprTheme.Colors.textTertiary)

@@ -23,6 +23,10 @@ struct POIListView: View {
     var isLoadingFood: Bool = false
     /// Whether the food fetch has completed (even if results are empty).
     var hasFetchedFood: Bool = false
+    /// Free tier: Food & Drinks shows a Premium prompt instead of results.
+    var isFoodLocked: Bool = false
+    /// Tapped from the locked Food & Drinks state — opens the paywall.
+    var onUnlockFood: (() -> Void)?
     /// Selected planned departure. `nil` means evaluate against now.
     var departureDate: Date?
 
@@ -180,7 +184,9 @@ struct POIListView: View {
             }
 
             // Content for selected tab
-            if activeTab == .food && isLoadingFood {
+            if activeTab == .food && isFoodLocked {
+                foodLockedState
+            } else if activeTab == .food && isLoadingFood {
                 // Loading state while fetching food from Google Places (New)
                 HStack(spacing: LoooprTheme.Spacing.xs) {
                     ProgressView().scaleEffect(0.8)
@@ -274,6 +280,46 @@ struct POIListView: View {
     }
 
     // MARK: - Food Sub-filter Bar
+
+    /// Premium prompt shown in place of the food list on the free tier.
+    /// Same card language as the rest of the sheet — a locked slot, not an ad.
+    private var foodLockedState: some View {
+        VStack(spacing: LoooprTheme.Spacing.sm) {
+            Image(systemName: "crown.fill")
+                .font(.system(size: 22, weight: .semibold))
+                .foregroundStyle(LoooprTheme.Colors.primary)
+                .frame(width: 48, height: 48)
+                .background(LoooprTheme.Colors.primaryLight)
+                .clipShape(Circle())
+
+            Text(L10n.POI.foodLockedTitle)
+                .font(LoooprTheme.Typography.headline)
+                .foregroundStyle(LoooprTheme.Colors.textPrimary)
+
+            Text(L10n.POI.foodLockedBody)
+                .font(LoooprTheme.Typography.subheadline)
+                .foregroundStyle(LoooprTheme.Colors.textSecondary)
+                .multilineTextAlignment(.center)
+                .fixedSize(horizontal: false, vertical: true)
+
+            Button {
+                onUnlockFood?()
+            } label: {
+                Text(L10n.POI.foodLockedCTA)
+                    .font(LoooprTheme.Typography.button)
+                    .foregroundStyle(LoooprTheme.Colors.textOnPrimary)
+                    .padding(.horizontal, LoooprTheme.Spacing.lg)
+                    .padding(.vertical, 10)
+                    .background(LoooprTheme.Colors.primary)
+                    .clipShape(Capsule())
+            }
+            .buttonStyle(.plain)
+            .padding(.top, LoooprTheme.Spacing.xxs)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, LoooprTheme.Spacing.lg)
+        .padding(.horizontal, LoooprTheme.Spacing.md)
+    }
 
     private var foodFilterBar: some View {
         HStack(spacing: 8) {

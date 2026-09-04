@@ -16,8 +16,10 @@ extension ServiceContainer {
             registerSingleton(AuthProviding.self, instance: authService)
         }
 
-        // Persistence
-        let persistenceStore = UserDefaultsStore()
+        // Persistence — file-backed, with transparent one-time migration of
+        // existing UserDefaults data (walk history with GPS tracks would
+        // bloat UserDefaults, which loads fully into memory at launch).
+        let persistenceStore = FileStore()
         registerSingleton(PersistenceStoring.self, instance: persistenceStore)
 
         // Repositories
@@ -34,9 +36,20 @@ extension ServiceContainer {
         let locationService = LiveLocationService()
         registerSingleton(LocationProviding.self, instance: locationService)
 
-        // Subscription (stub — wired to StoreKit 2 in Sprint 7)
-        let subscriptionService = LiveSubscriptionService()
-        registerSingleton(SubscriptionProviding.self, instance: subscriptionService)
+        // Subscription — RevenueCat when a key is configured, otherwise a
+        // permissive stub. Note: `paywallEnabled` in AppConfiguration.Freemium
+        // is the master switch; while false everyone is premium either way.
+        if Secrets.hasRevenueCatKey {
+            let subscriptionService = RevenueCatSubscriptionService(
+                apiKey: Secrets.revenueCatAPIKey,
+                paywallEnabled: config.freemium.paywallEnabled
+            )
+            registerSingleton(RevenueCatSubscriptionService.self, instance: subscriptionService)
+            registerSingleton(SubscriptionProviding.self, instance: subscriptionService)
+        } else {
+            let subscriptionService = LiveSubscriptionService()
+            registerSingleton(SubscriptionProviding.self, instance: subscriptionService)
+        }
 
         // Route Generation — freemium tier (MKDirections, quadrilateral loops)
         let routeGeneration = LiveRouteGenerationService(configuration: config)
@@ -110,6 +123,11 @@ extension ServiceContainer {
         let ticketAggregator = TicketAggregatorService(providers: ticketProviders)
         registerSingleton(TicketAggregating.self, instance: ticketAggregator)
 
+        // POI discovery — one shared instance so the 5-minute POI cache
+        // survives navigation instead of dying with each RouteDetail screen.
+        let poiAggregator = POIAggregatorService(configuration: config)
+        registerSingleton(POIAggregatorService.self, instance: poiAggregator)
+
         // Sharing
         if supabaseProvider != nil {
             let routeShareService = RouteShareService()
@@ -124,8 +142,12 @@ extension ServiceContainer {
         let pedometerService = LivePedometerService()
         registerSingleton(PedometerProviding.self, instance: pedometerService)
 
-        // Analytics
-        let analytics = LiveAnalyticsService()
+        // Apple Health — write-only export of finished walks as workouts
+        // (distance + GPS route). Never reads health data.
+        registerSingleton(HealthWorkoutSaving.self, instance: LiveHealthWorkoutService())
+
+        // Analytics — events are persisted to Supabase (analytics_events table)
+        let analytics = LiveAnalyticsService(supabase: supabaseProvider)
         registerSingleton(AnalyticsTracking.self, instance: analytics)
 
         // Live Activity

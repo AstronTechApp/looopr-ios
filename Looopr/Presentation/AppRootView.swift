@@ -31,6 +31,9 @@ struct AppRootView: View {
             await authService.restoreSession()
             authService.observeAuthChanges()
             hasCheckedSession = true
+            // Fired after session restore so the event carries the signed-in
+            // user; dropped silently when nobody is signed in yet.
+            ServiceContainer.shared.resolve(AnalyticsTracking.self).track(.appOpened)
         }
         .environment(\.locale, localization.currentLocale)
         // Force light color scheme app-wide.
@@ -76,7 +79,7 @@ struct AppRootView: View {
         case .settings:
             SettingsView()
         case .paywall:
-            Text("Upgrade to Premium")
+            PaywallView()
         }
     }
 
@@ -156,6 +159,9 @@ struct AppRootView: View {
         .onOpenURL { url in
             handleDeepLink(url)
         }
+        .fullScreenCover(isPresented: $router.isPaywallPresented) {
+            PaywallView()
+        }
     }
 
     // MARK: - iOS 17–25 · Custom Floating Pill Tab Bar
@@ -233,12 +239,15 @@ struct AppRootView: View {
         .onOpenURL { url in
             handleDeepLink(url)
         }
+        .fullScreenCover(isPresented: $router.isPaywallPresented) {
+            PaywallView()
+        }
     }
 
     // MARK: - Deep Linking
 
     private func handleDeepLink(_ url: URL) {
-        if url.host() == "looopr.app",
+        if url.host() == "looopr.app" || url.host() == "www.looopr.app",
            url.pathComponents.count >= 3,
            url.pathComponents[1] == "route",
            let routeID = UUID(uuidString: url.pathComponents[2]) {

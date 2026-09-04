@@ -6,6 +6,16 @@ final class AppRouter {
     var path = NavigationPath()
     var presentedSheet: AppRoute?
 
+    /// The paywall is presented as a full-screen cover, never pushed.
+    /// RevenueCat's paywall is designed edge-to-edge with its own close
+    /// button; pushing it left a back chevron, a safe-area gap above the
+    /// hero and the tab bar overlapping the footer links.
+    var isPaywallPresented = false
+
+    func presentPaywall() {
+        isPaywallPresented = true
+    }
+
     /// Tracks pushed routes so we can inspect the stack (NavigationPath is type-erased).
     private(set) var routeStack: [AppRoute] = []
 

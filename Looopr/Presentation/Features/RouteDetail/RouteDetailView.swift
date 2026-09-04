@@ -82,6 +82,7 @@ struct RouteDetailView: View {
         .navigationBarBackButtonHidden()
         .toolbar(.hidden, for: .navigationBar)
         .onAppear {
+            viewModel.refreshTier()
             viewModel.loadPOIsIfNeeded()
             fitMapToRoute()
         }
@@ -667,6 +668,8 @@ struct RouteDetailView: View {
                     onFoodTabSelected: { viewModel.loadFoodIfNeeded() },
                     isLoadingFood: viewModel.isLoadingFood,
                     hasFetchedFood: viewModel.hasFetchedFood,
+                    isFoodLocked: viewModel.isFoodLocked,
+                    onUnlockFood: { router.presentPaywall() },
                     departureDate: viewModel.plannedDepartureDate,
                     selectedTab: $selectedPOITab,
                     focusedPOIID: $focusedPOIID

@@ -86,10 +86,24 @@ struct AppConfiguration: Sendable {
         let midWalkDirectionConsecutiveChecks: Int
         let midWalkDirectionCooldownSeconds: TimeInterval
         // Wrong-way detection
+        /// Seconds after walk start during which no detection runs (lets GPS settle).
         let wrongWayWarmupSeconds: TimeInterval
+        /// Detection only runs within this many metres of the walk start.
         let wrongWayDetectionWindowMeters: Double
+        /// Travel bearing must differ from the route bearing by more than this to count.
         let wrongWayDivergenceDegrees: Double
+        /// Metres of sustained wrong-way travel before the prompt is shown.
         let wrongWayTriggerMeters: Double
+        /// Seconds of sustained wrong-way travel before the prompt is shown
+        /// (both this and `wrongWayTriggerMeters` must be met).
+        let wrongWayMinDurationSeconds: TimeInterval
+        /// Fixes slower than this (m/s) are treated as standing still and
+        /// never count as wrong-way travel — GPS drift while stationary
+        /// produces random bearings.
+        let wrongWayMinSpeedMetersPerSecond: Double
+        /// Travel bearing is measured from a fix at least this far back,
+        /// not from the previous fix, so 5 m GPS jitter can't flip it.
+        let wrongWayBearingBaselineMeters: Double
         /// Maximum number of user-confirmed route flips per session.
         let wrongWayMaxFlips: Int
     }
@@ -98,12 +112,18 @@ struct AppConfiguration: Sendable {
     // MARK: - Freemium
 
     struct Freemium: Sendable {
-        /// Routes shown to free users (MKDirections quadrilateral loops).
+        /// Master switch for monetisation. `false` (pre-launch): every user
+        /// gets premium features and the free-tier limits are never enforced,
+        /// regardless of purchase state. `true`: only users with the active
+        /// RevenueCat entitlement get premium. Flip this at launch.
+        let paywallEnabled: Bool
+        /// Routes shown to free users. Same Mapbox generator as paid — the
+        /// free tier gets the best N of the candidate set, not a weaker set.
         let freeRouteLimit: Int
-        /// Routes shown to paid users (Mapbox pentagon loops).
+        /// Routes shown to paid users.
         let paidRouteLimit: Int
     }
-    let freemium: Freemium
+    var freemium: Freemium
 
     // MARK: - Presets
 
@@ -160,15 +180,33 @@ struct AppConfiguration: Sendable {
             midWalkDirectionThresholdDegrees: 150,
             midWalkDirectionConsecutiveChecks: 3,
             midWalkDirectionCooldownSeconds: 60,
-            wrongWayWarmupSeconds: 5,
-            wrongWayDetectionWindowMeters: 250,
+            wrongWayWarmupSeconds: 15,
+            wrongWayDetectionWindowMeters: 300,
             wrongWayDivergenceDegrees: 120,
-            wrongWayTriggerMeters: 12,
+            wrongWayTriggerMeters: 40,
+            wrongWayMinDurationSeconds: 20,
+            wrongWayMinSpeedMetersPerSecond: 0.5,
+            wrongWayBearingBaselineMeters: 15,
             wrongWayMaxFlips: 1
         ),
-        freemium: Freemium(freeRouteLimit: 2, paidRouteLimit: 8)
+        freemium: Freemium(paywallEnabled: false, freeRouteLimit: 2, paidRouteLimit: 8)
     )
 
-    static let debug = production
+    /// Debug builds mirror production in every respect except one: the
+    /// paywall is ON. That lets the RevenueCat paywall and the free-tier
+    /// limits be exercised on device — against the Test Store while the real
+    /// App Store products don't exist yet — without the shipped build
+    /// gating anyone. Release still reads `production`, where the paywall
+    /// stays off until launch.
+    static let debug: AppConfiguration = {
+        var config = production
+        config.freemium = Freemium(
+            paywallEnabled: true,
+            freeRouteLimit: production.freemium.freeRouteLimit,
+            paidRouteLimit: production.freemium.paidRouteLimit
+        )
+        return config
+    }()
+
     static let staging = production
 }

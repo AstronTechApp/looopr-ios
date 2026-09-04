@@ -18,6 +18,10 @@ final class RouteDetailViewModel {
     private(set) var hasCompletedInitialPOILoad = false
     private(set) var isLoadingFood = false
     private(set) var hasFetchedFood = false
+    /// True on the free tier: the Food & Drinks tab shows a Premium prompt
+    /// instead of firing Google Places. Refreshed on appear so a purchase
+    /// made from the paywall unlocks it when the user comes back.
+    private(set) var isFoodLocked = false
     private(set) var addedFoodStops: Set<UUID> = []
     private(set) var isSaved = false
     private(set) var isSharing = false
@@ -26,6 +30,7 @@ final class RouteDetailViewModel {
 
     private let poiAggregator: POIAggregatorService
     private let foodService: GooglePlacesNewFoodService?
+    private let subscriptionService: SubscriptionProviding
     private let routeRepository: RouteRepository
     private let routeShareService: RouteShareService?
     private let configuration: AppConfiguration
@@ -35,17 +40,30 @@ final class RouteDetailViewModel {
         route: Route,
         poiAggregator: POIAggregatorService? = nil,
         foodService: GooglePlacesNewFoodService? = nil,
+        subscriptionService: SubscriptionProviding? = nil,
         routeRepository: RouteRepository? = nil,
         routeShareService: RouteShareService? = nil,
         configuration: AppConfiguration = .current
     ) {
         self.route = route
-        self.poiAggregator = poiAggregator ?? POIAggregatorService(configuration: configuration)
+        // Shared singleton: keeps the POI cache warm across screens, so
+        // flipping between route options doesn't re-fire Google/Overpass.
+        self.poiAggregator = poiAggregator
+            ?? ServiceContainer.shared.resolveOptional(POIAggregatorService.self)
+            ?? POIAggregatorService(configuration: configuration)
         self.foodService = foodService ?? ServiceContainer.shared.resolveOptional(GooglePlacesNewFoodService.self)
+        self.subscriptionService = subscriptionService ?? ServiceContainer.shared.resolve(SubscriptionProviding.self)
         self.routeRepository = routeRepository ?? ServiceContainer.shared.resolve(RouteRepository.self)
         self.routeShareService = routeShareService ?? ServiceContainer.shared.resolveOptional(RouteShareService.self)
         self.configuration = configuration
         self.isSaved = self.routeRepository.isRouteSaved(route.id)
+        self.isFoodLocked = !self.subscriptionService.isPaidSubscriber
+    }
+
+    /// Re-reads the subscription state. Call on appear: the entitlement can
+    /// change while this screen is off-stack (paywall pushed on top).
+    func refreshTier() {
+        isFoodLocked = !subscriptionService.isPaidSubscriber
     }
 
     // MARK: - POI Categories
@@ -221,6 +239,10 @@ final class RouteDetailViewModel {
     /// Called when the user taps the "Food & Drinks" tab — NOT during initial load.
     func loadFoodIfNeeded() {
         guard !hasFetchedFood, !isLoadingFood else { return }
+        // Free tier never reaches Google — this is where the per-user cost
+        // lives (Nearby Search + Place Details), so the gate sits on the
+        // fetch itself, not just on the UI.
+        guard !isFoodLocked else { return }
         guard let foodService else {
             logger.warning("Food service unavailable — Google Places API key missing?")
             hasFetchedFood = true

@@ -149,6 +149,10 @@ struct POIDetailView: View {
                 }
             }
             .task {
+                ServiceContainer.shared.resolve(AnalyticsTracking.self).track(
+                    .poiViewed(poiId: poi.id, category: poi.category.rawValue)
+                )
+
                 // On-demand enrichment: fetch Google Place Details for food
                 // POIs that haven't been enriched yet. Attraction POIs skip
                 // enrichment entirely (MapKit data is sufficient) to eliminate
@@ -209,9 +213,15 @@ struct POIDetailView: View {
             .background(LoooprTheme.Colors.surfaceSecondary)
             .clipShape(RoundedRectangle(cornerRadius: LoooprTheme.Radius.sm))
         } else if let bookingURL = p.bookingURL {
-            LinkButton(title: L10n.POIDetail.bookTickets, icon: "ticket.fill", url: bookingURL, color: .orange)
+            LinkButton(title: L10n.POIDetail.bookTickets, icon: "ticket.fill", url: bookingURL, color: .orange, onTap: {
+                ServiceContainer.shared.resolve(AnalyticsTracking.self)
+                    .track(.bookingLinkTapped(poiId: p.id, partner: "direct"))
+            })
         } else if let best = ticketResult?.bestOffer {
-            LinkButton(title: L10n.POIDetail.bookOn(best.providerName), icon: "ticket.fill", url: best.bookingURL, color: .orange)
+            LinkButton(title: L10n.POIDetail.bookOn(best.providerName), icon: "ticket.fill", url: best.bookingURL, color: .orange, onTap: {
+                ServiceContainer.shared.resolve(AnalyticsTracking.self)
+                    .track(.bookingLinkTapped(poiId: p.id, partner: best.providerName))
+            })
 
             if let offers = ticketResult?.offers, offers.count > 1 {
                 Button { showAllOffers.toggle() } label: {
@@ -230,13 +240,20 @@ struct POIDetailView: View {
                             title: "\(offer.providerName) — \(offer.price ?? "See price")",
                             icon: "ticket",
                             url: offer.bookingURL,
-                            color: LoooprTheme.Colors.textSecondary
+                            color: LoooprTheme.Colors.textSecondary,
+                            onTap: {
+                                ServiceContainer.shared.resolve(AnalyticsTracking.self)
+                                    .track(.bookingLinkTapped(poiId: p.id, partner: offer.providerName))
+                            }
                         )
                     }
                 }
             }
         } else if let fallback = ticketResult?.fallbackURL {
-            LinkButton(title: L10n.POIDetail.buyTickets, icon: "ticket.fill", url: fallback, color: .orange)
+            LinkButton(title: L10n.POIDetail.buyTickets, icon: "ticket.fill", url: fallback, color: .orange, onTap: {
+                ServiceContainer.shared.resolve(AnalyticsTracking.self)
+                    .track(.bookingLinkTapped(poiId: p.id, partner: "fallback_search"))
+            })
         }
 
         // Secondary buttons
@@ -312,10 +329,15 @@ private struct LinkButton: View {
     let icon: String
     let url: URL
     let color: Color
+    /// Optional hook fired on tap, before the sheet opens (e.g. analytics).
+    var onTap: (() -> Void)? = nil
     @State private var showSafari = false
 
     var body: some View {
-        Button { showSafari = true } label: {
+        Button {
+            onTap?()
+            showSafari = true
+        } label: {
             Label(title, systemImage: icon)
                 .font(LoooprTheme.Typography.headline)
                 .frame(maxWidth: .infinity)

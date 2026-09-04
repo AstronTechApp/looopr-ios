@@ -1,7 +1,9 @@
 import Foundation
 
-/// Stub implementation — returns true for Mapbox testing.
-/// Revert to `false` before shipping; Sprint 7 wires this to StoreKit 2.
+/// Fallback used only when no RevenueCat API key is configured (local dev
+/// without Secrets). Everyone is treated as premium, matching the behaviour
+/// of `paywallEnabled: false`. The real implementation is
+/// `RevenueCatSubscriptionService`.
 final class LiveSubscriptionService: SubscriptionProviding {
     var isPaidSubscriber: Bool { true }
 }

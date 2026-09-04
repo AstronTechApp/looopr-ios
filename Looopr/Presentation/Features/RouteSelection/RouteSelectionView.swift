@@ -39,6 +39,17 @@ struct RouteSelectionView: View {
                 hasAppeared = true
             }
         }
+        // Routes stream in one at a time. Reveal the list on the first
+        // arrival instead of waiting for generation to finish — on the
+        // free tier that can be a minute or more of serial MKDirections
+        // calls, and the user was staring at skeletons the whole time.
+        .onChange(of: viewModel.routes.isEmpty) { _, isEmpty in
+            if !isEmpty && !hasAppeared {
+                withAnimation(LoooprTheme.Animation.gentle) {
+                    hasAppeared = true
+                }
+            }
+        }
     }
 
     // MARK: - Header (Glassmorphic)
@@ -97,7 +108,9 @@ struct RouteSelectionView: View {
 
     @ViewBuilder
     private var routeList: some View {
-        if viewModel.isLoading {
+        // Skeletons only while nothing has arrived yet. Once the first
+        // route streams in, show it — the rest fill in underneath.
+        if viewModel.isLoading && viewModel.routes.isEmpty {
             VStack(spacing: LoooprTheme.Spacing.xl) {
                 ForEach(0..<3, id: \.self) { _ in
                     SkeletonRouteCard()
@@ -121,7 +134,16 @@ struct RouteSelectionView: View {
                 ForEach(Array(viewModel.routes.enumerated()), id: \.element.id) { index, route in
                     RouteSelectionCard(
                         route: route,
-                        onTapCard: { router.navigate(to: .routeDetail(route)) },
+                        onTapCard: {
+                            ServiceContainer.shared.resolve(AnalyticsTracking.self).track(
+                                .routeSelected(
+                                    routeId: route.id,
+                                    durationMinutes: route.durationMinutes,
+                                    distanceKm: route.distanceKilometers
+                                )
+                            )
+                            router.navigate(to: .routeDetail(route))
+                        },
                         onStartWalk: { router.navigate(to: .walkNavigation(route)) }
                     )
                     .offset(y: hasAppeared ? 0 : 40)
@@ -131,9 +153,84 @@ struct RouteSelectionView: View {
                         value: hasAppeared
                     )
                 }
+
+                if viewModel.isLoading {
+                    findingMoreRow
+                } else if viewModel.isFreeTier {
+                    UpgradeCard {
+                        // PaywallView tracks `.paywallShown` itself on appear.
+                        router.presentPaywall()
+                    }
+                }
             }
             .padding(.horizontal, LoooprTheme.Spacing.screenHorizontal)
         }
+    }
+
+    private var findingMoreRow: some View {
+        HStack(spacing: LoooprTheme.Spacing.sm) {
+            ProgressView()
+                .tint(LoooprTheme.Colors.primary)
+            Text(L10n.RouteSelection.findingMore)
+                .font(LoooprTheme.Typography.subheadline)
+                .foregroundStyle(LoooprTheme.Colors.textSecondary)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, LoooprTheme.Spacing.md)
+    }
+}
+
+// MARK: - Upgrade Card (free tier)
+
+/// Shown under the free-tier routes once generation finishes. Deliberately
+/// a card in the same family as the route cards rather than a banner: it
+/// reads as "here's what the next slot would be", not as an ad.
+private struct UpgradeCard: View {
+    let onTap: () -> Void
+
+    var body: some View {
+        Button(action: onTap) {
+            HStack(alignment: .top, spacing: LoooprTheme.Spacing.md) {
+                Image(systemName: "crown.fill")
+                    .font(.system(size: 20, weight: .semibold))
+                    .foregroundStyle(LoooprTheme.Colors.primary)
+                    .frame(width: 44, height: 44)
+                    .background(LoooprTheme.Colors.primaryLight)
+                    .clipShape(Circle())
+
+                VStack(alignment: .leading, spacing: LoooprTheme.Spacing.xxs) {
+                    Text(L10n.RouteSelection.upgradeTitle)
+                        .font(LoooprTheme.Typography.headline)
+                        .foregroundStyle(LoooprTheme.Colors.textPrimary)
+
+                    Text(L10n.RouteSelection.upgradeBody)
+                        .font(LoooprTheme.Typography.subheadline)
+                        .foregroundStyle(LoooprTheme.Colors.textSecondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                        .multilineTextAlignment(.leading)
+
+                    HStack(spacing: 4) {
+                        Text(L10n.RouteSelection.upgradeCTA)
+                        Image(systemName: "chevron.right")
+                            .font(.system(size: 11, weight: .semibold))
+                    }
+                    .font(LoooprTheme.Typography.button)
+                    .foregroundStyle(LoooprTheme.Colors.primary)
+                    .padding(.top, LoooprTheme.Spacing.xs)
+                }
+
+                Spacer(minLength: 0)
+            }
+            .padding(LoooprTheme.Spacing.md)
+            .background(LoooprTheme.Colors.surface)
+            .clipShape(RoundedRectangle(cornerRadius: LoooprTheme.Radius.lg))
+            .overlay(
+                RoundedRectangle(cornerRadius: LoooprTheme.Radius.lg)
+                    .strokeBorder(LoooprTheme.Colors.primaryLight, lineWidth: 1.5)
+            )
+            .loooprShadow(LoooprTheme.Shadows.sm)
+        }
+        .buttonStyle(.plain)
     }
 }
 
