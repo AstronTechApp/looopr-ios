@@ -5,6 +5,8 @@ struct LoooprApp: App {
     @Environment(\.scenePhase) private var scenePhase
 
     init() {
+        // First, so a crash anywhere in startup is still reported.
+        CrashReporter.start()
         ServiceContainer.shared.registerProductionServices()
         SettingsManager.shared.restoreOnLaunch()
 

@@ -27,7 +27,18 @@ final class SupabaseClientProvider: @unchecked Sendable {
 
         client = SupabaseClient(
             supabaseURL: url,
-            supabaseKey: Secrets.supabaseAnonKey
+            supabaseKey: Secrets.supabaseAnonKey,
+            options: SupabaseClientOptions(
+                auth: SupabaseClientOptions.AuthOptions(
+                    // Opt in to supabase-swift's upcoming session behaviour
+                    // (the locally stored session is emitted immediately as
+                    // the initial session, even before a network refresh).
+                    // Silences the SDK's launch advisory; safe for us — we
+                    // restore sessions via `auth.session` directly and ignore
+                    // the .initialSession event in AuthService.
+                    emitLocalSessionAsInitialSession: true
+                )
+            )
         )
     }
 }

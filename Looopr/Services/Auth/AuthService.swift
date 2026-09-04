@@ -84,12 +84,9 @@ final class AuthService: @unchecked Sendable {
 
     @MainActor
     func deleteAccount() async throws {
-        guard let userID else { return }
-        // Call the delete-account Edge Function
-        try await supabase.client.functions.invoke(
-            "hyper-endpoint",
-            options: .init(body: ["user_id": userID.uuidString])
-        )
+        // The Edge Function derives the account to delete from the caller's
+        // JWT — no user id is sent (or trusted) in the body.
+        try await supabase.client.functions.invoke("delete-account")
         clearSession()
     }
 
@@ -97,7 +94,7 @@ final class AuthService: @unchecked Sendable {
 
     func exportUserData() async throws -> Data {
         try await supabase.client.functions.invoke(
-            "hyper-task"
+            "export-user-data"
         ) { data, _ in
             data
         }
@@ -112,6 +109,12 @@ final class AuthService: @unchecked Sendable {
         userEmail = session.user.email
         userDisplayName = session.user.userMetadata["full_name"]?.stringValue
             ?? session.user.userMetadata["name"]?.stringValue
+
+        // Tie the RevenueCat identity to this account so purchases follow
+        // the user across devices. No-op when RevenueCat isn't configured.
+        ServiceContainer.shared.resolveOptional(RevenueCatSubscriptionService.self)?
+            .syncIdentity(appUserID: session.user.id.uuidString)
+        CrashReporter.setUser(id: session.user.id.uuidString)
     }
 
     @MainActor
@@ -120,6 +123,10 @@ final class AuthService: @unchecked Sendable {
         isSignedIn = false
         userEmail = nil
         userDisplayName = nil
+
+        ServiceContainer.shared.resolveOptional(RevenueCatSubscriptionService.self)?
+            .syncIdentity(appUserID: nil)
+        CrashReporter.setUser(id: nil)
     }
 }
 

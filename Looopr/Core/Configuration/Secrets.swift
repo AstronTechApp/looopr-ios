@@ -25,6 +25,35 @@ enum Secrets {
         !mapboxAccessToken.isEmpty
     }
 
+    // MARK: - Subscriptions
+
+    /// RevenueCat *public* SDK key (safe to ship in the binary).
+    ///
+    /// A Test Store key (`test_...`) routes purchases to RevenueCat's
+    /// simulated store — perfect for development, catastrophic in a
+    /// TestFlight/App Store build (nobody would ever be charged, and Apple
+    /// review would fail). Outside DEBUG such a key is treated as absent so
+    /// the app falls back to the permissive stub instead.
+    static var revenueCatAPIKey: String {
+        let key = Bundle.main.infoDictionary?["REVENUECAT_API_KEY"] as? String ?? ""
+        #if DEBUG
+        return key
+        #else
+        return key.hasPrefix("test_") ? "" : key
+        #endif
+    }
+
+    static var hasRevenueCatKey: Bool { !revenueCatAPIKey.isEmpty }
+
+    // MARK: - Crash reporting
+
+    /// Sentry DSN (public; safe to ship). Empty = crash reporting off.
+    static var sentryDSN: String {
+        Bundle.main.infoDictionary?["SENTRY_DSN"] as? String ?? ""
+    }
+
+    static var hasSentryDSN: Bool { !sentryDSN.isEmpty }
+
     // MARK: - Ticket Providers
 
     static var viatorAPIKey: String {
