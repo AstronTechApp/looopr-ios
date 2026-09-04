@@ -40,3 +40,10 @@ Pods/
 
 # Local assistant workspace
 .claude/
+
+# Sentry auth token for dSYM upload - never commit
+.sentryclirc
+
+# Morning crash-triage automation: git worktrees + reports
+.worktrees/
+crash-triage/
