@@ -39,7 +39,7 @@ enum L10n {
         static var signInGoogle: String { String(localized: "auth.signInGoogle", defaultValue: "Sign in with Google", bundle: LocalizationManager.shared.localizedBundle) }
         static var signingIn: String { String(localized: "auth.signingIn", defaultValue: "Signing in...", bundle: LocalizationManager.shared.localizedBundle) }
         static var appleIDCredentialsFailed: String { String(localized: "auth.appleIDCredentialsFailed", defaultValue: "Failed to get Apple ID credentials.", bundle: LocalizationManager.shared.localizedBundle) }
-        static var privacyAgreement: String { String(localized: "auth.privacyAgreement", defaultValue: "By signing in, you agree to our [Privacy Policy](https://looopr.app/privacy). We collect your name, email, saved routes, and walk history to provide the service.", bundle: LocalizationManager.shared.localizedBundle) }
+        static var privacyAgreement: String { String(localized: "auth.privacyAgreement", defaultValue: "By signing in, you agree to our [Privacy Policy](https://looopr.app/privacy.html). We collect your name, email, saved routes, and walk history to provide the service.", bundle: LocalizationManager.shared.localizedBundle) }
     }
 
     // MARK: - Route Names
@@ -91,6 +91,10 @@ enum L10n {
         static var yourRoutes: String { String(localized: "routeSelection.yourRoutes", defaultValue: "Your Routes", bundle: LocalizationManager.shared.localizedBundle) }
         static var walkLabel: String { String(localized: "routeSelection.walkLabel", defaultValue: "walk", bundle: LocalizationManager.shared.localizedBundle) }
         static var noRoutesFound: String { String(localized: "routeSelection.noRoutesFound", defaultValue: "No routes found nearby", bundle: LocalizationManager.shared.localizedBundle) }
+        static var findingMore: String { String(localized: "routeSelection.findingMore", defaultValue: "Finding more routes…", bundle: LocalizationManager.shared.localizedBundle) }
+        static var upgradeTitle: String { String(localized: "routeSelection.upgradeTitle", defaultValue: "Want more options?", bundle: LocalizationManager.shared.localizedBundle) }
+        static var upgradeBody: String { String(localized: "routeSelection.upgradeBody", defaultValue: "Looopr Premium finds up to 8 loops per walk and shows the cafés along the way.", bundle: LocalizationManager.shared.localizedBundle) }
+        static var upgradeCTA: String { String(localized: "routeSelection.upgradeCTA", defaultValue: "See Premium", bundle: LocalizationManager.shared.localizedBundle) }
         static var difficulty: String { String(localized: "routeSelection.difficulty", defaultValue: "Difficulty", bundle: LocalizationManager.shared.localizedBundle) }
         static var loopLabel: String { String(localized: "routeSelection.loopLabel", defaultValue: "loop", bundle: LocalizationManager.shared.localizedBundle) }
         static var includesFerry: String { String(localized: "routeSelection.includesFerry", defaultValue: "Includes ferry crossing", bundle: LocalizationManager.shared.localizedBundle) }
@@ -128,6 +132,9 @@ enum L10n {
         static var findingNearby: String { String(localized: "poi.findingNearby", defaultValue: "Finding nearby cafes & restaurants...", bundle: LocalizationManager.shared.localizedBundle) }
         static var noRestaurantsFound: String { String(localized: "poi.noRestaurantsFound", defaultValue: "No highly-rated cafes or restaurants found nearby", bundle: LocalizationManager.shared.localizedBundle) }
         static var tapToFind: String { String(localized: "poi.tapToFind", defaultValue: "Tap to find nearby cafes & restaurants", bundle: LocalizationManager.shared.localizedBundle) }
+        static var foodLockedTitle: String { String(localized: "poi.foodLockedTitle", defaultValue: "Cafés & restaurants are Premium", bundle: LocalizationManager.shared.localizedBundle) }
+        static var foodLockedBody: String { String(localized: "poi.foodLockedBody", defaultValue: "See the best coffee and food stops along this route, with ratings, opening hours and photos.", bundle: LocalizationManager.shared.localizedBundle) }
+        static var foodLockedCTA: String { String(localized: "poi.foodLockedCTA", defaultValue: "See Premium", bundle: LocalizationManager.shared.localizedBundle) }
         static var fromRoute: String { String(localized: "poi.fromRoute", defaultValue: "from route", bundle: LocalizationManager.shared.localizedBundle) }
         static var walkTime: String { String(localized: "poi.walkTime", defaultValue: "walk", bundle: LocalizationManager.shared.localizedBundle) }
         static var openNow: String { String(localized: "poi.openNow", defaultValue: "Open now", bundle: LocalizationManager.shared.localizedBundle) }
@@ -232,11 +239,42 @@ enum L10n {
         static var saveRoute: String { String(localized: "finishWalk.saveRoute", defaultValue: "Save Route", bundle: LocalizationManager.shared.localizedBundle) }
         static var routeSaved: String { String(localized: "finishWalk.routeSaved", defaultValue: "Route Saved", bundle: LocalizationManager.shared.localizedBundle) }
         static var shareRoute: String { String(localized: "finishWalk.shareRoute", defaultValue: "Share Route", bundle: LocalizationManager.shared.localizedBundle) }
+        static var exportGPX: String { String(localized: "finishWalk.exportGPX", defaultValue: "Export GPX", bundle: LocalizationManager.shared.localizedBundle) }
         static var goHome: String { String(localized: "finishWalk.goHome", defaultValue: "Go Home", bundle: LocalizationManager.shared.localizedBundle) }
         static var distance: String { String(localized: "finishWalk.distance", defaultValue: "Distance", bundle: LocalizationManager.shared.localizedBundle) }
         static var duration: String { String(localized: "finishWalk.duration", defaultValue: "Duration", bundle: LocalizationManager.shared.localizedBundle) }
         static var avgPace: String { String(localized: "finishWalk.avgPace", defaultValue: "Avg Pace", bundle: LocalizationManager.shared.localizedBundle) }
         static var elevation: String { String(localized: "finishWalk.elevation", defaultValue: "Elevation", bundle: LocalizationManager.shared.localizedBundle) }
+    }
+
+    // MARK: - Paywall
+    enum Paywall {
+        static var title: String { String(localized: "paywall.title", defaultValue: "Looopr Premium", bundle: LocalizationManager.shared.localizedBundle) }
+        static var settingsRow: String { String(localized: "paywall.settingsRow", defaultValue: "Upgrade to Premium", bundle: LocalizationManager.shared.localizedBundle) }
+        static var headline: String { String(localized: "paywall.headline", defaultValue: "Walk further with Premium", bundle: LocalizationManager.shared.localizedBundle) }
+        static var subtitle: String { String(localized: "paywall.subtitle", defaultValue: "More routes, and the best coffee stops along the way.", bundle: LocalizationManager.shared.localizedBundle) }
+        static var featureRoutes: String { String(localized: "paywall.featureRoutes", defaultValue: "Up to 8 route options per walk instead of 2", bundle: LocalizationManager.shared.localizedBundle) }
+        static var featureLoops: String { String(localized: "paywall.featureLoops", defaultValue: "Cafés and restaurants along every route", bundle: LocalizationManager.shared.localizedBundle) }
+        static var featureFuture: String { String(localized: "paywall.featureFuture", defaultValue: "Ratings, opening hours and photos for every stop", bundle: LocalizationManager.shared.localizedBundle) }
+        static var monthly: String { String(localized: "paywall.monthly", defaultValue: "Monthly", bundle: LocalizationManager.shared.localizedBundle) }
+        static var annual: String { String(localized: "paywall.annual", defaultValue: "Yearly", bundle: LocalizationManager.shared.localizedBundle) }
+        static var bestValue: String { String(localized: "paywall.bestValue", defaultValue: "BEST VALUE", bundle: LocalizationManager.shared.localizedBundle) }
+        static var cta: String { String(localized: "paywall.cta", defaultValue: "Continue", bundle: LocalizationManager.shared.localizedBundle) }
+        static var restore: String { String(localized: "paywall.restore", defaultValue: "Restore Purchases", bundle: LocalizationManager.shared.localizedBundle) }
+        static var nothingToRestore: String { String(localized: "paywall.nothingToRestore", defaultValue: "No previous purchase found for this Apple ID.", bundle: LocalizationManager.shared.localizedBundle) }
+        static var unavailable: String { String(localized: "paywall.unavailable", defaultValue: "Subscriptions aren't available right now. Please try again later.", bundle: LocalizationManager.shared.localizedBundle) }
+        static var purchaseFailed: String { String(localized: "paywall.purchaseFailed", defaultValue: "Purchase Failed", bundle: LocalizationManager.shared.localizedBundle) }
+        static var legalNote: String { String(localized: "paywall.legalNote", defaultValue: "Payment is charged to your Apple ID. Subscriptions renew automatically until cancelled in Settings at least 24 hours before the period ends.", bundle: LocalizationManager.shared.localizedBundle) }
+        static var statusRow: String { String(localized: "paywall.statusRow", defaultValue: "Premium", bundle: LocalizationManager.shared.localizedBundle) }
+        static var statusActive: String { String(localized: "paywall.statusActive", defaultValue: "Active", bundle: LocalizationManager.shared.localizedBundle) }
+        static var manageSubscription: String { String(localized: "paywall.manageSubscription", defaultValue: "Manage Subscription", bundle: LocalizationManager.shared.localizedBundle) }
+    }
+
+    // MARK: - GPX export
+    enum GPX {
+        static var exportTitle: String { String(localized: "gpx.exportTitle", defaultValue: "Export GPX", bundle: LocalizationManager.shared.localizedBundle) }
+        static var noTrack: String { String(localized: "gpx.noTrack", defaultValue: "This walk has no recorded GPS track to export.", bundle: LocalizationManager.shared.localizedBundle) }
+        static var exportFailed: String { String(localized: "gpx.exportFailed", defaultValue: "Couldn't export GPX", bundle: LocalizationManager.shared.localizedBundle) }
     }
 
     // MARK: - Saved Routes
@@ -283,6 +321,19 @@ enum L10n {
         static var steps: String { String(localized: "profile.steps", defaultValue: "Steps", bundle: LocalizationManager.shared.localizedBundle) }
         static var time: String { String(localized: "profile.time", defaultValue: "Time", bundle: LocalizationManager.shared.localizedBundle) }
         static var elevationGain: String { String(localized: "profile.elevationGain", defaultValue: "Elev Gain", bundle: LocalizationManager.shared.localizedBundle) }
+
+        static var inAppleHealth: String { String(localized: "profile.inAppleHealth", defaultValue: "Apple Health", bundle: LocalizationManager.shared.localizedBundle) }
+
+        static var deleteWalk: String { String(localized: "profile.deleteWalk", defaultValue: "Delete", bundle: LocalizationManager.shared.localizedBundle) }
+        static var deleteWalkQuestion: String { String(localized: "profile.deleteWalkQuestion", defaultValue: "Delete this walk?", bundle: LocalizationManager.shared.localizedBundle) }
+        static var cancel: String { String(localized: "profile.cancel", defaultValue: "Cancel", bundle: LocalizationManager.shared.localizedBundle) }
+
+        static func willBeDeleted(_ name: String) -> String {
+            return String(format: NSLocalizedString("profile.willBeDeleted", tableName: nil, bundle: LocalizationManager.shared.localizedBundle, value: "%@ will be permanently removed from your walk history. This cannot be undone.", comment: ""), name)
+        }
+
+        static var deleteFailedTitle: String { String(localized: "profile.deleteFailedTitle", defaultValue: "Delete incomplete", bundle: LocalizationManager.shared.localizedBundle) }
+        static var deleteFailedMessage: String { String(localized: "profile.deleteFailedMessage", defaultValue: "The walk was removed from this device, but we couldn't reach the server. It may reappear when your other devices sync.", bundle: LocalizationManager.shared.localizedBundle) }
     }
 
     // MARK: - Settings
@@ -298,6 +349,7 @@ enum L10n {
         static var health: String { String(localized: "settings.health", defaultValue: "HEALTH", bundle: LocalizationManager.shared.localizedBundle) }
         static var appleHealth: String { String(localized: "settings.appleHealth", defaultValue: "Apple Health", bundle: LocalizationManager.shared.localizedBundle) }
         static var notConnected: String { String(localized: "settings.notConnected", defaultValue: "Not Connected", bundle: LocalizationManager.shared.localizedBundle) }
+        static var connected: String { String(localized: "settings.connected", defaultValue: "Connected", bundle: LocalizationManager.shared.localizedBundle) }
         static var notifications: String { String(localized: "settings.notifications", defaultValue: "NOTIFICATIONS", bundle: LocalizationManager.shared.localizedBundle) }
         static var walkReminder: String { String(localized: "settings.walkReminder", defaultValue: "Walk Reminder", bundle: LocalizationManager.shared.localizedBundle) }
         static var walkReminderDescription: String { String(localized: "settings.walkReminderDescription", defaultValue: "Daily reminder to go for a walk", bundle: LocalizationManager.shared.localizedBundle) }
@@ -315,6 +367,8 @@ enum L10n {
         static var rateLooopr: String { String(localized: "settings.rateLooopr", defaultValue: "Rate Looopr", bundle: LocalizationManager.shared.localizedBundle) }
         static var shareLooopr: String { String(localized: "settings.shareLooopr", defaultValue: "Share Looopr", bundle: LocalizationManager.shared.localizedBundle) }
         static var privacyPolicy: String { String(localized: "settings.privacyPolicy", defaultValue: "Privacy Policy", bundle: LocalizationManager.shared.localizedBundle) }
+        static var termsOfService: String { String(localized: "settings.termsOfService", defaultValue: "Terms of Service", bundle: LocalizationManager.shared.localizedBundle) }
+        static var support: String { String(localized: "settings.support", defaultValue: "Support", bundle: LocalizationManager.shared.localizedBundle) }
         static var notificationsDisabled: String { String(localized: "settings.notificationsDisabled", defaultValue: "Notifications Disabled", bundle: LocalizationManager.shared.localizedBundle) }
         static var openSettings: String { String(localized: "settings.openSettings", defaultValue: "Open Settings", bundle: LocalizationManager.shared.localizedBundle) }
         static var enableNotificationsMessage: String { String(localized: "settings.enableNotificationsMessage", defaultValue: "Enable notifications in Settings to use walk reminders.", bundle: LocalizationManager.shared.localizedBundle) }
@@ -340,6 +394,31 @@ enum L10n {
         static var privacyMessage: String { String(localized: "healthSettings.privacyMessage", defaultValue: "Your health data stays on your device. Looopr never uploads health information to any server.", bundle: LocalizationManager.shared.localizedBundle) }
         static var comingSoonButton: String { String(localized: "healthSettings.comingSoonButton", defaultValue: "Coming Soon", bundle: LocalizationManager.shared.localizedBundle) }
         static var ok: String { String(localized: "healthSettings.ok", defaultValue: "OK", bundle: LocalizationManager.shared.localizedBundle) }
+        static var saveWalksToggle: String { String(localized: "healthSettings.saveWalksToggle", defaultValue: "Save walks to Apple Health", bundle: LocalizationManager.shared.localizedBundle) }
+        static var saveWalksSubtitle: String { String(localized: "healthSettings.saveWalksSubtitle", defaultValue: "Each finished walk is added as a walking workout with its distance and route", bundle: LocalizationManager.shared.localizedBundle) }
+        static var connectedMessage: String { String(localized: "healthSettings.connectedMessage", defaultValue: "Looopr is allowed to write walks to Apple Health.", bundle: LocalizationManager.shared.localizedBundle) }
+        static var deniedMessage: String { String(localized: "healthSettings.deniedMessage", defaultValue: "Looopr isn't allowed to write to Apple Health. You can change that in the Health app under Sharing → Apps → Looopr.", bundle: LocalizationManager.shared.localizedBundle) }
+        static var openHealthApp: String { String(localized: "healthSettings.openHealthApp", defaultValue: "Open Health", bundle: LocalizationManager.shared.localizedBundle) }
+        static var unavailableMessage: String { String(localized: "healthSettings.unavailableMessage", defaultValue: "Apple Health isn't available on this device.", bundle: LocalizationManager.shared.localizedBundle) }
+        static var featureWorkoutsTitle: String { String(localized: "healthSettings.featureWorkoutsTitle", defaultValue: "Walking Workouts", bundle: LocalizationManager.shared.localizedBundle) }
+        static var featureWorkoutsDescription: String { String(localized: "healthSettings.featureWorkoutsDescription", defaultValue: "Every finished walk is saved as a workout in the Fitness app", bundle: LocalizationManager.shared.localizedBundle) }
+        static var featureDistanceTitle: String { String(localized: "healthSettings.featureDistanceTitle", defaultValue: "Distance", bundle: LocalizationManager.shared.localizedBundle) }
+        static var featureDistanceDescription: String { String(localized: "healthSettings.featureDistanceDescription", defaultValue: "The distance you actually walked, not the planned loop", bundle: LocalizationManager.shared.localizedBundle) }
+        static var featureRouteTitle: String { String(localized: "healthSettings.featureRouteTitle", defaultValue: "Route Map", bundle: LocalizationManager.shared.localizedBundle) }
+        static var featureRouteDescription: String { String(localized: "healthSettings.featureRouteDescription", defaultValue: "Your GPS track, shown on the workout's map", bundle: LocalizationManager.shared.localizedBundle) }
+        static var permissionFailed: String { String(localized: "healthSettings.permissionFailed", defaultValue: "Couldn't request Apple Health access", bundle: LocalizationManager.shared.localizedBundle) }
+    }
+
+    // MARK: - Health (saving walks)
+    enum Health {
+        static var saveTitle: String { String(localized: "health.saveTitle", defaultValue: "Save to Apple Health", bundle: LocalizationManager.shared.localizedBundle) }
+        static var savedTitle: String { String(localized: "health.savedTitle", defaultValue: "Saved to Apple Health", bundle: LocalizationManager.shared.localizedBundle) }
+        static var saving: String { String(localized: "health.saving", defaultValue: "Saving to Apple Health…", bundle: LocalizationManager.shared.localizedBundle) }
+        static var saveFailedTitle: String { String(localized: "health.saveFailedTitle", defaultValue: "Couldn't save to Apple Health", bundle: LocalizationManager.shared.localizedBundle) }
+        static var unavailable: String { String(localized: "health.unavailable", defaultValue: "Apple Health isn't available on this device.", bundle: LocalizationManager.shared.localizedBundle) }
+        static var notAuthorized: String { String(localized: "health.notAuthorized", defaultValue: "Looopr doesn't have permission to write to Apple Health. You can grant it in Settings → Apple Health.", bundle: LocalizationManager.shared.localizedBundle) }
+        static var nothingToSave: String { String(localized: "health.nothingToSave", defaultValue: "This walk has no distance or GPS track to save.", bundle: LocalizationManager.shared.localizedBundle) }
+        static var saveFailed: String { String(localized: "health.saveFailed", defaultValue: "Apple Health didn't accept the workout. Please try again.", bundle: LocalizationManager.shared.localizedBundle) }
     }
 
     // MARK: - Privacy Settings
@@ -387,6 +466,8 @@ enum L10n {
         static var walked: String { String(localized: "liveActivity.walked", defaultValue: "walked", bundle: LocalizationManager.shared.localizedBundle) }
         static var ahead: String { String(localized: "liveActivity.ahead", defaultValue: "ahead", bundle: LocalizationManager.shared.localizedBundle) }
         static var next: String { String(localized: "liveActivity.next", defaultValue: "Next:", bundle: LocalizationManager.shared.localizedBundle) }
+        static var turnAhead: String { String(localized: "liveActivity.turnAhead", defaultValue: "Turn ahead", bundle: LocalizationManager.shared.localizedBundle) }
+        static var inDistance: String { String(localized: "liveActivity.inDistance", defaultValue: "in", bundle: LocalizationManager.shared.localizedBundle) }
     }
 
     // MARK: - Time/Duration
