@@ -7,6 +7,16 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		C2E82D9C0FE37A0871B760ED /* FileStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0B93AB80F2F329EBC07E252 /* FileStore.swift */; };
+		385716D03C52F431761161F9 /* SubscriptionGateTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F733303B3AA9C49AB0C989F1 /* SubscriptionGateTests.swift */; };
+		C7D60B47D7DF2C99E82D181D /* PaywallViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 92B4CBE2BB017C99788126C0 /* PaywallViewModel.swift */; };
+		F03DFF06A781764EEF310E2C /* PaywallView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B408867899B09AA3E1A8F25E /* PaywallView.swift */; };
+		A4CBDEF8E8397BB3850C4083 /* RevenueCatSubscriptionService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6D161999A47A06C3A2A4AD44 /* RevenueCatSubscriptionService.swift */; };
+		85731EE4374252F66D970CE7 /* GPXExporterTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C455E080FDCE543ED81280B9 /* GPXExporterTests.swift */; };
+		389701F163F0982637C84B3B /* GPXExporter.swift in Sources */ = {isa = PBXBuildFile; fileRef = D389605B7D6FD3555C7AD063 /* GPXExporter.swift */; };
+		B1F6727466704CB9991FDC45 /* HealthWorkoutSaving.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2EE064F9D1824012AA6D1827 /* HealthWorkoutSaving.swift */; };
+		CE7695A9C02645D1BBB8A3FA /* LiveHealthWorkoutService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3B5104E0B7DE4929B732AB70 /* LiveHealthWorkoutService.swift */; };
+		9E00CB7F89AFF64AFD589A89 /* TrackPoint.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2D0E0938DF13A326610E0F5 /* TrackPoint.swift */; };
 		0109717E969E772B34657EA8 /* KlookTicketProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9580173DC549C455621737BA /* KlookTicketProvider.swift */; };
 		0220930625959B549B97AC7D /* AuthService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 381D9D1BE8CC12E4BF15DDC2 /* AuthService.swift */; };
 		035B2296E0FE8F4DAD16B3A0 /* Environment.swift in Sources */ = {isa = PBXBuildFile; fileRef = C5FFDE91CBD495EA92F37C42 /* Environment.swift */; };
@@ -14,6 +24,9 @@
 		0635E9179C2493B7BDD781F9 /* AppTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 77C717168DDB19B39FED0065 /* AppTheme.swift */; };
 		06C43B079032BCEA53B10763 /* TiqetsTicketProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1C6606A5D0FB76976E4F31B /* TiqetsTicketProvider.swift */; };
 		06CF7957AF91D9467ED20313 /* Supabase in Frameworks */ = {isa = PBXBuildFile; productRef = F834BD281657D4A251603C10 /* Supabase */; };
+		6387FFF380F4E0BCFCA26557 /* RevenueCat in Frameworks */ = {isa = PBXBuildFile; productRef = BC370E58E66D879F2ADB24F8 /* RevenueCat */; };
+		63866041E10F12A28D8EDAEB /* Sentry in Frameworks */ = {isa = PBXBuildFile; productRef = 549FABB438BB46AAEA1F914B /* Sentry */; };
+		3441FE7F6E7CE28A2C11B4CD /* RevenueCatUI in Frameworks */ = {isa = PBXBuildFile; productRef = 30A956BA7D8743055B0CC77F /* RevenueCatUI */; };
 		09FACC948F9BDA8DC0A25DF8 /* WalkNavigationViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5356F80333058777DBFD7ABD /* WalkNavigationViewModel.swift */; };
 		0A41E20722A0E0EFFD884DB2 /* RouteShareService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 14F78F4FE951835C7F84A17B /* RouteShareService.swift */; };
 		0A490ED09DED17D19A36ACA8 /* ProfileViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = AD8FA7E9FBE1AD9B4B95460F /* ProfileViewModel.swift */; };
@@ -77,6 +90,7 @@
 		722FDC554293B5021049E064 /* AuthView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8F8093285F9B129F1C5D39B3 /* AuthView.swift */; };
 		747E4ADAF212AFC1EC7F491F /* AnalyticsService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2D01891DF05843E0DADC4DD8 /* AnalyticsService.swift */; };
 		759AD5AF85856F187180CE76 /* AppLogger.swift in Sources */ = {isa = PBXBuildFile; fileRef = BBC8442F6EEB19CAD87B5EDF /* AppLogger.swift */; };
+		8AD64F9E158F51B3D61D8AF8 /* CrashReporter.swift in Sources */ = {isa = PBXBuildFile; fileRef = B44A7D2DBBEE05FC079C5DC6 /* CrashReporter.swift */; };
 		771A3A93F3A4F89F9EADD7AF /* RouteSelectionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3BF11064C425FEF63FFD920B /* RouteSelectionView.swift */; };
 		77CA697BD439D0550D02D568 /* WalkSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = 19CB0581550284AC1649744A /* WalkSession.swift */; };
 		781F7442E1C17485C04CCA44 /* WalkFeedback.swift in Sources */ = {isa = PBXBuildFile; fileRef = 41BB8120A2AD38095766B464 /* WalkFeedback.swift */; };
@@ -90,7 +104,6 @@
 		913FF9DD91F8D636CD0BE837 /* HealthSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3AF87D331080643C06E11581 /* HealthSettingsView.swift */; };
 		91537F9BAD8D5CFD25192972 /* NearbyExperience.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1531380D764350851B38E219 /* NearbyExperience.swift */; };
 		919524681CFA90004EAC2DF1 /* WalkDetailViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 16317208A0934BDA07C4204E /* WalkDetailViewModel.swift */; };
-		936CD0ADC3D8D6B0FFDA944A /* FileStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = B22CC8C2499ACAA5A67EDFE8 /* FileStore.swift */; };
 		9395F047AEABD3BB2E671786 /* LivePedometerService.swift in Sources */ = {isa = PBXBuildFile; fileRef = F497A7E89EC53C34F6B31617 /* LivePedometerService.swift */; };
 		947EBBE08C83CF1534F489B0 /* URLSessionAPIClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 32E595C2E03A68FDB45F185A /* URLSessionAPIClient.swift */; };
 		95F13CDCCE1563EABF1A7B89 /* OverpassAPI.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3E171A7AC7DEE5E5F39EB443 /* OverpassAPI.swift */; };
@@ -190,6 +203,16 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		A0B93AB80F2F329EBC07E252 /* FileStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileStore.swift; sourceTree = "<group>"; };
+		F733303B3AA9C49AB0C989F1 /* SubscriptionGateTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SubscriptionGateTests.swift; sourceTree = "<group>"; };
+		92B4CBE2BB017C99788126C0 /* PaywallViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaywallViewModel.swift; sourceTree = "<group>"; };
+		B408867899B09AA3E1A8F25E /* PaywallView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaywallView.swift; sourceTree = "<group>"; };
+		6D161999A47A06C3A2A4AD44 /* RevenueCatSubscriptionService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RevenueCatSubscriptionService.swift; sourceTree = "<group>"; };
+		C455E080FDCE543ED81280B9 /* GPXExporterTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GPXExporterTests.swift; sourceTree = "<group>"; };
+		D389605B7D6FD3555C7AD063 /* GPXExporter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GPXExporter.swift; sourceTree = "<group>"; };
+		2EE064F9D1824012AA6D1827 /* HealthWorkoutSaving.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HealthWorkoutSaving.swift; sourceTree = "<group>"; };
+		3B5104E0B7DE4929B732AB70 /* LiveHealthWorkoutService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiveHealthWorkoutService.swift; sourceTree = "<group>"; };
+		B2D0E0938DF13A326610E0F5 /* TrackPoint.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrackPoint.swift; sourceTree = "<group>"; };
 		0186C0838B6F292D1AE8DD48 /* LoooprTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = LoooprTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		02D0AEAB33EEF97E2A520EC2 /* CLLocationCoordinate2D+Helpers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "CLLocationCoordinate2D+Helpers.swift"; sourceTree = "<group>"; };
 		03A04B4D6DDC49A202E56CDE /* WrongWayDetector.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WrongWayDetector.swift; sourceTree = "<group>"; };
@@ -290,7 +313,6 @@
 		ADFABF66B50C5DAE8B60BBC5 /* Secrets.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Secrets.xcconfig; sourceTree = "<group>"; };
 		AEF135D93355795C4120E2BC /* ServiceContainer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ServiceContainer.swift; sourceTree = "<group>"; };
 		B1D01FF8F38C0C902BB851D1 /* LoooprLiveActivityBundle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoooprLiveActivityBundle.swift; sourceTree = "<group>"; };
-		B22CC8C2499ACAA5A67EDFE8 /* FileStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileStore.swift; sourceTree = "<group>"; };
 		B268678998A0B0C71DE4D912 /* ReentryPointFinder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReentryPointFinder.swift; sourceTree = "<group>"; };
 		B50F8CA98F6678174C207AA3 /* RouteCardMini.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RouteCardMini.swift; sourceTree = "<group>"; };
 		B563D8143D9D3D31187E6097 /* GetYourGuideAPI.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GetYourGuideAPI.swift; sourceTree = "<group>"; };
@@ -300,6 +322,7 @@
 		B90FB025083FC5C1EC944BBA /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		BA61D083B32B1B897293EA8E /* TicketOffer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TicketOffer.swift; sourceTree = "<group>"; };
 		BBC8442F6EEB19CAD87B5EDF /* AppLogger.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppLogger.swift; sourceTree = "<group>"; };
+		B44A7D2DBBEE05FC079C5DC6 /* CrashReporter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CrashReporter.swift; sourceTree = "<group>"; };
 		BD5448B80A5DB3AA126DDBBA /* RouteArrowHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RouteArrowHelper.swift; sourceTree = "<group>"; };
 		C025EE990B8A54562D93A1F8 /* POIEnriching.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = POIEnriching.swift; sourceTree = "<group>"; };
 		C11D386ADA4F268ECA4BB921 /* FoodCheckInBannerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FoodCheckInBannerView.swift; sourceTree = "<group>"; };
@@ -351,16 +374,29 @@
 			buildActionMask = 2147483647;
 			files = (
 				06CF7957AF91D9467ED20313 /* Supabase in Frameworks */,
+				6387FFF380F4E0BCFCA26557 /* RevenueCat in Frameworks */,
+				3441FE7F6E7CE28A2C11B4CD /* RevenueCatUI in Frameworks */,
+				63866041E10F12A28D8EDAEB /* Sentry in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		62F517A908A252C72FDFCD74 /* Paywall */ = {
+			isa = PBXGroup;
+			children = (
+				B408867899B09AA3E1A8F25E /* PaywallView.swift */,
+				92B4CBE2BB017C99788126C0 /* PaywallViewModel.swift */,
+			);
+			path = Paywall;
+			sourceTree = "<group>";
+		};
 		04F345C92F543BFA10A62B1F /* Logging */ = {
 			isa = PBXGroup;
 			children = (
 				BBC8442F6EEB19CAD87B5EDF /* AppLogger.swift */,
+				B44A7D2DBBEE05FC079C5DC6 /* CrashReporter.swift */,
 			);
 			path = Logging;
 			sourceTree = "<group>";
@@ -446,6 +482,7 @@
 				077BCD193F002395AD7D8174 /* POI.swift */,
 				F124AE4F3E4DEEC18B99BBE1 /* POICategory.swift */,
 				74621340F5C5598C623BF764 /* Route.swift */,
+				B2D0E0938DF13A326610E0F5 /* TrackPoint.swift */,
 				BA61D083B32B1B897293EA8E /* TicketOffer.swift */,
 				280972E6D06540C67875D0E0 /* TicketResult.swift */,
 				F501BD480A5950E079BE5D71 /* UserProfile.swift */,
@@ -471,6 +508,7 @@
 				ACB895BA8D4AD58BC3E09667 /* FinishWalk */,
 				E1EE2AB06DF7E631BA2F3406 /* Home */,
 				0B304169A5EDB8C6F68B38B8 /* POIDetail */,
+				62F517A908A252C72FDFCD74 /* Paywall */,
 				2DE20A3B0E980208CA4D19D5 /* Profile */,
 				05178388902A95AE012F6C35 /* RouteDetail */,
 				BE521F45EEE1594AD7BC4A0B /* RouteSelection */,
@@ -569,7 +607,7 @@
 		66B9521F8326A2FD4FEF9D3B /* Persistence */ = {
 			isa = PBXGroup;
 			children = (
-				B22CC8C2499ACAA5A67EDFE8 /* FileStore.swift */,
+				A0B93AB80F2F329EBC07E252 /* FileStore.swift */,
 				134249684383762E43157B2E /* UserDefaultsStore.swift */,
 			);
 			path = Persistence;
@@ -596,6 +634,7 @@
 			children = (
 				3ED831A4A72E2BC4FBC06310 /* AnalyticsTracking.swift */,
 				CAF4EF06A76F5C3F0F7E57A1 /* AuthProviding.swift */,
+				2EE064F9D1824012AA6D1827 /* HealthWorkoutSaving.swift */,
 				526DB4727286105D8FBA8DCD /* LocationProviding.swift */,
 				9BB27B3B9F6F8C843175DE5E /* NavigationDirecting.swift */,
 				59CA15D19CE95F05FC76BD53 /* PedometerProviding.swift */,
@@ -663,12 +702,21 @@
 			path = Helpers;
 			sourceTree = "<group>";
 		};
+		82DF42D7794E40949D80E836 /* Health */ = {
+			isa = PBXGroup;
+			children = (
+				3B5104E0B7DE4929B732AB70 /* LiveHealthWorkoutService.swift */,
+			);
+			path = Health;
+			sourceTree = "<group>";
+		};
 		9F73D78A2AC6FFA73E729777 /* Services */ = {
 			isa = PBXGroup;
 			children = (
 				A35293ECA4D339BAC4C3E836 /* Analytics */,
 				6A2078E2FBACED31F18C78DD /* Auth */,
 				7C20CFE6CD57F66997BFF40C /* Experiences */,
+				82DF42D7794E40949D80E836 /* Health */,
 				BEAEEEAFABC2379085B71EC8 /* LiveActivity */,
 				BDE02A8D2C0E6860A41CE537 /* Location */,
 				B3DE42A6D1696928779426B7 /* Navigation */,
@@ -717,6 +765,7 @@
 		A60E255117F203F124919062 /* Sharing */ = {
 			isa = PBXGroup;
 			children = (
+				D389605B7D6FD3555C7AD063 /* GPXExporter.swift */,
 				14F78F4FE951835C7F84A17B /* RouteShareService.swift */,
 			);
 			path = Sharing;
@@ -791,9 +840,11 @@
 		D6A734EFF9992DB57C901E06 /* LoooprTests */ = {
 			isa = PBXGroup;
 			children = (
+				C455E080FDCE543ED81280B9 /* GPXExporterTests.swift */,
 				2681139FE02503BC9DD568B1 /* LoooprTests.swift */,
 				932CA0366246995E1DC46C40 /* POIOpeningHoursTests.swift */,
 				E498E2984E49683D65FAEC5E /* RerouteLoopTests.swift */,
+				F733303B3AA9C49AB0C989F1 /* SubscriptionGateTests.swift */,
 			);
 			path = LoooprTests;
 			sourceTree = "<group>";
@@ -814,6 +865,7 @@
 			isa = PBXGroup;
 			children = (
 				CF07ECEDB173CA6F7B8DD181 /* LiveSubscriptionService.swift */,
+				6D161999A47A06C3A2A4AD44 /* RevenueCatSubscriptionService.swift */,
 			);
 			path = Subscription;
 			sourceTree = "<group>";
@@ -987,6 +1039,7 @@
 				78C3531F83B42A8AB9735D15 /* Resources */,
 				7A88B4F9DD191EA6B463ABCA /* Frameworks */,
 				6100F6909BD58FC01D3A8475 /* Embed Foundation Extensions */,
+				552DB3FA64AA8D51026287D8 /* Sentry — upload dSYMs */,
 			);
 			buildRules = (
 			);
@@ -996,6 +1049,9 @@
 			name = Looopr;
 			packageProductDependencies = (
 				F834BD281657D4A251603C10 /* Supabase */,
+				BC370E58E66D879F2ADB24F8 /* RevenueCat */,
+				30A956BA7D8743055B0CC77F /* RevenueCatUI */,
+				549FABB438BB46AAEA1F914B /* Sentry */,
 			);
 			productName = Looopr;
 			productReference = 6063EA7767E792C6FA9481DB /* Looopr.app */;
@@ -1008,7 +1064,7 @@
 			isa = PBXProject;
 			attributes = {
 				BuildIndependentTargetsInParallel = YES;
-				LastUpgradeCheck = 1600;
+				LastUpgradeCheck = 2600;
 				TargetAttributes = {
 					0466A3B7308B3AD18A111086 = {
 						DevelopmentTeam = 8U8ACC3N8B;
@@ -1040,6 +1096,8 @@
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
 				171DCFB299E507081D1189AC /* XCRemoteSwiftPackageReference "supabase-swift" */,
+				AA400F8DC90C8A3E1B7D4FB6 /* XCRemoteSwiftPackageReference "purchases-ios-spm" */,
+				3FF1E526492A59726968C189 /* XCRemoteSwiftPackageReference "sentry-cocoa" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 143AB8F68A23707B16146C39 /* Products */;
@@ -1085,6 +1143,25 @@
 			shellPath = /bin/sh;
 			shellScript = "if which xcodegen > /dev/null 2>&1; then\n  cd \"$SRCROOT\" && xcodegen generate --quiet\nelse\n  echo \"warning: xcodegen not found — run: brew install xcodegen\"\nfi\n";
 		};
+		552DB3FA64AA8D51026287D8 /* Sentry — upload dSYMs */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+			);
+			name = "Sentry — upload dSYMs";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "if [ \"$CONFIGURATION\" != \"Release\" ]; then exit 0; fi\nif [ ! -f \"$SRCROOT/.sentryclirc\" ]; then echo \"note: no .sentryclirc — skipping Sentry dSYM upload\"; exit 0; fi\nif ! which sentry-cli > /dev/null 2>&1; then echo \"warning: sentry-cli not found — run: brew install getsentry/tools/sentry-cli\"; exit 0; fi\ncd \"$SRCROOT\" && sentry-cli debug-files upload --include-sources \"$DWARF_DSYM_FOLDER_PATH\"\n";
+		};
 /* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
@@ -1092,9 +1169,11 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				85731EE4374252F66D970CE7 /* GPXExporterTests.swift in Sources */,
 				CFADF9889409827D615330C3 /* LoooprTests.swift in Sources */,
 				8F99566954DE62BBD63A431C /* POIOpeningHoursTests.swift in Sources */,
 				AB7134DB198F2C0AC4ACAA72 /* RerouteLoopTests.swift in Sources */,
+				385716D03C52F431761161F9 /* SubscriptionGateTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1112,9 +1191,12 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				B1F6727466704CB9991FDC45 /* HealthWorkoutSaving.swift in Sources */,
+				CE7695A9C02645D1BBB8A3FA /* LiveHealthWorkoutService.swift in Sources */,
 				3B311595188C724E24A036B4 /* APIClient.swift in Sources */,
 				F163810238F19054827396C0 /* AnalyticsEvent.swift in Sources */,
 				747E4ADAF212AFC1EC7F491F /* AnalyticsService.swift in Sources */,
+				8AD64F9E158F51B3D61D8AF8 /* CrashReporter.swift in Sources */,
 				96DC4818644B530B7BDA71A4 /* AnalyticsTracking.swift in Sources */,
 				36A581D77EAD73B585952BAC /* AppConfiguration.swift in Sources */,
 				759AD5AF85856F187180CE76 /* AppLogger.swift in Sources */,
@@ -1134,7 +1216,6 @@
 				035B2296E0FE8F4DAD16B3A0 /* Environment.swift in Sources */,
 				8B771D600475C31464E6632F /* FeedbackSectionView.swift in Sources */,
 				650559380923C5EE157C7CA3 /* FeedbackTag.swift in Sources */,
-				936CD0ADC3D8D6B0FFDA944A /* FileStore.swift in Sources */,
 				33711EC630F202FCFC76C6E6 /* FinishWalkView.swift in Sources */,
 				0DA4B2313E651DE690CD6415 /* FinishWalkViewModel.swift in Sources */,
 				71088DDC22C5B7D512491FAF /* FoodCheckInBannerView.swift in Sources */,
@@ -1154,6 +1235,7 @@
 				BE9D452A7011D0355D61B5E8 /* LiveActivityManager.swift in Sources */,
 				9395F047AEABD3BB2E671786 /* LivePedometerService.swift in Sources */,
 				8E18FA353E6DADAF0C179FD2 /* LiveSubscriptionService.swift in Sources */,
+				A4CBDEF8E8397BB3850C4083 /* RevenueCatSubscriptionService.swift in Sources */,
 				9D7093CC4542C905C685B625 /* LoadingStateView.swift in Sources */,
 				D5838F57F319162BBD0462D1 /* LocalizationManager.swift in Sources */,
 				3E9B2D8923A534F86D8C5507 /* Location.swift in Sources */,
@@ -1211,6 +1293,9 @@
 				18A9CD54135F57026D9CF41D /* RouteRepository.swift in Sources */,
 				771A3A93F3A4F89F9EADD7AF /* RouteSelectionView.swift in Sources */,
 				7FDCD6A49F8E7B43E24DB4E1 /* RouteSelectionViewModel.swift in Sources */,
+				389701F163F0982637C84B3B /* GPXExporter.swift in Sources */,
+				F03DFF06A781764EEF310E2C /* PaywallView.swift in Sources */,
+				C7D60B47D7DF2C99E82D181D /* PaywallViewModel.swift in Sources */,
 				0A41E20722A0E0EFFD884DB2 /* RouteShareService.swift in Sources */,
 				ECBFA74C324F0045538ED112 /* SavedRoutesView.swift in Sources */,
 				D0B8CEFD2887244DA18CD606 /* SavedRoutesViewModel.swift in Sources */,
@@ -1235,6 +1320,7 @@
 				06C43B079032BCEA53B10763 /* TiqetsTicketProvider.swift in Sources */,
 				947EBBE08C83CF1534F489B0 /* URLSessionAPIClient.swift in Sources */,
 				5FD3FF865B574976B19D82B9 /* UnitPreference.swift in Sources */,
+				C2E82D9C0FE37A0871B760ED /* FileStore.swift in Sources */,
 				C240029EF9D5B8401F4F3CE2 /* UserDefaultsStore.swift in Sources */,
 				DD64100D807D4FC7D28FF665 /* UserProfile.swift in Sources */,
 				CC0410795C4AD5D06DFD0E42 /* ViatorAPI.swift in Sources */,
@@ -1250,6 +1336,7 @@
 				517D2C95A793EA36AB71D699 /* WalkStatsBar.swift in Sources */,
 				C822E4CDB2F960BFC6BBCA18 /* WalkingPaceSelectionView.swift in Sources */,
 				C8564018EA0CDA0F265516B6 /* WrongWayDetector.swift in Sources */,
+				9E00CB7F89AFF64AFD589A89 /* TrackPoint.swift in Sources */,
 				DE462F48A0432D6FC54A78BB /* WrongWaySheetView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -1328,6 +1415,7 @@
 				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_TEAM = 8U8ACC3N8B;
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
@@ -1386,6 +1474,7 @@
 				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				DEVELOPMENT_TEAM = 8U8ACC3N8B;
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
@@ -1549,6 +1638,14 @@
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
+		AA400F8DC90C8A3E1B7D4FB6 /* XCRemoteSwiftPackageReference "purchases-ios-spm" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/RevenueCat/purchases-ios-spm";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 5.0.0;
+			};
+		};
 		171DCFB299E507081D1189AC /* XCRemoteSwiftPackageReference "supabase-swift" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/supabase/supabase-swift";
@@ -1557,13 +1654,36 @@
 				minimumVersion = 2.0.0;
 			};
 		};
+		3FF1E526492A59726968C189 /* XCRemoteSwiftPackageReference "sentry-cocoa" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/getsentry/sentry-cocoa";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 9.0.0;
+			};
+		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
+		BC370E58E66D879F2ADB24F8 /* RevenueCat */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = AA400F8DC90C8A3E1B7D4FB6 /* XCRemoteSwiftPackageReference "purchases-ios-spm" */;
+			productName = RevenueCat;
+		};
+		30A956BA7D8743055B0CC77F /* RevenueCatUI */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = AA400F8DC90C8A3E1B7D4FB6 /* XCRemoteSwiftPackageReference "purchases-ios-spm" */;
+			productName = RevenueCatUI;
+		};
 		F834BD281657D4A251603C10 /* Supabase */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = 171DCFB299E507081D1189AC /* XCRemoteSwiftPackageReference "supabase-swift" */;
 			productName = Supabase;
+		};
+		549FABB438BB46AAEA1F914B /* Sentry */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 3FF1E526492A59726968C189 /* XCRemoteSwiftPackageReference "sentry-cocoa" */;
+			productName = Sentry;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};
