@@ -10,6 +10,9 @@ protocol LocationProviding: AnyObject, Sendable {
 
     var coordinatePublisher: AnyPublisher<CLLocationCoordinate2D, Never> { get }
     var locationPublisher: AnyPublisher<CLLocation, Never> { get }
+    /// Compass heading in degrees (0 = true north), emitted on every
+    /// `CLLocationManager` heading update — independent of location updates.
+    var headingPublisher: AnyPublisher<CLLocationDirection, Never> { get }
     var authorizationPublisher: AnyPublisher<CLAuthorizationStatus, Never> { get }
 
     func requestAuthorization()

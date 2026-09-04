@@ -7,31 +7,45 @@ struct WalkNavigationView: View {
     @State private var offRoute = OffRouteViewModel()
     @State private var showStopConfirmation = false
     @State private var cameraPosition: MapCameraPosition
+    /// While true the camera tracks the user: centred just behind the puck
+    /// and rotated to the compass heading, so "up" on screen is always the
+    /// direction you're walking (Google Maps walking-mode behaviour).
+    /// Cleared as soon as the user drags the map; restored by the re-center pill.
     @State private var isFollowingUser = true
-    /// Counts in-flight programmatic camera updates. Each programmatic change
-    /// increments this; each `.onMapCameraChange(frequency: .onEnd)` event
-    /// decrements it. Only when it reaches 0 does a camera-end event count
-    /// as a user-initiated pan (which disables follow mode).
-    /// Starts at 1 to absorb the Map's own initial-render camera event.
-    @State private var pendingCameraChanges: Int = 1
+    /// Camera distance used while following. Starts at `navigationDistance`
+    /// and adopts whatever zoom the user pinches to, so following doesn't
+    /// keep snapping their zoom level back.
+    @State private var followDistance: CLLocationDistance = 600
     /// Tracks the live map camera heading so the user-location arrow can be
     /// rotated relative to the map.
     @State private var currentMapHeading: CLLocationDirection = 0
     /// 0→1 cycling value that drives the "marching" wave along route arrows.
     @State private var arrowPhase: Double = 0
+    /// Drives `arrowPhase`. Stored so it can be invalidated in `onDisappear` —
+    /// an anonymous scheduled timer would keep firing (and keep this view
+    /// alive) for the rest of the app session.
+    @State private var arrowTimer: Timer?
 
     private let routeColor = Color(hex: "#66BB6A")
 
     // MARK: - Camera constants (60-70° tilt, 500-800m distance)
     private let navigationDistance: CLLocationDistance = 600
     private let navigationPitch: Double = 65
+    /// How far ahead of the user (along the heading) the camera aims, in
+    /// metres. Pushes the puck into the lower part of the screen so more of
+    /// the upcoming route is visible — the same framing Google Maps uses.
+    private let navigationLookAhead: CLLocationDistance = 45
 
     init(route: Route) {
-        _viewModel = State(initialValue: WalkNavigationViewModel(route: route))
+        let viewModel = WalkNavigationViewModel(route: route)
+        _viewModel = State(initialValue: viewModel)
+        // Face down the route from the very first frame, before GPS/compass
+        // have reported anything.
         _cameraPosition = State(initialValue: .camera(MapCamera(
-            centerCoordinate: route.startLocation.clCoordinate,
+            centerCoordinate: route.startLocation.clCoordinate
+                .coordinate(at: 45, bearing: viewModel.heading),
             distance: 600,
-            heading: 0,
+            heading: viewModel.heading,
             pitch: 65
         )))
     }
@@ -40,24 +54,34 @@ struct WalkNavigationView: View {
 
     private func navigationCamera(at coordinate: CLLocationCoordinate2D,
                                   heading: CLLocationDirection) -> MapCamera {
-        MapCamera(centerCoordinate: coordinate,
-                  distance: navigationDistance,
+        MapCamera(centerCoordinate: coordinate.coordinate(at: navigationLookAhead, bearing: heading),
+                  distance: followDistance,
                   heading: heading,
                   pitch: navigationPitch)
     }
 
     private var nextStepBearing: Double { viewModel.currentRouteBearing }
 
-    private func snapToNavigationCamera() {
-        guard let location = viewModel.userLocation else {
-            isFollowingUser = true
-            return
-        }
-        pendingCameraChanges += 1
-        withAnimation(.easeOut(duration: 0.6)) {
+    /// Re-aims the camera at the user with the current compass heading.
+    /// Called on every location *and* heading change while following, so
+    /// the map keeps rotating with the user even when they stand still and
+    /// turn around.
+    private func updateFollowCamera(duration: Double) {
+        guard isFollowingUser, let location = viewModel.userLocation else { return }
+        withAnimation(.easeOut(duration: duration)) {
             cameraPosition = .camera(navigationCamera(at: location, heading: viewModel.heading))
         }
+    }
+
+    private func snapToNavigationCamera() {
         isFollowingUser = true
+        followDistance = navigationDistance
+        updateFollowCamera(duration: 0.6)
+    }
+
+    private func stopFollowingUser() {
+        guard isFollowingUser else { return }
+        isFollowingUser = false
     }
 
     // MARK: - Computed helpers
@@ -207,12 +231,16 @@ struct WalkNavigationView: View {
         .task { await viewModel.start() }
         .onAppear {
             UIApplication.shared.isIdleTimerDisabled = true
-            Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { _ in
-                arrowPhase = (arrowPhase + 0.033).truncatingRemainder(dividingBy: 1.0)
+            if arrowTimer == nil {
+                arrowTimer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { _ in
+                    arrowPhase = (arrowPhase + 0.033).truncatingRemainder(dividingBy: 1.0)
+                }
             }
         }
         .onDisappear {
             UIApplication.shared.isIdleTimerDisabled = false
+            arrowTimer?.invalidate()
+            arrowTimer = nil
         }
         .onChange(of: viewModel.userLocation) { _, location in
             guard let location else { return }
@@ -221,28 +249,31 @@ struct WalkNavigationView: View {
                 horizontalAccuracy: viewModel.currentAccuracy,
                 routePolyline: viewModel.activePolyline
             )
-            if isFollowingUser {
-                pendingCameraChanges += 1
-                withAnimation(.easeOut(duration: 0.4)) {
-                    cameraPosition = .camera(navigationCamera(at: location, heading: viewModel.heading))
-                }
-            }
+            updateFollowCamera(duration: 0.4)
         }
-        .onChange(of: viewModel.heading) { _, heading in
-            guard isFollowingUser, let location = viewModel.userLocation else { return }
-            pendingCameraChanges += 1
-            withAnimation(.easeOut(duration: 0.3)) {
-                cameraPosition = .camera(navigationCamera(at: location, heading: heading))
-            }
+        .onChange(of: viewModel.heading) { _, _ in
+            updateFollowCamera(duration: 0.3)
         }
         .onMapCameraChange(frequency: .continuous) { context in
             currentMapHeading = context.camera.heading
         }
-        .onMapCameraChange(frequency: .onEnd) { _ in
-            if pendingCameraChanges > 0 {
-                pendingCameraChanges -= 1
-            } else if isFollowingUser {
-                isFollowingUser = false
+        .onMapCameraChange(frequency: .onEnd) { context in
+            guard isFollowingUser, let location = viewModel.userLocation else { return }
+            // Safety net in case the drag gesture below doesn't fire: while
+            // following, the camera always settles within `navigationLookAhead`
+            // of the user, so a centre far away from them was a user pan.
+            // (Threshold is deliberately generous so an interrupted
+            // follow-animation or a GPS jump can never trip it.)
+            if context.camera.centerCoordinate.distance(to: location) > 250 {
+                stopFollowingUser()
+                return
+            }
+            // Pinch-zoom while following: keep the user's chosen distance.
+            // Our own follow moves never change distance, so any change
+            // here came from the user.
+            let distance = context.camera.distance
+            if abs(distance - followDistance) > 15 {
+                followDistance = min(max(distance, 150), 2_000)
             }
         }
         .onChange(of: offRoute.isOffRoute) { _, isOff in
@@ -267,7 +298,7 @@ struct WalkNavigationView: View {
     // MARK: - Map
 
     private var navigationMap: some View {
-        Map(position: $cameraPosition) {
+        Map(position: $cameraPosition, interactionModes: [.pan, .zoom]) {
             // Route polyline in Looopr green
             MapPolyline(coordinates: viewModel.activePolyline)
                 .stroke(routeColor, lineWidth: 10)
@@ -289,30 +320,18 @@ struct WalkNavigationView: View {
                 }
             }
 
-            // User location — directional arrow that lies flat on the map ground plane.
-            // rotationEffect spins the arrow to face the heading; rotation3DEffect tilts
-            // it backward by the camera pitch so it foreshortens correctly on the 3D map.
+            // User location — shaded "puck" marker (Google Maps style).
+            // The chevron stays upright in screen space at constant size so it can
+            // never distort with camera pitch; the pitch-squashed halo + shadow
+            // ellipses on the ground plane beneath it are what anchor it in 3D.
             if let location = viewModel.userLocation {
                 Annotation("", coordinate: location) {
-                    ZStack {
-                        // White border (slightly larger)
-                        NavigationArrowShape()
-                            .fill(.white)
-                            .frame(width: 44, height: 52)
-                        // Dark green fill
-                        NavigationArrowShape()
-                            .fill(Color(hex: "#1B5E20"))
-                            .frame(width: 36, height: 44)
-                    }
-                    // 1. Spin so tip faces the direction of travel
-                    .rotationEffect(.degrees(viewModel.heading - currentMapHeading))
+                    UserPuckMarker(
+                        rotation: viewModel.heading - currentMapHeading,
+                        pitchSquash: cos(navigationPitch * .pi / 180)
+                    )
                     .animation(.easeOut(duration: 0.25), value: viewModel.heading)
                     .animation(.easeOut(duration: 0.25), value: currentMapHeading)
-                    // 2. Tilt the arrow backward by the camera pitch so it lies flat
-                    //    on the ground plane instead of standing upright in screen space
-                    .rotation3DEffect(.degrees(-navigationPitch), axis: (x: 1, y: 0, z: 0))
-                    // 3. Shadow of the foreshortened shape, cast downward onto the map
-                    .shadow(color: .black.opacity(0.35), radius: 6, x: 0, y: 4)
                 }
             }
 
@@ -356,6 +375,13 @@ struct WalkNavigationView: View {
         }
         .mapStyle(.standard(elevation: .realistic))
         .mapControls { MapCompass() }
+        // Any finger drag on the map hands camera control to the user until
+        // they tap the re-center pill. `simultaneousGesture` lets MapKit keep
+        // handling the pan itself; we only observe it.
+        .simultaneousGesture(
+            DragGesture(minimumDistance: 12)
+                .onChanged { _ in stopFollowingUser() }
+        )
     }
 
     // MARK: - Turn Instruction Banner
@@ -702,11 +728,90 @@ private extension RouteToastStyle {
     }
 }
 
+// MARK: - User Puck Marker
+
+/// User-location marker: an upright, shaded chevron floating over a
+/// pitch-squashed halo + contact shadow on the map's ground plane.
+///
+/// Design rationale: a flat shape tilted onto the ground plane reads as a
+/// "sticker" next to 3D buildings because it has no volume or lighting.
+/// Instead the chevron stays billboarded (constant screen size, never
+/// distorted by pitch) and gets its 3D feel from (a) a tip→tail gradient
+/// and top-edge highlight suggesting volume, and (b) squashed ground
+/// ellipses beneath it that anchor it in the scene — the same trick
+/// Google Maps uses for its navigation puck.
+private struct UserPuckMarker: View {
+    /// Degrees to spin the chevron so its tip faces the direction of travel
+    /// (heading minus current camera heading).
+    let rotation: Double
+    /// cos(camera pitch in radians) — vertical squash factor applied to
+    /// ground-plane elements so they foreshorten with the 3D camera.
+    let pitchSquash: Double
+
+    var body: some View {
+        ZStack {
+            // Soft "you are here" halo lying on the map surface.
+            Ellipse()
+                .fill(
+                    RadialGradient(
+                        colors: [Color(hex: "#1B5E20").opacity(0.28), .clear],
+                        center: .center,
+                        startRadius: 2,
+                        endRadius: 26
+                    )
+                )
+                .frame(width: 52, height: max(52 * pitchSquash, 10))
+
+            // Contact shadow directly beneath the chevron.
+            Ellipse()
+                .fill(.black.opacity(0.30))
+                .frame(width: 26, height: max(26 * pitchSquash, 6))
+                .blur(radius: 3)
+                .offset(y: 2)
+
+            // The chevron itself — upright, floating just above its shadow.
+            ZStack {
+                // White outline (slightly larger, matches app marker style).
+                NavigationArrowShape()
+                    .fill(.white)
+                    .frame(width: 40, height: 46)
+                // Shaded green fill: lighter at the tip, darker at the tail,
+                // so the marker reads as lit from above while it rotates.
+                NavigationArrowShape()
+                    .fill(
+                        LinearGradient(
+                            colors: [Color(hex: "#43A047"), Color(hex: "#1B5E20")],
+                            startPoint: .top,
+                            endPoint: .bottom
+                        )
+                    )
+                    .frame(width: 32, height: 38)
+                    .overlay(
+                        // Faint highlight along the leading edges for volume.
+                        NavigationArrowShape()
+                            .stroke(
+                                LinearGradient(
+                                    colors: [.white.opacity(0.55), .clear],
+                                    startPoint: .top,
+                                    endPoint: .center
+                                ),
+                                lineWidth: 1.5
+                            )
+                            .frame(width: 32, height: 38)
+                    )
+            }
+            .rotationEffect(.degrees(rotation))
+            .shadow(color: .black.opacity(0.25), radius: 3, x: 0, y: 2)
+            .offset(y: -10)
+        }
+    }
+}
+
 // MARK: - Navigation Arrow Shape
 
 /// Pointed arrowhead with a notched tail — tip points UP at 0° rotation.
-/// Designed to be paired with rotationEffect (heading) + rotation3DEffect (pitch)
-/// so it foreshortens correctly and appears to lie flat on the map ground plane.
+/// Spin with rotationEffect (heading); used upright inside UserPuckMarker
+/// and for the small direction arrows along the route.
 private struct NavigationArrowShape: Shape {
     func path(in rect: CGRect) -> Path {
         var p = Path()

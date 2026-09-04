@@ -68,7 +68,13 @@ final class WalkNavigationViewModel {
     private(set) var nextInstruction: String?
     private(set) var distanceToNextStep: Double = 0
     private(set) var userLocation: CLLocationCoordinate2D?
+    /// Direction the map camera should face (0 = N, 90 = E …). Driven by
+    /// the compass so the map rotates as the user turns, like Google Maps'
+    /// walking mode. Seeded with the route's opening bearing so the map
+    /// already faces "down the route" before the first compass reading.
     private(set) var heading: CLLocationDirection = 0
+    /// True once a real compass reading has arrived.
+    private(set) var hasCompassHeading = false
     private(set) var currentAccuracy: Double = 0
     private(set) var distanceWalked: Double = 0
     private(set) var elapsedSeconds: TimeInterval = 0
@@ -166,6 +172,11 @@ final class WalkNavigationViewModel {
     private let locationService: LocationProviding
     private let directionsService: NavigationDirecting
     private let pedometerService: PedometerProviding
+    private let analytics: AnalyticsTracking
+
+    // Per-walk analytics counters, reported on walk_completed.
+    private var flipCount = 0
+    private var rerouteCount = 0
     private let stepTracker: StepTracker
     private let wrongWayDetector: WrongWayDetector
     private let config: AppConfiguration
@@ -173,6 +184,7 @@ final class WalkNavigationViewModel {
     private let liveActivityManager = LiveActivityManager.shared
 
     private var locationCancellable: AnyCancellable?
+    private var headingCancellable: AnyCancellable?
     private var elapsedTimer: Timer?
     private var liveActivityTimer: Timer?
     private let startTime = Date()
@@ -204,16 +216,24 @@ final class WalkNavigationViewModel {
         locationService: LocationProviding = ServiceContainer.shared.resolve(LocationProviding.self),
         directionsService: NavigationDirecting = ServiceContainer.shared.resolve(NavigationDirecting.self),
         pedometerService: PedometerProviding = ServiceContainer.shared.resolve(PedometerProviding.self),
+        analytics: AnalyticsTracking = ServiceContainer.shared.resolve(AnalyticsTracking.self),
         configuration: AppConfiguration = .current
     ) {
         self.route = route
         self.locationService = locationService
         self.directionsService = directionsService
         self.pedometerService = pedometerService
+        self.analytics = analytics
         self.config = configuration
         self.stepTracker = StepTracker(configuration: configuration)
         self.wrongWayDetector = WrongWayDetector(configuration: configuration)
-        self.session = WalkSession(routeId: route.id)
+        // Capture the route forecast on the session so planned-vs-actual is
+        // queryable once the walk is synced to Supabase.
+        self.session = WalkSession(
+            routeId: route.id,
+            plannedDurationMinutes: route.durationMinutes,
+            plannedDistanceMeters: route.distanceKilometers * 1000
+        )
         self.activePolyline = route.pathCoordinates
         self.activePolylineCumulativeDistances = Self.cumulativeDistances(for: route.pathCoordinates)
         self.routeArrows = RouteArrowHelper.arrows(along: route.pathCoordinates)
@@ -227,6 +247,7 @@ final class WalkNavigationViewModel {
         self.currentRouteBearing = route.pathCoordinates.count >= 2
             ? route.pathCoordinates[0].bearing(to: route.pathCoordinates[1])
             : 0
+        self.heading = self.currentRouteBearing
 
         self.wrongWayDetector.onWrongWayDetected = { [weak self] in
             Task { @MainActor in
@@ -241,6 +262,11 @@ final class WalkNavigationViewModel {
     }
 
     func start() async {
+        analytics.track(.walkStarted(
+            routeId: route.id,
+            plannedMinutes: route.durationMinutes,
+            plannedDistanceKm: route.distanceKilometers
+        ))
         wrongWayDetector.startSession()
         syncWrongWayDebug()
         locationService.startUpdating()
@@ -279,6 +305,7 @@ final class WalkNavigationViewModel {
     func stop() {
         locationService.stopUpdating()
         locationCancellable?.cancel()
+        headingCancellable?.cancel()
         elapsedTimer?.invalidate()
         pedometerService.stopCounting()
         session.finishedAt = Date()
@@ -293,6 +320,15 @@ final class WalkNavigationViewModel {
 
     func finish() {
         stop()
+        analytics.track(.walkCompleted(
+            routeId: route.id,
+            durationSeconds: session.durationSeconds,
+            distanceMeters: session.distanceWalkedMeters,
+            stepCount: session.stepCount,
+            plannedMinutes: session.plannedDurationMinutes,
+            flipCount: flipCount,
+            rerouteCount: rerouteCount
+        ))
         isFinished = true
     }
 
@@ -385,6 +421,35 @@ final class WalkNavigationViewModel {
             .sink { [weak self] clLocation in
                 self?.handleLocationUpdate(clLocation)
             }
+
+        headingCancellable = locationService.headingPublisher
+            .receive(on: RunLoop.main)
+            .sink { [weak self] newHeading in
+                self?.handleHeadingUpdate(newHeading)
+            }
+
+        // Adopt any reading the compass already produced before we subscribed.
+        if let existing = locationService.currentHeading {
+            handleHeadingUpdate(existing)
+        }
+    }
+
+    /// Smallest signed angle between two compass bearings, in degrees (-180…180).
+    private static func angleDelta(_ a: CLLocationDirection, _ b: CLLocationDirection) -> Double {
+        var d = (b - a).truncatingRemainder(dividingBy: 360)
+        if d > 180 { d -= 360 }
+        if d < -180 { d += 360 }
+        return d
+    }
+
+    private func handleHeadingUpdate(_ newHeading: CLLocationDirection) {
+        let normalized = (newHeading.truncatingRemainder(dividingBy: 360) + 360)
+            .truncatingRemainder(dividingBy: 360)
+        // Ignore sub-threshold wobble so the camera isn't re-targeted for
+        // every 1° of compass noise. The first real reading always wins.
+        if hasCompassHeading, abs(Self.angleDelta(heading, normalized)) < 2 { return }
+        hasCompassHeading = true
+        heading = normalized
     }
 
     private func handleLocationUpdate(_ clLocation: CLLocation) {
@@ -394,7 +459,13 @@ final class WalkNavigationViewModel {
 
         userLocation = coordinate
         currentAccuracy = accuracy
-        heading = locationService.currentHeading ?? 0
+        recordTrackPoint(clLocation)
+        // Heading is driven by `handleHeadingUpdate` (compass). Until the
+        // compass reports, fall back to the GPS course when the user is
+        // actually moving so the map still faces the direction of travel.
+        if !hasCompassHeading, clLocation.course >= 0, clLocation.speed > 0.7 {
+            heading = clLocation.course
+        }
 
         // Track distance walked
         if let prev = previous {
@@ -418,6 +489,31 @@ final class WalkNavigationViewModel {
         updateStreetNameIfNeeded(clLocation)
 
         updateStepInstructionProgress(from: coordinate)
+    }
+
+    /// Fixes less accurate than this (metres) are left out of the recorded
+    /// track so a GPS hiccup under a bridge doesn't put a spike in the GPX.
+    private static let trackAccuracyLimitMeters: Double = 50
+
+    /// Core Location hands over its last cached fix the instant updates
+    /// start, and that fix can be minutes old and kilometres away — from
+    /// wherever the phone last had a lock. Keeping it would open the GPX
+    /// with a straight line across town, so anything staler than this is
+    /// dropped and we wait for a live one.
+    private static let maxTrackPointAgeSeconds: TimeInterval = 10
+
+    /// Appends the fix to the session's walked track (used for GPX export /
+    /// Strava). Keeps every reasonably accurate fix in chronological order.
+    private func recordTrackPoint(_ location: CLLocation) {
+        guard location.horizontalAccuracy >= 0,
+              location.horizontalAccuracy <= Self.trackAccuracyLimitMeters,
+              -location.timestamp.timeIntervalSinceNow <= Self.maxTrackPointAgeSeconds
+        else { return }
+        if let last = session.trackPoints?.last, location.timestamp <= last.timestamp {
+            return
+        }
+        if session.trackPoints == nil { session.trackPoints = [] }
+        session.trackPoints?.append(TrackPoint(location: location))
     }
 
     private func checkWrongWayIfNeeded(_ clLocation: CLLocation) {
@@ -648,6 +744,8 @@ final class WalkNavigationViewModel {
             debugLastRerouteDate = lastRerouteTime
             triggerHaptic()
             logger.info("Rerouted: \(steps.count) steps")
+            rerouteCount += 1
+            analytics.track(.rerouteTriggered(routeId: route.id))
 
             // Show green "Route updated" toast
             routeToastMessage = L10n.WalkNavigation.routeUpdated
@@ -697,6 +795,8 @@ final class WalkNavigationViewModel {
             syncWrongWayDebug()
             triggerHaptic()
             logger.info("Route flipped with \(steps.count) recomputed steps from \(path.count) reversed path points")
+            flipCount += 1
+            analytics.track(.routeFlipped(routeId: route.id))
 
             try? await Task.sleep(for: .seconds(config.navigation.rerouteToastDismissSeconds))
             showRouteUpdatedToast = false

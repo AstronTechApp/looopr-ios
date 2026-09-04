@@ -105,7 +105,8 @@ struct DebugNavigationOverlay: View {
     }
 
     private var wrongWayDistanceLabel: String {
-        "\(Int(wrongWaySnapshot.wrongWayMeters))/\(Int(wrongWaySnapshot.triggerMeters)) m"
+        "\(Int(wrongWaySnapshot.wrongWayMeters))/\(Int(wrongWaySnapshot.triggerMeters)) m · "
+            + "\(Int(wrongWaySnapshot.wrongWaySeconds))/\(Int(wrongWaySnapshot.minDurationSeconds)) s"
     }
 
     private var wrongWayWindowLabel: String {

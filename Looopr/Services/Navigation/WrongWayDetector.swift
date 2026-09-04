@@ -7,6 +7,8 @@ struct WrongWayDetectorDebugSnapshot: Equatable {
     var windowLimitMeters: Double = 0
     var wrongWayMeters: Double = 0
     var triggerMeters: Double = 0
+    var wrongWaySeconds: Double = 0
+    var minDurationSeconds: Double = 0
     var divergenceDegrees: Double?
     var expectedBearing: Double?
     var travelBearing: Double?
@@ -19,9 +21,13 @@ struct WrongWayDetectorDebugSnapshot: Equatable {
 /// Flow:
 ///   1. GPS warmup guard -- ignore the first few seconds (once per session).
 ///   2. Accumulate `wrongWayDistance` when the user's travel bearing diverges
-///      from the expected route bearing.
-///   3. Once `wrongWayDistance` reaches the configured trigger distance,
-///      fire `onWrongWayDetected`.
+///      from the expected route bearing. The travel bearing is measured from
+///      a fix at least `bearingBaselineMeters` back (not the previous fix),
+///      and only fixes where the user is actually moving count — GPS drift
+///      while standing still produces random bearings and must not trigger.
+///   3. Once `wrongWayDistance` reaches the configured trigger distance AND
+///      the divergence has persisted for `minDurationSeconds`, fire
+///      `onWrongWayDetected`.
 ///   4. If the user self-corrects before the trigger distance,
 ///      reset `wrongWayDistance`.
 ///   5. After `maxFlips` confirmed flips, detection stops for the session.
@@ -37,6 +43,9 @@ final class WrongWayDetector {
     private let detectionWindowMeters: Double
     private let divergenceThresholdDegrees: Double
     private let wrongWayTriggerMeters: Double
+    private let minDurationSeconds: TimeInterval
+    private let minSpeed: Double
+    private let bearingBaselineMeters: Double
     private let maxFlips: Int
 
     // MARK: - State
@@ -57,6 +66,12 @@ final class WrongWayDetector {
     private var walkStartTime: Date?
     private var previousLocation: CLLocation?
     private var wrongWayDistance: CLLocationDistance = 0
+    /// Timestamp of the first fix in the current run of diverging travel.
+    private var wrongWayStartedAt: Date?
+    /// Recent moving fixes, oldest first, used to measure travel bearing
+    /// over `bearingBaselineMeters` rather than fix-to-fix.
+    private var trail: [CLLocation] = []
+    private let trailMaxAge: TimeInterval = 90
 
     /// Total distance considered by this detector since the walk started.
     /// This is not reset when the user dismisses the prompt, so it enforces
@@ -74,6 +89,9 @@ final class WrongWayDetector {
         self.detectionWindowMeters = configuration.navigation.wrongWayDetectionWindowMeters
         self.divergenceThresholdDegrees = configuration.navigation.wrongWayDivergenceDegrees
         self.wrongWayTriggerMeters = configuration.navigation.wrongWayTriggerMeters
+        self.minDurationSeconds = configuration.navigation.wrongWayMinDurationSeconds
+        self.minSpeed = configuration.navigation.wrongWayMinSpeedMetersPerSecond
+        self.bearingBaselineMeters = configuration.navigation.wrongWayBearingBaselineMeters
         self.maxFlips = configuration.navigation.wrongWayMaxFlips
     }
 
@@ -82,6 +100,9 @@ final class WrongWayDetector {
         self.detectionWindowMeters = navigation.wrongWayDetectionWindowMeters
         self.divergenceThresholdDegrees = navigation.wrongWayDivergenceDegrees
         self.wrongWayTriggerMeters = navigation.wrongWayTriggerMeters
+        self.minDurationSeconds = navigation.wrongWayMinDurationSeconds
+        self.minSpeed = navigation.wrongWayMinSpeedMetersPerSecond
+        self.bearingBaselineMeters = navigation.wrongWayBearingBaselineMeters
         self.maxFlips = navigation.wrongWayMaxFlips
     }
 
@@ -91,7 +112,8 @@ final class WrongWayDetector {
         walkStartTime = Date()
         previousLocation = nil
         cumulativeDistanceSinceSessionStart = 0
-        wrongWayDistance = 0
+        clearWrongWayRun()
+        trail = []
         flipCount = 0
         awaitingUserResponse = false
         updateDebug(status: "idle", reason: "session started")
@@ -100,7 +122,7 @@ final class WrongWayDetector {
     /// Called when the user confirms "Yes, flip route".
     func recordFlip() {
         flipCount += 1
-        wrongWayDistance = 0
+        clearWrongWayRun()
         awaitingUserResponse = false
         updateDebug(status: "flipped", reason: "user confirmed")
         // previousLocation is kept so the next check has a reference point.
@@ -108,7 +130,7 @@ final class WrongWayDetector {
 
     /// Called when the user dismisses the prompt and keeps the original route.
     func recordDismissal() {
-        wrongWayDistance = 0
+        clearWrongWayRun()
         awaitingUserResponse = false
         updateDebug(status: "dismissed", reason: "user kept original")
         // flipCount is NOT incremented -- dismissed prompts don't count.
@@ -119,9 +141,10 @@ final class WrongWayDetector {
     /// and it should let the beginning-of-walk prompt recover on the next
     /// clear wrong-way movement.
     func recordFailedFlip() {
-        wrongWayDistance = 0
+        clearWrongWayRun()
         awaitingUserResponse = false
         previousLocation = nil
+        trail = []
         cumulativeDistanceSinceSessionStart = 0
         updateDebug(status: "retry", reason: "flip failed; detector reset")
     }
@@ -132,9 +155,15 @@ final class WrongWayDetector {
     /// bearing is meaningless) doesn't carry over into a later wrong-way
     /// trigger once they're back on the polyline.
     func resetAccumulator() {
-        wrongWayDistance = 0
+        clearWrongWayRun()
         previousLocation = nil
+        trail = []
         updateDebug(status: "reset", reason: "off-route/reroute reset")
+    }
+
+    private func clearWrongWayRun() {
+        wrongWayDistance = 0
+        wrongWayStartedAt = nil
     }
 
     func recordSkipped(reason: String) {
@@ -198,21 +227,41 @@ final class WrongWayDetector {
         // Ignore large GPS jumps; they should not count as intentional walking.
         guard delta < 75 else {
             previousLocation = userLocation
-            wrongWayDistance = 0
+            clearWrongWayRun()
+            trail = []
             updateDebug(status: "gps jump", reason: "\(Int(delta))m jump ignored")
             return
         }
 
         defer { previousLocation = userLocation }
 
+        // Standing still? GPS drift while stationary yields random bearings,
+        // so such fixes neither count towards nor clear a wrong-way run.
+        let dt = userLocation.timestamp.timeIntervalSince(previous.timestamp)
+        let speed = userLocation.speed >= 0 ? userLocation.speed : delta / max(dt, 0.1)
+        guard speed >= minSpeed else {
+            updateDebug(status: "stationary", reason: String(format: "%.1f m/s", speed))
+            return
+        }
+
         cumulativeDistanceSinceSessionStart += delta
         guard cumulativeDistanceSinceSessionStart <= detectionWindowMeters else {
-            wrongWayDistance = 0
+            clearWrongWayRun()
             updateDebug(status: "expired", reason: "start window passed")
             return
         }
-        // Compute bearings
-        let travelBearing = previous.coordinate.bearing(to: userLocation.coordinate)
+
+        // Measure travel bearing over a baseline of at least
+        // `bearingBaselineMeters` so per-fix jitter can't swing it around.
+        trail.removeAll { userLocation.timestamp.timeIntervalSince($0.timestamp) > trailMaxAge }
+        trail.append(previous)
+        guard let anchor = trail.last(where: {
+            $0.distance(from: userLocation) >= bearingBaselineMeters
+        }) else {
+            updateDebug(status: "baseline", reason: "building \(Int(bearingBaselineMeters))m baseline")
+            return
+        }
+        let travelBearing = anchor.coordinate.bearing(to: userLocation.coordinate)
         let divergence = Self.angularDivergence(travelBearing, expectedBearing)
         let reverseStartAlignment = reverseStartBearing.map {
             Self.angularDivergence(travelBearing, $0)
@@ -226,7 +275,10 @@ final class WrongWayDetector {
 
         if divergence > divergenceThresholdDegrees || matchesReverseStart {
             wrongWayDistance += delta
-            if wrongWayDistance >= wrongWayTriggerMeters {
+            let startedAt = wrongWayStartedAt ?? previous.timestamp
+            wrongWayStartedAt = startedAt
+            let wrongWaySeconds = userLocation.timestamp.timeIntervalSince(startedAt)
+            if wrongWayDistance >= wrongWayTriggerMeters, wrongWaySeconds >= minDurationSeconds {
                 awaitingUserResponse = true
                 updateDebug(
                     status: "triggered",
@@ -249,7 +301,7 @@ final class WrongWayDetector {
             }
         } else {
             // User self-corrected
-            wrongWayDistance = 0
+            clearWrongWayRun()
             updateDebug(
                 status: "aligned",
                 reason: "travel matches route",
@@ -285,6 +337,8 @@ final class WrongWayDetector {
             windowLimitMeters: detectionWindowMeters,
             wrongWayMeters: wrongWayDistance,
             triggerMeters: wrongWayTriggerMeters,
+            wrongWaySeconds: wrongWayStartedAt.map { max(0, Date().timeIntervalSince($0)) } ?? 0,
+            minDurationSeconds: minDurationSeconds,
             divergenceDegrees: divergenceDegrees,
             expectedBearing: expectedBearing,
             travelBearing: travelBearing,

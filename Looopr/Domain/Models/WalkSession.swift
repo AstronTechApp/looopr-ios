@@ -15,8 +15,20 @@ struct WalkSession: Identifiable, Codable, Sendable, Hashable {
     var elevationGainMeters: Double?
     var routeColorIndex: Int?
     var routeCoordinates: [Location]?
+    /// What the route forecast promised when the walk started — kept alongside
+    /// the actuals so planned-vs-actual is directly queryable.
+    var plannedDurationMinutes: Int?
+    var plannedDistanceMeters: Double?
+    /// The GPS track actually walked, in chronological order. `nil` for walks
+    /// recorded before track recording existed. This is what GPX export and
+    /// Strava upload are built from — `routeCoordinates` is only the plan.
+    var trackPoints: [TrackPoint]?
+    /// Identifier of the HKWorkout this walk was saved as in Apple Health,
+    /// or `nil` when it hasn't been (or the user has that turned off).
+    var healthKitWorkoutID: UUID?
 
     var isComplete: Bool { finishedAt != nil }
+    var hasTrack: Bool { (trackPoints?.count ?? 0) >= 2 }
 
     var distanceKilometers: Double {
         distanceWalkedMeters / 1000
@@ -26,8 +38,20 @@ struct WalkSession: Identifiable, Codable, Sendable, Hashable {
         Int(durationSeconds / 60)
     }
 
+    /// The *planned* loop. Use `trackCoordinates` for what was actually walked.
     var pathCoordinates: [CLLocationCoordinate2D] {
         routeCoordinates?.map(\.clCoordinate) ?? []
+    }
+
+    /// The GPS track actually walked, in order; empty when none was recorded.
+    var trackCoordinates: [CLLocationCoordinate2D] {
+        trackPoints?.map(\.clCoordinate) ?? []
+    }
+
+    /// What a map of this walk should draw as its main line: the walked
+    /// track when there is one, otherwise the planned loop (older walks).
+    var displayCoordinates: [CLLocationCoordinate2D] {
+        hasTrack ? trackCoordinates : pathCoordinates
     }
 
     init(
@@ -43,7 +67,11 @@ struct WalkSession: Identifiable, Codable, Sendable, Hashable {
         routeName: String? = nil,
         elevationGainMeters: Double? = nil,
         routeColorIndex: Int? = nil,
-        routeCoordinates: [Location]? = nil
+        routeCoordinates: [Location]? = nil,
+        plannedDurationMinutes: Int? = nil,
+        plannedDistanceMeters: Double? = nil,
+        trackPoints: [TrackPoint]? = nil,
+        healthKitWorkoutID: UUID? = nil
     ) {
         self.id = id
         self.routeId = routeId
@@ -58,6 +86,10 @@ struct WalkSession: Identifiable, Codable, Sendable, Hashable {
         self.elevationGainMeters = elevationGainMeters
         self.routeColorIndex = routeColorIndex
         self.routeCoordinates = routeCoordinates
+        self.plannedDurationMinutes = plannedDurationMinutes
+        self.plannedDistanceMeters = plannedDistanceMeters
+        self.trackPoints = trackPoints
+        self.healthKitWorkoutID = healthKitWorkoutID
     }
 
     // Backward-compatible decoding. Sessions saved before the photo/collage
@@ -77,6 +109,10 @@ struct WalkSession: Identifiable, Codable, Sendable, Hashable {
         case elevationGainMeters
         case routeColorIndex
         case routeCoordinates
+        case plannedDurationMinutes
+        case plannedDistanceMeters
+        case trackPoints
+        case healthKitWorkoutID
     }
 
     init(from decoder: Decoder) throws {
@@ -94,5 +130,9 @@ struct WalkSession: Identifiable, Codable, Sendable, Hashable {
         elevationGainMeters = try container.decodeIfPresent(Double.self, forKey: .elevationGainMeters)
         routeColorIndex = try container.decodeIfPresent(Int.self, forKey: .routeColorIndex)
         routeCoordinates = try container.decodeIfPresent([Location].self, forKey: .routeCoordinates)
+        plannedDurationMinutes = try container.decodeIfPresent(Int.self, forKey: .plannedDurationMinutes)
+        plannedDistanceMeters = try container.decodeIfPresent(Double.self, forKey: .plannedDistanceMeters)
+        trackPoints = try container.decodeIfPresent([TrackPoint].self, forKey: .trackPoints)
+        healthKitWorkoutID = try container.decodeIfPresent(UUID.self, forKey: .healthKitWorkoutID)
     }
 }

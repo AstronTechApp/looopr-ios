@@ -45,6 +45,9 @@ final class RerouteLoopTests: XCTestCase {
         wrongWayWarmupSeconds: TimeInterval = 0,
         wrongWayDetectionWindowMeters: Double = 250,
         wrongWayTriggerMeters: Double = 12,
+        wrongWayMinDurationSeconds: TimeInterval = 0,
+        wrongWayMinSpeedMetersPerSecond: Double = 0,
+        wrongWayBearingBaselineMeters: Double = 10,
         wrongWayMaxFlips: Int = 1
     ) -> AppConfiguration.Navigation {
         AppConfiguration.Navigation(
@@ -69,6 +72,9 @@ final class RerouteLoopTests: XCTestCase {
             wrongWayDetectionWindowMeters: wrongWayDetectionWindowMeters,
             wrongWayDivergenceDegrees: 120,
             wrongWayTriggerMeters: wrongWayTriggerMeters,
+            wrongWayMinDurationSeconds: wrongWayMinDurationSeconds,
+            wrongWayMinSpeedMetersPerSecond: wrongWayMinSpeedMetersPerSecond,
+            wrongWayBearingBaselineMeters: wrongWayBearingBaselineMeters,
             wrongWayMaxFlips: wrongWayMaxFlips
         )
     }
@@ -134,6 +140,121 @@ final class RerouteLoopTests: XCTestCase {
         XCTAssertTrue(didTrigger)
         XCTAssertEqual(detector.debugSnapshot.status, "triggered")
         XCTAssertEqual(detector.debugSnapshot.reason, "reverse start")
+    }
+
+    private func makeFix(
+        _ coordinate: CLLocationCoordinate2D,
+        at time: Date,
+        speed: CLLocationSpeed
+    ) -> CLLocation {
+        CLLocation(
+            coordinate: coordinate,
+            altitude: 0,
+            horizontalAccuracy: 5,
+            verticalAccuracy: 5,
+            course: -1,
+            speed: speed,
+            timestamp: time
+        )
+    }
+
+    func testWrongWayDetectorIgnoresStationaryGPSDrift() {
+        let detector = WrongWayDetector(navigation: makeNavigationConfig(
+            wrongWayTriggerMeters: 12,
+            wrongWayMinSpeedMetersPerSecond: 0.5
+        ))
+        var didTrigger = false
+        detector.onWrongWayDetected = { didTrigger = true }
+        detector.startSession()
+
+        // User stands at the start looking at the phone while the fix
+        // wanders ~6 m in random directions, always "away" from the route
+        // bearing (0°). Speed is reported as 0 the whole time.
+        let start = CLLocationCoordinate2D.amsterdam
+        let t0 = Date()
+        var point = start
+        for i in 0..<12 {
+            let bearing = [150.0, 200.0, 170.0, 220.0][i % 4]
+            point = point.coordinate(at: 6, bearing: bearing)
+            detector.check(
+                userLocation: makeFix(point, at: t0.addingTimeInterval(Double(i) * 4), speed: 0),
+                expectedBearing: 0
+            )
+        }
+
+        XCTAssertFalse(didTrigger, "GPS drift while standing still must not prompt a route flip")
+        XCTAssertEqual(detector.debugSnapshot.status, "stationary")
+    }
+
+    func testWrongWayDetectorRequiresSustainedDurationNotJustDistance() {
+        let detector = WrongWayDetector(navigation: makeNavigationConfig(
+            wrongWayTriggerMeters: 12,
+            wrongWayMinDurationSeconds: 20,
+            wrongWayMinSpeedMetersPerSecond: 0.5
+        ))
+        var triggerCount = 0
+        detector.onWrongWayDetected = { triggerCount += 1 }
+        detector.startSession()
+
+        // Walking due south at ~1.25 m/s (5 m every 4 s) while the route
+        // expects north.
+        let start = CLLocationCoordinate2D.amsterdam
+        let t0 = Date()
+        var point = start
+        var elapsed: TimeInterval = 0
+
+        func step() {
+            point = point.coordinate(at: 5, bearing: 180)
+            elapsed += 4
+            detector.check(
+                userLocation: makeFix(point, at: t0.addingTimeInterval(elapsed), speed: 1.25),
+                expectedBearing: 0
+            )
+        }
+
+        // Fix 1 primes, fix 2 builds the bearing baseline; by fix 5 we've
+        // logged 15 m of wrong-way travel (> 12 m trigger) but only 12 s of
+        // it — no prompt yet.
+        for _ in 0..<5 { step() }
+        XCTAssertEqual(triggerCount, 0, "Distance alone must not trigger before the minimum duration")
+        XCTAssertEqual(detector.debugSnapshot.status, "accumulating")
+
+        // Keep going: once >= 20 s of continuous wrong-way travel, prompt.
+        for _ in 0..<2 { step() }
+        XCTAssertEqual(triggerCount, 1)
+        XCTAssertEqual(detector.debugSnapshot.status, "triggered")
+    }
+
+    func testWrongWayDetectorResetsWhenUserSelfCorrects() {
+        let detector = WrongWayDetector(navigation: makeNavigationConfig(
+            wrongWayTriggerMeters: 12,
+            wrongWayMinDurationSeconds: 20,
+            wrongWayMinSpeedMetersPerSecond: 0.5
+        ))
+        var didTrigger = false
+        detector.onWrongWayDetected = { didTrigger = true }
+        detector.startSession()
+
+        let start = CLLocationCoordinate2D.amsterdam
+        let t0 = Date()
+        var point = start
+        var elapsed: TimeInterval = 0
+        func step(bearing: Double) {
+            point = point.coordinate(at: 5, bearing: bearing)
+            elapsed += 4
+            detector.check(
+                userLocation: makeFix(point, at: t0.addingTimeInterval(elapsed), speed: 1.25),
+                expectedBearing: 0
+            )
+        }
+
+        // 16 s south (wrong), then a long stretch north (right).
+        for _ in 0..<5 { step(bearing: 180) }
+        for _ in 0..<10 { step(bearing: 0) }
+
+        XCTAssertFalse(didTrigger)
+        XCTAssertEqual(detector.debugSnapshot.status, "aligned")
+        XCTAssertEqual(detector.debugSnapshot.wrongWayMeters, 0)
     }
 
     @MainActor
@@ -226,6 +347,9 @@ final class RerouteLoopTests: XCTestCase {
             wrongWayDetectionWindowMeters: 100,
             wrongWayDivergenceDegrees: 120,
             wrongWayTriggerMeters: 25,
+            wrongWayMinDurationSeconds: 0,
+            wrongWayMinSpeedMetersPerSecond: 0,
+            wrongWayBearingBaselineMeters: 10,
             wrongWayMaxFlips: 3
         )
 
