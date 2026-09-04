@@ -146,7 +146,7 @@ struct LocationSearchView: View {
                     completer.search(query: newValue)
                 }
             }
-            .navigationTitle("Search Location")
+            .navigationTitle(L10n.LocationSearch.searchLocation)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {

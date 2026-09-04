@@ -460,7 +460,7 @@ struct WalkDetailView: View {
                 } else {
                     Image(systemName: "paperplane.fill")
                 }
-                Text("Share This Looopr")
+                Text(L10n.Share.shareThisLooopr)
                     .font(LoooprTheme.Typography.button)
             }
             .foregroundStyle(LoooprTheme.Colors.textOnPrimary)

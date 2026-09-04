@@ -75,7 +75,7 @@ struct AppRootView: View {
         case .sharedRoute(let routeID):
             SharedRouteView(routeID: routeID)
         case .locationSearch:
-            Text("Search Location")
+            Text(L10n.LocationSearch.searchLocation)
         case .settings:
             SettingsView()
         case .paywall:

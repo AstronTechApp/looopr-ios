@@ -132,6 +132,25 @@ enum L10n {
         static var findingNearby: String { String(localized: "poi.findingNearby", defaultValue: "Finding nearby cafes & restaurants...", bundle: LocalizationManager.shared.localizedBundle) }
         static var noRestaurantsFound: String { String(localized: "poi.noRestaurantsFound", defaultValue: "No highly-rated cafes or restaurants found nearby", bundle: LocalizationManager.shared.localizedBundle) }
         static var tapToFind: String { String(localized: "poi.tapToFind", defaultValue: "Tap to find nearby cafes & restaurants", bundle: LocalizationManager.shared.localizedBundle) }
+
+        /// Distance along the route paired with a rough walking time, e.g. "2.1 km · ~25min walk".
+        static func walkingInfo(distance: String, time: String) -> String {
+            return String(format: NSLocalizedString("poi.walkingInfo", tableName: nil, bundle: LocalizationManager.shared.localizedBundle, value: "%1$@ · %2$@ walk", comment: ""), distance, time)
+        }
+
+        static var walkTimeUnderMinute: String { String(localized: "poi.walkTimeUnderMinute", defaultValue: "<1min", bundle: LocalizationManager.shared.localizedBundle) }
+
+        static func walkTimeMinutes(_ minutes: Int) -> String {
+            return String(format: NSLocalizedString("poi.walkTimeMinutes", tableName: nil, bundle: LocalizationManager.shared.localizedBundle, value: "~%@min", comment: ""), "\(minutes)")
+        }
+
+        static func walkTimeHours(_ hours: Int) -> String {
+            return String(format: NSLocalizedString("poi.walkTimeHours", tableName: nil, bundle: LocalizationManager.shared.localizedBundle, value: "~%@h", comment: ""), "\(hours)")
+        }
+
+        static func walkTimeHoursMinutes(_ hours: Int, _ minutes: Int) -> String {
+            return String(format: NSLocalizedString("poi.walkTimeHoursMinutes", tableName: nil, bundle: LocalizationManager.shared.localizedBundle, value: "~%1$@h %2$@min", comment: ""), "\(hours)", "\(minutes)")
+        }
         static var foodLockedTitle: String { String(localized: "poi.foodLockedTitle", defaultValue: "Cafés & restaurants are Premium", bundle: LocalizationManager.shared.localizedBundle) }
         static var foodLockedBody: String { String(localized: "poi.foodLockedBody", defaultValue: "See the best coffee and food stops along this route, with ratings, opening hours and photos.", bundle: LocalizationManager.shared.localizedBundle) }
         static var foodLockedCTA: String { String(localized: "poi.foodLockedCTA", defaultValue: "See Premium", bundle: LocalizationManager.shared.localizedBundle) }
@@ -203,6 +222,22 @@ enum L10n {
         static var routeFlipping: String { String(localized: "walkNavigation.routeFlipping", defaultValue: "Flipping route...", bundle: LocalizationManager.shared.localizedBundle) }
         static var routeFlipped: String { String(localized: "walkNavigation.routeFlipped", defaultValue: "Route flipped — enjoy the walk!", bundle: LocalizationManager.shared.localizedBundle) }
         static var routeFlipFailed: String { String(localized: "walkNavigation.routeFlipFailed", defaultValue: "Couldn't flip route. Try again in a moment.", bundle: LocalizationManager.shared.localizedBundle) }
+        static var recenter: String { String(localized: "walkNavigation.recenter", defaultValue: "Re-center", bundle: LocalizationManager.shared.localizedBundle) }
+        static var approaching: String { String(localized: "walkNavigation.approaching", defaultValue: "APPROACHING", bundle: LocalizationManager.shared.localizedBundle) }
+
+        /// Preview of the instruction after the current one, e.g. "Then turn left onto Keizersgracht".
+        static func thenInstruction(_ instruction: String) -> String {
+            return String(format: NSLocalizedString("walkNavigation.thenInstruction", tableName: nil, bundle: LocalizationManager.shared.localizedBundle, value: "Then %@", comment: ""), instruction)
+        }
+
+        static func percentComplete(_ percent: Int) -> String {
+            return String(format: NSLocalizedString("walkNavigation.percentComplete", tableName: nil, bundle: LocalizationManager.shared.localizedBundle, value: "%@%% complete", comment: ""), "\(percent)")
+        }
+
+        /// Rough walking time to an upcoming point of interest.
+        static func approximateMinutes(_ minutes: Int) -> String {
+            return String(format: NSLocalizedString("walkNavigation.approximateMinutes", tableName: nil, bundle: LocalizationManager.shared.localizedBundle, value: "~%@ min", comment: ""), "\(minutes)")
+        }
     }
 
     // MARK: - Food Check-in
@@ -512,6 +547,8 @@ enum L10n {
         static func walkedRoute(_ name: String) -> String {
             return String(format: NSLocalizedString("share.walkedRoute", tableName: nil, bundle: LocalizationManager.shared.localizedBundle, value: "I just walked the %@ with Looopr!", comment: ""), name)
         }
+
+        static var shareThisLooopr: String { String(localized: "share.shareThisLooopr", defaultValue: "Share This Looopr", bundle: LocalizationManager.shared.localizedBundle) }
     }
 
     // MARK: - Miscellaneous

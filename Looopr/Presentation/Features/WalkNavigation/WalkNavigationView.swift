@@ -157,7 +157,7 @@ struct WalkNavigationView: View {
                                 .background(LoooprTheme.Colors.primary, in: Circle())
                                 .loooprShadow(LoooprTheme.Shadows.md)
                         }
-                        .accessibilityLabel(Text("Re-center"))
+                        .accessibilityLabel(Text(L10n.WalkNavigation.recenter))
                         .padding(.trailing, LoooprTheme.Spacing.md)
                         .padding(.bottom, LoooprTheme.Spacing.lg)
                     }
@@ -418,7 +418,7 @@ struct WalkNavigationView: View {
                     HStack(spacing: 4) {
                         Image(systemName: "chevron.forward")
                             .font(.system(size: 10, weight: .semibold))
-                        Text("Then \(next.lowercased())")
+                        Text(L10n.WalkNavigation.thenInstruction(next.lowercased()))
                             .lineLimit(1)
                     }
                     .font(.system(size: 12, design: .rounded))
@@ -458,7 +458,7 @@ struct WalkNavigationView: View {
             }
 
             VStack(alignment: .leading, spacing: 2) {
-                Text("APPROACHING")
+                Text(L10n.WalkNavigation.approaching)
                     .font(.system(size: 11, weight: .semibold, design: .rounded))
                     .foregroundStyle(.white.opacity(0.7))
                     .tracking(0.5)
@@ -474,7 +474,7 @@ struct WalkNavigationView: View {
                 Text(info.distanceMeters.formattedDistance())
                     .font(.system(size: 16, weight: .bold, design: .rounded))
                     .foregroundStyle(.white)
-                Text("~\(info.estimatedMinutes) min")
+                Text(L10n.WalkNavigation.approximateMinutes(info.estimatedMinutes))
                     .font(.system(size: 11, design: .rounded))
                     .foregroundStyle(.white.opacity(0.7))
             }
@@ -545,7 +545,7 @@ struct WalkNavigationView: View {
 
                 HStack {
                     Spacer()
-                    Text("\(Int(progressFraction * 100))% complete")
+                    Text(L10n.WalkNavigation.percentComplete(Int(progressFraction * 100)))
                         .font(.system(size: 11, design: .rounded))
                         .foregroundStyle(.secondary)
                 }

@@ -131,15 +131,17 @@ struct POI: Identifiable, Codable, Sendable, Hashable {
         let totalMinutes = Int((dist / pace.metresPerMinute).rounded())
         let timeText: String
         if totalMinutes < 1 {
-            timeText = "<1min"
+            timeText = L10n.POI.walkTimeUnderMinute
         } else if totalMinutes < 60 {
-            timeText = "~\(totalMinutes)min"
+            timeText = L10n.POI.walkTimeMinutes(totalMinutes)
         } else {
             let hours = totalMinutes / 60
             let remaining = totalMinutes % 60
-            timeText = remaining == 0 ? "~\(hours)h" : "~\(hours)h \(remaining)min"
+            timeText = remaining == 0
+                ? L10n.POI.walkTimeHours(hours)
+                : L10n.POI.walkTimeHoursMinutes(hours, remaining)
         }
-        return "\(distanceText) · \(timeText) walk"
+        return L10n.POI.walkingInfo(distance: distanceText, time: timeText)
     }
 
     init(
