@@ -284,6 +284,7 @@ enum L10n {
         static var routeUpdated: String { String(localized: "walkNavigation.routeUpdated", defaultValue: "Route updated", bundle: LocalizationManager.shared.localizedBundle) }
         static var routeFlipping: String { String(localized: "walkNavigation.routeFlipping", defaultValue: "Flipping route...", bundle: LocalizationManager.shared.localizedBundle) }
         static var arrived: String { String(localized: "walkNavigation.arrived", defaultValue: "You've arrived!", bundle: LocalizationManager.shared.localizedBundle) }
+        static var saveAndFinish: String { String(localized: "walkNavigation.saveAndFinish", defaultValue: "Save & Finish", bundle: LocalizationManager.shared.localizedBundle) }
         static var routeFlipped: String { String(localized: "walkNavigation.routeFlipped", defaultValue: "Route flipped — enjoy the walk!", bundle: LocalizationManager.shared.localizedBundle) }
         static var routeFlipFailed: String { String(localized: "walkNavigation.routeFlipFailed", defaultValue: "Couldn't flip route. Try again in a moment.", bundle: LocalizationManager.shared.localizedBundle) }
         static var recenter: String { String(localized: "walkNavigation.recenter", defaultValue: "Re-center", bundle: LocalizationManager.shared.localizedBundle) }

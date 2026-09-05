@@ -202,7 +202,7 @@ struct WalkNavigationView: View {
         .toolbar(.hidden, for: .navigationBar, .tabBar)
         .statusBarHidden()
         .confirmationDialog(L10n.WalkNavigation.endWalk, isPresented: $showStopConfirmation) {
-            Button("Save & Finish") { viewModel.finish() }
+            Button(L10n.WalkNavigation.saveAndFinish) { viewModel.finish() }
             Button(L10n.WalkNavigation.endWalkButton, role: .destructive) {
                 viewModel.stop()
                 router.popToRoot()
