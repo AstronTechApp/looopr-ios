@@ -61,7 +61,7 @@ struct WalkDetailView: View {
                 .presentationCornerRadius(LoooprTheme.Radius.sheet)
         }
         .alert("Couldn't Share", isPresented: $showShareError) {
-            Button("OK", role: .cancel) {}
+            Button(L10n.Misc.okay, role: .cancel) {}
         } message: {
             Text(viewModel.shareError ?? L10n.SavedRoutes.shareErrorMessage)
         }
@@ -273,12 +273,12 @@ struct WalkDetailView: View {
             }
         }
         .alert(L10n.GPX.exportFailed, isPresented: $showGPXError) {
-            Button("OK", role: .cancel) {}
+            Button(L10n.Misc.okay, role: .cancel) {}
         } message: {
             Text(viewModel.gpxError ?? L10n.GPX.noTrack)
         }
         .alert(L10n.Health.saveFailedTitle, isPresented: $showHealthError) {
-            Button("OK", role: .cancel) {}
+            Button(L10n.Misc.okay, role: .cancel) {}
         } message: {
             if case .failed(let message) = viewModel.healthSaveState {
                 Text(message)

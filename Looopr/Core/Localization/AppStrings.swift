@@ -644,6 +644,7 @@ enum L10n {
         static var walk: String { String(localized: "misc.walk", defaultValue: "Walk", bundle: LocalizationManager.shared.localizedBundle) }
         static var name: String { String(localized: "misc.name", defaultValue: "Name", bundle: LocalizationManager.shared.localizedBundle) }
         static var loading: String { String(localized: "misc.loading", defaultValue: "Loading...", bundle: LocalizationManager.shared.localizedBundle) }
+        static var cancel: String { String(localized: "misc.cancel", defaultValue: "Cancel", bundle: LocalizationManager.shared.localizedBundle) }
         static var error: String { String(localized: "misc.error", defaultValue: "Error", bundle: LocalizationManager.shared.localizedBundle) }
         static var retry: String { String(localized: "misc.retry", defaultValue: "Retry", bundle: LocalizationManager.shared.localizedBundle) }
         static var okay: String { String(localized: "misc.okay", defaultValue: "OK", bundle: LocalizationManager.shared.localizedBundle) }

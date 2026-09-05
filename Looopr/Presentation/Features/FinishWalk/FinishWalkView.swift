@@ -121,7 +121,7 @@ struct FinishWalkView: View {
             }
         }
         .alert("Couldn't Share", isPresented: $showShareError) {
-            Button("OK", role: .cancel) {}
+            Button(L10n.Misc.okay, role: .cancel) {}
         } message: {
             Text(viewModel.shareError ?? "Something went wrong. Please try again.")
         }
@@ -131,7 +131,7 @@ struct FinishWalkView: View {
             }
         }
         .alert(L10n.GPX.exportFailed, isPresented: $showGPXError) {
-            Button("OK", role: .cancel) {}
+            Button(L10n.Misc.okay, role: .cancel) {}
         } message: {
             Text(viewModel.gpxError ?? L10n.GPX.noTrack)
         }

@@ -207,7 +207,7 @@ struct WalkNavigationView: View {
                 viewModel.stop()
                 router.popToRoot()
             }
-            Button("Cancel", role: .cancel) { }
+            Button(L10n.Misc.cancel, role: .cancel) { }
         } message: {
             Text(L10n.WalkNavigation.progressNotSaved)
         }

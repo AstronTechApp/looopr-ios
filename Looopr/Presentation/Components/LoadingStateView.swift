@@ -27,7 +27,7 @@ struct ErrorStateView: View {
                 .font(AppTheme.bodyFont)
                 .multilineTextAlignment(.center)
                 .foregroundStyle(.secondary)
-            Button("Try Again", action: retryAction)
+            Button(L10n.Misc.retry, action: retryAction)
                 .buttonStyle(.borderedProminent)
         }
         .padding()
