@@ -19,7 +19,7 @@ func todayHoursString(from weekdayText: [String]?, at date: Date = Date()) -> St
     if let colonRange = raw.range(of: ":") {
         let timePart = raw[colonRange.upperBound...].trimmingCharacters(in: .whitespaces)
         if Calendar.current.isDateInToday(date) {
-            return "Today: \(timePart)"
+            return L10n.POI.todayHours(String(timePart))
         }
     }
     return raw

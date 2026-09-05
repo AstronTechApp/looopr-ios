@@ -139,24 +139,24 @@ enum POICategory: String, Codable, CaseIterable, Sendable {
     /// Fallback description when Google Places doesn't provide an editorial summary
     var genericDescription: String {
         switch self {
-        case .museum:       return "Museum and cultural exhibition"
-        case .monument:     return "Historic monument and memorial"
-        case .historicSite: return "Historic site of cultural significance"
-        case .church:       return "Church and place of worship"
-        case .castle:       return "Castle and historic fortification"
-        case .park:         return "Park and green space"
-        case .garden:       return "Garden and botanical area"
-        case .gallery:      return "Art gallery and exhibition space"
-        case .theater:      return "Theater and performing arts venue"
-        case .zoo:          return "Zoo and wildlife park"
-        case .aquarium:     return "Aquarium and marine life center"
-        case .landmark:     return "Notable landmark and point of interest"
-        case .viewpoint:    return "Scenic viewpoint"
-        case .restaurant:   return "Restaurant"
-        case .cafe:         return "Cafe and coffee house"
-        case .bakery:       return "Bakery and pastry shop"
-        case .bar:          return "Bar and lounge"
-        case .other:        return "Point of interest"
+        case .museum: return L10n.POI.CategoryDescription.museum
+        case .monument: return L10n.POI.CategoryDescription.monument
+        case .historicSite: return L10n.POI.CategoryDescription.historicSite
+        case .church: return L10n.POI.CategoryDescription.church
+        case .castle: return L10n.POI.CategoryDescription.castle
+        case .park: return L10n.POI.CategoryDescription.park
+        case .garden: return L10n.POI.CategoryDescription.garden
+        case .gallery: return L10n.POI.CategoryDescription.gallery
+        case .theater: return L10n.POI.CategoryDescription.theater
+        case .zoo: return L10n.POI.CategoryDescription.zoo
+        case .aquarium: return L10n.POI.CategoryDescription.aquarium
+        case .landmark: return L10n.POI.CategoryDescription.landmark
+        case .viewpoint: return L10n.POI.CategoryDescription.viewpoint
+        case .restaurant: return L10n.POI.CategoryDescription.restaurant
+        case .cafe: return L10n.POI.CategoryDescription.cafe
+        case .bakery: return L10n.POI.CategoryDescription.bakery
+        case .bar: return L10n.POI.CategoryDescription.bar
+        case .other: return L10n.POI.CategoryDescription.other
         }
     }
 

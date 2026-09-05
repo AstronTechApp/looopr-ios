@@ -33,7 +33,7 @@ final class LocalizationManager {
 
         var displayName: String {
             switch self {
-            case .system: return "System Default"
+            case .system: return String(localized: "settings.language.system", defaultValue: "System Default", bundle: LocalizationManager.shared.localizedBundle)
             case .en: return "English"
             case .nl: return "Nederlands"
             case .de: return "Deutsch"

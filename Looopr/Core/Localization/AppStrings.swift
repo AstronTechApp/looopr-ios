@@ -157,6 +157,9 @@ enum L10n {
         static var onRoute: String { String(localized: "poi.onRoute", defaultValue: "On Route", bundle: LocalizationManager.shared.localizedBundle) }
         static var nearRoute: String { String(localized: "poi.nearRoute", defaultValue: "Near Route", bundle: LocalizationManager.shared.localizedBundle) }
         static var foodAndDrinks: String { String(localized: "poi.foodAndDrinks", defaultValue: "Food & Drinks", bundle: LocalizationManager.shared.localizedBundle) }
+        static func todayHours(_ hours: String) -> String {
+            String(format: NSLocalizedString("poi.todayHours", tableName: nil, bundle: LocalizationManager.shared.localizedBundle, value: "Today: %@", comment: ""), hours)
+        }
         static var cafes: String { String(localized: "poi.cafes", defaultValue: "Cafes", bundle: LocalizationManager.shared.localizedBundle) }
         static var restaurants: String { String(localized: "poi.restaurants", defaultValue: "Restaurants", bundle: LocalizationManager.shared.localizedBundle) }
         static var findingNearby: String { String(localized: "poi.findingNearby", defaultValue: "Finding nearby cafes & restaurants...", bundle: LocalizationManager.shared.localizedBundle) }
@@ -214,6 +217,28 @@ enum L10n {
             static var bakery: String { String(localized: "poi.category.bakery", defaultValue: "Bakery", bundle: LocalizationManager.shared.localizedBundle) }
             static var bar: String { String(localized: "poi.category.bar", defaultValue: "Bar", bundle: LocalizationManager.shared.localizedBundle) }
             static var other: String { String(localized: "poi.category.other", defaultValue: "Other", bundle: LocalizationManager.shared.localizedBundle) }
+        }
+
+        /// Fallback one-line descriptions when Google Places has no editorial summary.
+        enum CategoryDescription {
+            static var museum: String { String(localized: "poi.categoryDescription.museum", defaultValue: "Museum and cultural exhibition", bundle: LocalizationManager.shared.localizedBundle) }
+            static var monument: String { String(localized: "poi.categoryDescription.monument", defaultValue: "Historic monument and memorial", bundle: LocalizationManager.shared.localizedBundle) }
+            static var historicSite: String { String(localized: "poi.categoryDescription.historicSite", defaultValue: "Historic site of cultural significance", bundle: LocalizationManager.shared.localizedBundle) }
+            static var church: String { String(localized: "poi.categoryDescription.church", defaultValue: "Church and place of worship", bundle: LocalizationManager.shared.localizedBundle) }
+            static var castle: String { String(localized: "poi.categoryDescription.castle", defaultValue: "Castle and historic fortification", bundle: LocalizationManager.shared.localizedBundle) }
+            static var park: String { String(localized: "poi.categoryDescription.park", defaultValue: "Park and green space", bundle: LocalizationManager.shared.localizedBundle) }
+            static var garden: String { String(localized: "poi.categoryDescription.garden", defaultValue: "Garden and botanical area", bundle: LocalizationManager.shared.localizedBundle) }
+            static var gallery: String { String(localized: "poi.categoryDescription.gallery", defaultValue: "Art gallery and exhibition space", bundle: LocalizationManager.shared.localizedBundle) }
+            static var theater: String { String(localized: "poi.categoryDescription.theater", defaultValue: "Theater and performing arts venue", bundle: LocalizationManager.shared.localizedBundle) }
+            static var zoo: String { String(localized: "poi.categoryDescription.zoo", defaultValue: "Zoo and wildlife park", bundle: LocalizationManager.shared.localizedBundle) }
+            static var aquarium: String { String(localized: "poi.categoryDescription.aquarium", defaultValue: "Aquarium and marine life center", bundle: LocalizationManager.shared.localizedBundle) }
+            static var landmark: String { String(localized: "poi.categoryDescription.landmark", defaultValue: "Notable landmark and point of interest", bundle: LocalizationManager.shared.localizedBundle) }
+            static var viewpoint: String { String(localized: "poi.categoryDescription.viewpoint", defaultValue: "Scenic viewpoint", bundle: LocalizationManager.shared.localizedBundle) }
+            static var restaurant: String { String(localized: "poi.categoryDescription.restaurant", defaultValue: "Restaurant", bundle: LocalizationManager.shared.localizedBundle) }
+            static var cafe: String { String(localized: "poi.categoryDescription.cafe", defaultValue: "Cafe and coffee house", bundle: LocalizationManager.shared.localizedBundle) }
+            static var bakery: String { String(localized: "poi.categoryDescription.bakery", defaultValue: "Bakery and pastry shop", bundle: LocalizationManager.shared.localizedBundle) }
+            static var bar: String { String(localized: "poi.categoryDescription.bar", defaultValue: "Bar and lounge", bundle: LocalizationManager.shared.localizedBundle) }
+            static var other: String { String(localized: "poi.categoryDescription.other", defaultValue: "Point of interest", bundle: LocalizationManager.shared.localizedBundle) }
         }
     }
 
