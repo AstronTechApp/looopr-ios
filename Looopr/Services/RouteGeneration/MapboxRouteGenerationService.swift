@@ -26,7 +26,7 @@ final class MapboxRouteGenerationService: RouteGenerating, @unchecked Sendable {
     ) async throws -> [Route] {
         try Task.checkCancellation()
 
-        let cacheKey = cacheKey(for: start, minutes: minutes, speedKmH: walkingSpeedKmH)
+        let cacheKey = cacheKey(for: start, minutes: minutes, speedKmH: walkingSpeedKmH, maxRoutes: configuration.freemium.paidRouteLimit)
         if let cached = await cache.get(cacheKey) {
             logger.info("Returning \(cached.count) cached Mapbox routes")
             return cached
@@ -57,7 +57,7 @@ final class MapboxRouteGenerationService: RouteGenerating, @unchecked Sendable {
         AsyncThrowingStream { continuation in
             let task = Task {
                 do {
-                    let key = self.cacheKey(for: start, minutes: minutes, speedKmH: walkingSpeedKmH)
+                    let key = self.cacheKey(for: start, minutes: minutes, speedKmH: walkingSpeedKmH, maxRoutes: maxRoutes)
 
                     if let cached = await self.cache.get(key) {
                         self.logger.info("Streaming \(min(cached.count, maxRoutes)) cached Mapbox routes")
@@ -365,8 +365,11 @@ final class MapboxRouteGenerationService: RouteGenerating, @unchecked Sendable {
 
     // MARK: - Helpers
 
-    private func cacheKey(for start: CLLocationCoordinate2D, minutes: Int, speedKmH: Double) -> String {
-        "mapbox_\(Int(start.latitude * 1000)),\(Int(start.longitude * 1000)),\(minutes),\(Int(speedKmH * 10))"
+    /// The route limit is part of the key so a set generated at the free tier
+    /// (2 routes) is not handed back to a Premium request (8 routes) after an
+    /// upgrade in the same session.
+    private func cacheKey(for start: CLLocationCoordinate2D, minutes: Int, speedKmH: Double, maxRoutes: Int) -> String {
+        "mapbox_\(Int(start.latitude * 1000)),\(Int(start.longitude * 1000)),\(minutes),\(Int(speedKmH * 10)),max\(maxRoutes)"
     }
 
     private func difficulty(for distance: Double, time: Double) -> Route.Difficulty {
