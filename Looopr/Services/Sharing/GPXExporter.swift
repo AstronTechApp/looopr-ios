@@ -24,7 +24,7 @@ enum GPXExporter {
     static func gpxString(for session: WalkSession) -> String? {
         guard session.hasTrack, let points = session.trackPoints else { return nil }
 
-        let name = escape(session.routeName ?? "Looopr walk")
+        let name = escape(session.routeName.map(L10n.RouteName.localized) ?? "Looopr walk")
         let isoFormatter = ISO8601DateFormatter()
         isoFormatter.formatOptions = [.withInternetDateTime]
         isoFormatter.timeZone = TimeZone(identifier: "UTC")
@@ -85,7 +85,7 @@ enum GPXExporter {
         dateFormatter.dateFormat = "yyyy-MM-dd_HHmm"
         let date = dateFormatter.string(from: session.startedAt)
 
-        let base = (session.routeName ?? "Looopr walk")
+        let base = (session.routeName.map(L10n.RouteName.localized) ?? "Looopr walk")
             .components(separatedBy: CharacterSet.alphanumerics.union(.whitespaces).inverted)
             .joined()
             .trimmingCharacters(in: .whitespaces)

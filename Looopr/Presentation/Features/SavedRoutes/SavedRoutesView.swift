@@ -45,7 +45,7 @@ struct SavedRoutesView: View {
                 viewModel.routePendingDeletion = nil
             }
         } message: { route in
-            Text(L10n.SavedRoutes.willBeRemoved(route.baseName))
+            Text(L10n.SavedRoutes.willBeRemoved(L10n.RouteName.localized(route.baseName)))
         }
         .alert(L10n.SavedRoutes.shareErrorTitle, isPresented: $showShareError) {
             Button(L10n.Misc.okay, role: .cancel) {}
@@ -111,7 +111,7 @@ struct SavedRoutesView: View {
     private func share(_ route: Route) async {
         if let url = await viewModel.shareRoute(route) {
             shareURL = url
-            shareTitle = L10n.SavedRoutes.shareTitle(route.baseName)
+            shareTitle = L10n.SavedRoutes.shareTitle(L10n.RouteName.localized(route.baseName))
             showShareSheet = true
         } else {
             showShareError = true

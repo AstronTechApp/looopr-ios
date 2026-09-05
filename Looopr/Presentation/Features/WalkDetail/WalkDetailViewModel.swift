@@ -93,7 +93,7 @@ final class WalkDetailViewModel {
     // MARK: - Computed
 
     var routeName: String {
-        session.routeName ?? "Walk"
+        session.routeName.map(L10n.RouteName.localized) ?? L10n.Misc.walk
     }
 
     var walkDate: String {

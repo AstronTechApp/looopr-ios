@@ -246,7 +246,7 @@ private struct RouteSelectionCard: View {
     }
 
     private var difficultyLabel: String {
-        route.difficulty.rawValue.capitalized
+        route.difficulty.localizedLabel
     }
 
     var body: some View {

@@ -19,6 +19,15 @@ struct Route: Identifiable, Codable, Sendable, Hashable {
 
     enum Difficulty: String, Codable, CaseIterable, Sendable {
         case easy, moderate, challenging
+
+        /// User-facing label in the app's current language.
+        var localizedLabel: String {
+            switch self {
+            case .easy: return L10n.RouteDifficulty.easy
+            case .moderate: return L10n.RouteDifficulty.moderate
+            case .challenging: return L10n.RouteDifficulty.challenging
+            }
+        }
     }
 
     private enum CodingKeys: String, CodingKey {

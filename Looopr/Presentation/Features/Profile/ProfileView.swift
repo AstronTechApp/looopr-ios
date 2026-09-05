@@ -70,7 +70,7 @@ struct ProfileView: View {
                 viewModel.walkPendingDeletion = nil
             }
         } message: { session in
-            Text(L10n.Profile.willBeDeleted(session.routeName ?? L10n.Misc.walk))
+            Text(L10n.Profile.willBeDeleted(session.routeName.map(L10n.RouteName.localized) ?? L10n.Misc.walk))
         }
         .alert(L10n.Profile.deleteFailedTitle, isPresented: $viewModel.deleteFailedWarning) {
             Button(L10n.Misc.okay, role: .cancel) {}
@@ -487,7 +487,7 @@ private struct ActivityCard: View {
                     )
 
                     VStack(alignment: .leading, spacing: LoooprTheme.Spacing.xs) {
-                        Text(session.routeName ?? L10n.Misc.walk)
+                        Text(session.routeName.map(L10n.RouteName.localized) ?? L10n.Misc.walk)
                             .font(LoooprTheme.Typography.headline)
                             .foregroundStyle(LoooprTheme.Colors.textPrimary)
                             .multilineTextAlignment(.leading)
@@ -546,7 +546,7 @@ private struct ActivityCard: View {
         .clipShape(RoundedRectangle(cornerRadius: LoooprTheme.Radius.card))
         .loooprShadow(LoooprTheme.Shadows.sm)
         .sheet(isPresented: $isShowingShare) {
-            let name = session.routeName ?? L10n.Misc.walk
+            let name = session.routeName.map(L10n.RouteName.localized) ?? L10n.Misc.walk
             let text = L10n.Share.walkedRoute(name)
             ActivitySheet(items: [text])
         }

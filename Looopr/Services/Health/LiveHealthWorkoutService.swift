@@ -97,7 +97,7 @@ final class LiveHealthWorkoutService: HealthWorkoutSaving, @unchecked Sendable {
             HKMetadataKeyIndoorWorkout: false,
         ]
         if let name = session.routeName, !name.isEmpty {
-            metadata[HKMetadataKeyWorkoutBrandName] = "Looopr · \(name)"
+            metadata[HKMetadataKeyWorkoutBrandName] = "Looopr · \(L10n.RouteName.localized(name))"
         }
         try await builder.addMetadata(metadata)
 

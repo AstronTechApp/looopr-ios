@@ -54,6 +54,17 @@ enum L10n {
         static var west: String { String(localized: "routeName.west", defaultValue: "West", bundle: LocalizationManager.shared.localizedBundle) }
         static var northwest: String { String(localized: "routeName.northwest", defaultValue: "Northwest", bundle: LocalizationManager.shared.localizedBundle) }
 
+        /// Word order of a route name. %1$@ is the direction, %2$@ is the loop word.
+        /// English/German put the direction first ("East Loop"); Dutch and the Romance
+        /// languages put the loop word first ("Rondje Oost", "Boucle Est").
+        static var format: String { String(localized: "routeName.format", defaultValue: "%1$@ %2$@", bundle: LocalizationManager.shared.localizedBundle) }
+
+        /// Composes a display name from a localized direction and loop word using the
+        /// language's word order.
+        static func compose(direction: String, loop loopWord: String) -> String {
+            String(format: format, locale: nil, direction, loopWord)
+        }
+
         /// Translates a stored English route name (e.g. "Northwest Loop") at display time.
         /// Sorted longest-first so "Northwest" matches before "North".
         /// Also handles spaced variants like "North West" and "North East".
@@ -77,13 +88,20 @@ enum L10n {
                 if englishName.hasPrefix(entry.english) {
                     let suffix = englishName.dropFirst(entry.english.count).trimmingCharacters(in: .whitespaces)
                     if suffix == "Loop" || suffix.isEmpty {
-                        return "\(entry.localized()) \(loop)"
+                        return compose(direction: entry.localized(), loop: loop)
                     }
-                    return "\(entry.localized()) \(suffix)"
+                    return compose(direction: entry.localized(), loop: suffix)
                 }
             }
             return englishName
         }
+    }
+
+    // MARK: - Route Difficulty
+    enum RouteDifficulty {
+        static var easy: String { String(localized: "routeDifficulty.easy", defaultValue: "Easy", bundle: LocalizationManager.shared.localizedBundle) }
+        static var moderate: String { String(localized: "routeDifficulty.moderate", defaultValue: "Moderate", bundle: LocalizationManager.shared.localizedBundle) }
+        static var challenging: String { String(localized: "routeDifficulty.challenging", defaultValue: "Challenging", bundle: LocalizationManager.shared.localizedBundle) }
     }
 
     // MARK: - Route Selection

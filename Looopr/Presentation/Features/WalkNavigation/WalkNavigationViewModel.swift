@@ -293,7 +293,7 @@ final class WalkNavigationViewModel {
 
             // Start Live Activity and its dedicated update timer
             liveActivityManager.startActivity(
-                routeName: route.baseName,
+                routeName: L10n.RouteName.localized(route.baseName),
                 totalDistanceMeters: route.distanceKilometers * 1000,
                 totalPOIs: route.pois.count,
                 startDate: startTime
