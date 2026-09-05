@@ -38,11 +38,11 @@ struct OffRouteBannerView: View {
     }
 
     private var title: String {
-        isRerouting ? "Recalculating..." : "Checking route..."
+        isRerouting ? L10n.OffRoute.recalculating : L10n.OffRoute.checkingRoute
     }
 
     private var subtitle: String {
-        if isRerouting { return "Finding your path forward" }
-        return "\(distanceMeters.formattedDistance()) from route"
+        if isRerouting { return L10n.OffRoute.findingPath }
+        return "\(distanceMeters.formattedDistance()) \(L10n.POI.fromRoute)"
     }
 }

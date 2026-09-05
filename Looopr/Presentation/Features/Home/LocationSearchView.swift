@@ -138,7 +138,7 @@ struct LocationSearchView: View {
             .listStyle(.insetGrouped)
             .scrollContentBackground(.visible)
             .background(LoooprTheme.Colors.background)
-            .searchable(text: $searchText, placement: .navigationBarDrawer(displayMode: .always), prompt: "Search city, address, or place")
+            .searchable(text: $searchText, placement: .navigationBarDrawer(displayMode: .always), prompt: L10n.LocationSearch.prompt)
             .onChange(of: searchText) { _, newValue in
                 if newValue.isEmpty {
                     completer.results = []

@@ -117,6 +117,18 @@ enum L10n {
         static var loopLabel: String { String(localized: "routeSelection.loopLabel", defaultValue: "loop", bundle: LocalizationManager.shared.localizedBundle) }
         static var includesFerry: String { String(localized: "routeSelection.includesFerry", defaultValue: "Includes ferry crossing", bundle: LocalizationManager.shared.localizedBundle) }
         static var startWalk: String { String(localized: "routeSelection.startWalk", defaultValue: "Start Walk", bundle: LocalizationManager.shared.localizedBundle) }
+        static var statDistance: String { String(localized: "routeSelection.statDistance", defaultValue: "Distance", bundle: LocalizationManager.shared.localizedBundle) }
+        static var statTime: String { String(localized: "routeSelection.statTime", defaultValue: "Time", bundle: LocalizationManager.shared.localizedBundle) }
+        static var statElevation: String { String(localized: "routeSelection.statElevation", defaultValue: "Elevation", bundle: LocalizationManager.shared.localizedBundle) }
+        static func subtitleFinding(_ value: String) -> String {
+            String(format: NSLocalizedString("routeSelection.subtitleFinding", tableName: nil, bundle: LocalizationManager.shared.localizedBundle, value: "Finding routes · %@ walk", comment: ""), value)
+        }
+        static func subtitleFound(count: Int, duration: String) -> String {
+            if count == 1 {
+                return String(format: NSLocalizedString("routeSelection.subtitleFound.one", tableName: nil, bundle: LocalizationManager.shared.localizedBundle, value: "1 route found · %@ walk", comment: ""), duration)
+            }
+            return String(format: NSLocalizedString("routeSelection.subtitleFound.other", tableName: nil, bundle: LocalizationManager.shared.localizedBundle, value: "%1$@ routes found · %2$@ walk", comment: ""), "\(count)", duration)
+        }
     }
 
     // MARK: - Route Detail
@@ -209,6 +221,11 @@ enum L10n {
     enum POIDetail {
         static var loadingDetails: String { String(localized: "poiDetail.loadingDetails", defaultValue: "Loading details...", bundle: LocalizationManager.shared.localizedBundle) }
         static var findingTickets: String { String(localized: "poiDetail.findingTickets", defaultValue: "Finding tickets...", bundle: LocalizationManager.shared.localizedBundle) }
+        static var hours: String { String(localized: "poiDetail.hours", defaultValue: "Hours", bundle: LocalizationManager.shared.localizedBundle) }
+        static var admission: String { String(localized: "poiDetail.admission", defaultValue: "Admission", bundle: LocalizationManager.shared.localizedBundle) }
+        static var phone: String { String(localized: "poiDetail.phone", defaultValue: "Phone", bundle: LocalizationManager.shared.localizedBundle) }
+        static var accessibility: String { String(localized: "poiDetail.accessibility", defaultValue: "Accessibility", bundle: LocalizationManager.shared.localizedBundle) }
+        static var seePrice: String { String(localized: "poiDetail.seePrice", defaultValue: "See price", bundle: LocalizationManager.shared.localizedBundle) }
 
         static func compareProviders(_ count: Int) -> String {
             return String(format: NSLocalizedString("poiDetail.compareProviders", tableName: nil, bundle: LocalizationManager.shared.localizedBundle, value: "Compare providers (%@)", comment: ""), "\(count)")
@@ -236,6 +253,9 @@ enum L10n {
         static var checkIn: String { String(localized: "walkNavigation.checkIn", defaultValue: "Check in", bundle: LocalizationManager.shared.localizedBundle) }
         static var finishWalk: String { String(localized: "walkNavigation.finishWalk", defaultValue: "Finish Walk", bundle: LocalizationManager.shared.localizedBundle) }
         static var remaining: String { String(localized: "walkNavigation.remaining", defaultValue: "remaining", bundle: LocalizationManager.shared.localizedBundle) }
+        static var statTime: String { String(localized: "walkNavigation.statTime", defaultValue: "Time", bundle: LocalizationManager.shared.localizedBundle) }
+        static var statDistance: String { String(localized: "walkNavigation.statDistance", defaultValue: "Distance", bundle: LocalizationManager.shared.localizedBundle) }
+        static var statRemaining: String { String(localized: "walkNavigation.statRemaining", defaultValue: "Remaining", bundle: LocalizationManager.shared.localizedBundle) }
         static var routeUpdated: String { String(localized: "walkNavigation.routeUpdated", defaultValue: "Route updated", bundle: LocalizationManager.shared.localizedBundle) }
         static var routeFlipping: String { String(localized: "walkNavigation.routeFlipping", defaultValue: "Flipping route...", bundle: LocalizationManager.shared.localizedBundle) }
         static var routeFlipped: String { String(localized: "walkNavigation.routeFlipped", defaultValue: "Route flipped — enjoy the walk!", bundle: LocalizationManager.shared.localizedBundle) }
@@ -487,6 +507,12 @@ enum L10n {
         static var yourData: String { String(localized: "privacySettings.yourData", defaultValue: "YOUR DATA", bundle: LocalizationManager.shared.localizedBundle) }
         static var dangerZone: String { String(localized: "privacySettings.dangerZone", defaultValue: "DANGER ZONE", bundle: LocalizationManager.shared.localizedBundle) }
         static var deleteAccount: String { String(localized: "privacySettings.deleteAccount", defaultValue: "Delete Account", bundle: LocalizationManager.shared.localizedBundle) }
+        static func exportFailed(_ value: String) -> String {
+            String(format: NSLocalizedString("privacySettings.exportFailed", tableName: nil, bundle: LocalizationManager.shared.localizedBundle, value: "Export failed: %@", comment: ""), value)
+        }
+        static func deletionFailed(_ value: String) -> String {
+            String(format: NSLocalizedString("privacySettings.deletionFailed", tableName: nil, bundle: LocalizationManager.shared.localizedBundle, value: "Deletion failed: %@", comment: ""), value)
+        }
         static var permanentlyRemoveData: String { String(localized: "privacySettings.permanentlyRemoveData", defaultValue: "Permanently remove all your data", bundle: LocalizationManager.shared.localizedBundle) }
     }
 
@@ -508,6 +534,7 @@ enum L10n {
         static var resolveFailedTitle: String { String(localized: "locationSearch.resolveFailedTitle", defaultValue: "Couldn't find that place", bundle: LocalizationManager.shared.localizedBundle) }
         static var resolveFailedMessage: String { String(localized: "locationSearch.resolveFailedMessage", defaultValue: "Maps didn't return a location for it. Check your connection or try a more specific search.", bundle: LocalizationManager.shared.localizedBundle) }
         static var searchLocation: String { String(localized: "locationSearch.searchLocation", defaultValue: "Search Location", bundle: LocalizationManager.shared.localizedBundle) }
+        static var prompt: String { String(localized: "locationSearch.prompt", defaultValue: "Search city, address, or place", bundle: LocalizationManager.shared.localizedBundle) }
     }
 
     // MARK: - Nearby Experiences
@@ -569,6 +596,21 @@ enum L10n {
         static var shareThisLooopr: String { String(localized: "share.shareThisLooopr", defaultValue: "Share This Looopr", bundle: LocalizationManager.shared.localizedBundle) }
     }
 
+    // MARK: - Walk Detail
+    enum WalkDetail {
+        static func checkedInAt(_ value: String) -> String {
+            String(format: NSLocalizedString("walkDetail.checkedInAt", tableName: nil, bundle: LocalizationManager.shared.localizedBundle, value: "Checked in at %@", comment: ""), value)
+        }
+        static var noRouteData: String { String(localized: "walkDetail.noRouteData", defaultValue: "This walk has no route data to share.", bundle: LocalizationManager.shared.localizedBundle) }
+    }
+
+    // MARK: - Shared Route
+    enum SharedRoute {
+        static var loading: String { String(localized: "sharedRoute.loading", defaultValue: "Loading shared route...", bundle: LocalizationManager.shared.localizedBundle) }
+        static var notFoundTitle: String { String(localized: "sharedRoute.notFoundTitle", defaultValue: "Route Not Found", bundle: LocalizationManager.shared.localizedBundle) }
+        static var notFoundSubtitle: String { String(localized: "sharedRoute.notFoundSubtitle", defaultValue: "This route may have expired or been removed.", bundle: LocalizationManager.shared.localizedBundle) }
+    }
+
     // MARK: - Miscellaneous
     enum Misc {
         static var walker: String { String(localized: "misc.walker", defaultValue: "Walker", bundle: LocalizationManager.shared.localizedBundle) }
@@ -589,6 +631,9 @@ enum L10n {
     enum OffRoute {
         static var offRoute: String { String(localized: "offRoute.offRoute", defaultValue: "You're off the route", bundle: LocalizationManager.shared.localizedBundle) }
         static var returnToRoute: String { String(localized: "offRoute.returnToRoute", defaultValue: "Return to the marked path", bundle: LocalizationManager.shared.localizedBundle) }
+        static var recalculating: String { String(localized: "offRoute.recalculating", defaultValue: "Recalculating...", bundle: LocalizationManager.shared.localizedBundle) }
+        static var checkingRoute: String { String(localized: "offRoute.checkingRoute", defaultValue: "Checking route...", bundle: LocalizationManager.shared.localizedBundle) }
+        static var findingPath: String { String(localized: "offRoute.findingPath", defaultValue: "Finding your path forward", bundle: LocalizationManager.shared.localizedBundle) }
     }
 
     // MARK: - Feedback

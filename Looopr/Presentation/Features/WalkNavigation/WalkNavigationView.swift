@@ -553,11 +553,11 @@ struct WalkNavigationView: View {
 
             // Stats row + stop button
             HStack(spacing: 0) {
-                statItem(label: "Time", value: elapsedLabel)
+                statItem(label: L10n.WalkNavigation.statTime, value: elapsedLabel)
                 Divider().frame(height: 36)
-                statItem(label: "Distance", value: viewModel.distanceWalked.formattedDistance())
+                statItem(label: L10n.WalkNavigation.statDistance, value: viewModel.distanceWalked.formattedDistance())
                 Divider().frame(height: 36)
-                statItem(label: "Remaining", value: viewModel.remainingMeters.formattedDistance())
+                statItem(label: L10n.WalkNavigation.statRemaining, value: viewModel.remainingMeters.formattedDistance())
                 Spacer(minLength: 12)
                 stopButton
             }

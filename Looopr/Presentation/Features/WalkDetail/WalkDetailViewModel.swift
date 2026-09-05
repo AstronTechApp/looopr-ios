@@ -156,7 +156,7 @@ final class WalkDetailViewModel {
     func shareRoute() async -> URL? {
         let coords = session.routeCoordinates ?? []
         guard !coords.isEmpty else {
-            shareError = "This walk has no route data to share."
+            shareError = L10n.WalkDetail.noRouteData
             return nil
         }
 

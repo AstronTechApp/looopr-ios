@@ -328,19 +328,19 @@ private struct RouteSelectionCard: View {
                 HStack(spacing: 0) {
                     RouteStatItem(
                         icon: "figure.walk",
-                        label: "Distance",
+                        label: L10n.RouteSelection.statDistance,
                         value: route.distanceKilometers.formattedDistanceFromKm()
                     )
 
                     RouteStatItem(
                         icon: "clock",
-                        label: "Time",
+                        label: L10n.RouteSelection.statTime,
                         value: route.paceAdjustedDurationLabel
                     )
 
                     RouteStatItem(
                         icon: "arrow.up.right",
-                        label: "Elevation",
+                        label: L10n.RouteSelection.statElevation,
                         value: Double(RouteSelectionViewModel.estimatedElevation(for: route)).formattedElevation()
                     )
                 }

@@ -194,7 +194,7 @@ struct PrivacySettingsView: View {
             try data.write(to: url)
             showingExportSuccess = true
         } catch {
-            errorMessage = "Export failed: \(error.localizedDescription)"
+            errorMessage = L10n.PrivacySettings.exportFailed(error.localizedDescription)
         }
     }
 
@@ -213,7 +213,7 @@ struct PrivacySettingsView: View {
             try? store.delete(forKey: "looopr.completedRoutes")
             try? store.delete(forKey: "looopr.walkHistory")
         } catch {
-            errorMessage = "Deletion failed: \(error.localizedDescription)"
+            errorMessage = L10n.PrivacySettings.deletionFailed(error.localizedDescription)
         }
     }
 

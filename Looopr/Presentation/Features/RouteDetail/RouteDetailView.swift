@@ -89,7 +89,7 @@ struct RouteDetailView: View {
         .sheet(isPresented: $showShareSheet) {
             if let url = shareURL {
                 ShareSheetView(items: [
-                    "Check out this walking route on Looopr! \u{1F6B6}",
+                    "\(L10n.Share.checkOutRoute) \u{1F6B6}",
                     url
                 ] as [Any])
             }

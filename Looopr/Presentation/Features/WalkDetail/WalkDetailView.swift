@@ -63,7 +63,7 @@ struct WalkDetailView: View {
         .alert("Couldn't Share", isPresented: $showShareError) {
             Button("OK", role: .cancel) {}
         } message: {
-            Text(viewModel.shareError ?? "Something went wrong. Please try again.")
+            Text(viewModel.shareError ?? L10n.SavedRoutes.shareErrorMessage)
         }
         .navigationBarBackButtonHidden()
         .toolbar(.hidden, for: .navigationBar)
@@ -262,7 +262,7 @@ struct WalkDetailView: View {
         .sheet(isPresented: $showShareSheet) {
             if let url = shareURL {
                 ShareSheetView(items: [
-                    "Check out the \(viewModel.routeName) I walked on Looopr! 🚶‍♂️",
+                    "\(L10n.Share.walkedRoute(viewModel.routeName)) 🚶‍♂️",
                     url
                 ] as [Any])
             }
@@ -379,20 +379,20 @@ struct WalkDetailView: View {
             WalkStatCard(
                 icon: "figure.walk",
                 value: viewModel.formattedDistance,
-                label: "Distance"
+                label: L10n.FinishWalk.distance
             )
 
             WalkStatCard(
                 icon: "clock",
                 value: viewModel.formattedDuration,
-                label: "Duration"
+                label: L10n.FinishWalk.duration
             )
 
             if viewModel.hasElevation {
                 WalkStatCard(
                     icon: "arrow.up.right",
                     value: viewModel.formattedElevation,
-                    label: "Elevation"
+                    label: L10n.FinishWalk.elevation
                 )
             }
 
@@ -400,7 +400,7 @@ struct WalkDetailView: View {
                 WalkStatCard(
                     icon: "shoe.2",
                     value: viewModel.formattedSteps,
-                    label: "Steps"
+                    label: L10n.Profile.steps
                 )
             }
         }
@@ -477,7 +477,7 @@ struct WalkDetailView: View {
     private func stopTimeFormatted(_ date: Date) -> String {
         let formatter = DateFormatter()
         formatter.dateFormat = "h:mm a"
-        return "Checked in at \(formatter.string(from: date))"
+        return L10n.WalkDetail.checkedInAt(formatter.string(from: date))
     }
 }
 

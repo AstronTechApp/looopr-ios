@@ -38,9 +38,9 @@ final class RouteSelectionViewModel {
 
     var subtitle: String {
         if isLoading {
-            return "Finding routes · \(Self.formattedMinutes(walkDurationMinutes)) walk"
+            return L10n.RouteSelection.subtitleFinding(Self.formattedMinutes(walkDurationMinutes))
         }
-        return "\(routes.count) route\(routes.count == 1 ? "" : "s") found · \(Self.formattedMinutes(walkDurationMinutes)) walk"
+        return L10n.RouteSelection.subtitleFound(count: routes.count, duration: Self.formattedMinutes(walkDurationMinutes))
     }
 
     /// Formatted duration string from raw minutes (e.g. "30min", "1h 30min").

@@ -64,7 +64,7 @@ final class WalkNavigationViewModel {
     let route: Route
     private(set) var steps: [NavigationStep] = []
     private(set) var currentStepIndex: Int = 0
-    private(set) var currentInstruction: String = "Preparing navigation..."
+    private(set) var currentInstruction: String = L10n.WalkNavigation.preparingNavigation
     private(set) var nextInstruction: String?
     private(set) var distanceToNextStep: Double = 0
     private(set) var userLocation: CLLocationCoordinate2D?
@@ -1279,7 +1279,7 @@ final class WalkNavigationViewModel {
 
         // Parse turn-by-turn direction from current navigation instruction
         let directionArrow = directionArrow(from: currentInstruction)
-        let directionText = currentInstruction == "Preparing navigation..." ? nil : currentInstruction
+        let directionText = currentInstruction == L10n.WalkNavigation.preparingNavigation ? nil : currentInstruction
         let directionDistance: Double? = distanceToNextStep > 0 ? distanceToNextStep : nil
 
         liveActivityManager.updateActivity(

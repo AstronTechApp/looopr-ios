@@ -120,7 +120,7 @@ struct POI: Identifiable, Codable, Sendable, Hashable {
     /// `SettingsManager.shared.preferredUnits`.
     func distanceFromRouteFormatted(units: SettingsManager.Units) -> String? {
         guard let dist = distanceFromRoute else { return nil }
-        return "\(dist.formattedDistance(units: units)) from route"
+        return "\(dist.formattedDistance(units: units)) \(L10n.POI.fromRoute)"
     }
 
     /// Formats the walking distance along the route and estimated walking time.

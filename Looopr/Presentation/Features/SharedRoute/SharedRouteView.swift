@@ -10,13 +10,13 @@ struct SharedRouteView: View {
     var body: some View {
         Group {
             if isLoading {
-                LoadingStateView(message: "Loading shared route...")
+                LoadingStateView(message: L10n.SharedRoute.loading)
             } else if let route {
                 RouteDetailView(route: route)
             } else {
                 EmptyStateView(
-                    title: "Route Not Found",
-                    subtitle: error ?? "This route may have expired or been removed.",
+                    title: L10n.SharedRoute.notFoundTitle,
+                    subtitle: error ?? L10n.SharedRoute.notFoundSubtitle,
                     systemImage: "map.fill"
                 )
             }

@@ -102,19 +102,19 @@ struct POIDetailView: View {
 
                         // Details
                         if let hours = displayPOI.openingHours {
-                            DetailRow(icon: "clock", title: "Hours", value: hours)
+                            DetailRow(icon: "clock", title: L10n.POIDetail.hours, value: hours)
                         }
 
                         if let fee = displayPOI.admissionFee {
-                            DetailRow(icon: "ticket", title: "Admission", value: fee)
+                            DetailRow(icon: "ticket", title: L10n.POIDetail.admission, value: fee)
                         }
 
                         if let phone = displayPOI.phoneNumber {
-                            DetailRow(icon: "phone", title: "Phone", value: phone)
+                            DetailRow(icon: "phone", title: L10n.POIDetail.phone, value: phone)
                         }
 
                         if let accessibility = displayPOI.accessibilityInfo {
-                            DetailRow(icon: "figure.roll", title: "Accessibility", value: accessibility)
+                            DetailRow(icon: "figure.roll", title: L10n.POIDetail.accessibility, value: accessibility)
                         }
 
                         // "View on Google Maps" button (for food POIs from Google Places New)
@@ -237,7 +237,7 @@ struct POIDetailView: View {
                 if showAllOffers {
                     ForEach(offers.dropFirst(1)) { offer in
                         LinkButton(
-                            title: "\(offer.providerName) — \(offer.price ?? "See price")",
+                            title: "\(offer.providerName) — \(offer.price ?? L10n.POIDetail.seePrice)",
                             icon: "ticket",
                             url: offer.bookingURL,
                             color: LoooprTheme.Colors.textSecondary,
