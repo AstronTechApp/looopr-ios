@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		C9598D433C64507E1ED680DD /* NavigationSemantics.swift in Sources */ = {isa = PBXBuildFile; fileRef = 15D79F921873F946DC3C303F /* NavigationSemantics.swift */; };
+		231F9A0AE7D5AE831BB434DA /* Localizable.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = F840EE71A683B8A0A86A0C3C /* Localizable.xcstrings */; };
 		C2E82D9C0FE37A0871B760ED /* FileStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0B93AB80F2F329EBC07E252 /* FileStore.swift */; };
 		385716D03C52F431761161F9 /* SubscriptionGateTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F733303B3AA9C49AB0C989F1 /* SubscriptionGateTests.swift */; };
 		61DFCCECF3E34A32E9D17906 /* ElevationCalculatorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4381EF1A2AC40F2B2240741C /* ElevationCalculatorTests.swift */; };
@@ -207,6 +209,8 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		15D79F921873F946DC3C303F /* NavigationSemantics.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NavigationSemantics.swift; sourceTree = "<group>"; };
+		F840EE71A683B8A0A86A0C3C /* Localizable.xcstrings */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; path = Localizable.xcstrings; sourceTree = "<group>"; };
 		A0B93AB80F2F329EBC07E252 /* FileStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileStore.swift; sourceTree = "<group>"; };
 		F733303B3AA9C49AB0C989F1 /* SubscriptionGateTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SubscriptionGateTests.swift; sourceTree = "<group>"; };
 		4381EF1A2AC40F2B2240741C /* ElevationCalculatorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ElevationCalculatorTests.swift; sourceTree = "<group>"; };
@@ -706,6 +710,7 @@
 		845FC539C127EAB831DEB6C1 /* Helpers */ = {
 			isa = PBXGroup;
 			children = (
+				15D79F921873F946DC3C303F /* NavigationSemantics.swift */,
 				8EACE961596F0A251629FC28 /* POIHelpers.swift */,
 				7B45A8545589C8B6EBE267C6 /* ElevationCalculator.swift */,
 			);
@@ -911,6 +916,7 @@
 		E68040B533C971786C84B3E9 /* LoooprLiveActivity */ = {
 			isa = PBXGroup;
 			children = (
+				F840EE71A683B8A0A86A0C3C /* Localizable.xcstrings */,
 				376160DB4CA0B64D0442C4BA /* Info.plist */,
 				B1D01FF8F38C0C902BB851D1 /* LoooprLiveActivityBundle.swift */,
 				E21ED900B7548F9775DAA6CF /* WalkActivityAttributes.swift */,
@@ -1038,6 +1044,7 @@
 			buildConfigurationList = 60687BA769251281906CF9C9 /* Build configuration list for PBXNativeTarget "LoooprLiveActivity" */;
 			buildPhases = (
 				AF7C35FDCA29D1C157338976 /* Sources */,
+				0F1C685F50A8B120970DF9A7 /* Resources */,
 			);
 			buildRules = (
 			);
@@ -1132,6 +1139,14 @@
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
+		0F1C685F50A8B120970DF9A7 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				231F9A0AE7D5AE831BB434DA /* Localizable.xcstrings in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		78C3531F83B42A8AB9735D15 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -1212,6 +1227,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				C9598D433C64507E1ED680DD /* NavigationSemantics.swift in Sources */,
 				B1F6727466704CB9991FDC45 /* HealthWorkoutSaving.swift in Sources */,
 				EDA764805B3BFF7DE324C10C /* ElevationProviding.swift in Sources */,
 				B7C1C730A36E356A5AAA463B /* LiveElevationService.swift in Sources */,

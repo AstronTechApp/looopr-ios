@@ -393,7 +393,7 @@ struct WalkNavigationView: View {
                 RoundedRectangle(cornerRadius: 8, style: .continuous)
                     .fill(Color(hex: "#1B5E20"))
                     .frame(width: 44, height: 44)
-                Image(systemName: directionIcon(for: viewModel.currentInstruction))
+                Image(systemName: directionIcon(for: viewModel.currentInstruction, step: viewModel.currentStep))
                     .font(.system(size: 20, weight: .semibold))
                     .foregroundStyle(.white)
             }
@@ -408,7 +408,7 @@ struct WalkNavigationView: View {
                     .lineLimit(1)
 
                 // Street / instruction
-                Text(streetName(from: viewModel.currentInstruction))
+                Text(streetName(from: viewModel.currentInstruction, step: viewModel.currentStep))
                     .font(.system(size: 14, design: .rounded))
                     .foregroundStyle(.white.opacity(0.85))
                     .lineLimit(1)
@@ -693,25 +693,13 @@ struct WalkNavigationView: View {
 
     // MARK: - Instruction helpers
 
-    private func directionIcon(for text: String) -> String {
-        let lower = text.lowercased()
-        if lower.contains("sharp left") || lower.contains("sharply left") { return "arrow.turn.up.left" }
-        if lower.contains("sharp right") || lower.contains("sharply right") { return "arrow.turn.up.right" }
-        if lower.contains("slight left") || lower.contains("bear left") { return "arrow.up.left" }
-        if lower.contains("slight right") || lower.contains("bear right") { return "arrow.up.right" }
-        if lower.contains("left")  { return "arrow.turn.up.left" }
-        if lower.contains("right") { return "arrow.turn.up.right" }
-        if lower.contains("u-turn") || lower.contains("uturn") { return "arrow.uturn.down" }
-        if lower.contains("arrive") || lower.contains("destination") { return "flag.fill" }
-        if lower.contains("roundabout") || lower.contains("rotary") { return "arrow.triangle.turn.up.right.circle" }
-        return "arrow.up"
+    private func directionIcon(for text: String, step: NavigationStep?) -> String {
+        let turn = step.map(NavigationSemantics.turn(for:)) ?? NavigationSemantics.turn(fromText: text)
+        return NavigationSemantics.sfSymbol(for: turn)
     }
 
-    private func streetName(from instruction: String) -> String {
-        if let range = instruction.range(of: "onto ", options: .caseInsensitive) {
-            return String(instruction[range.upperBound...])
-        }
-        return instruction
+    private func streetName(from instruction: String, step: NavigationStep?) -> String {
+        NavigationSemantics.streetLine(instruction: instruction, streetName: step?.streetName)
     }
 }
 

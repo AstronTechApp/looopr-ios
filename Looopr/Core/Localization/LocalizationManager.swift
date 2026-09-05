@@ -87,6 +87,24 @@ final class LocalizationManager {
         return bundle
     }
 
+    /// Language code of the current app language, readable off the main actor.
+    /// Follows the in-app override, else the device's preferred app localization.
+    nonisolated static var currentLanguageCode: String {
+        let saved = UserDefaults.standard.string(forKey: "settings.appLanguage") ?? "system"
+        let lang = SupportedLanguage(rawValue: saved) ?? .system
+        if lang == .system {
+            return Bundle.main.preferredLocalizations.first ?? "en"
+        }
+        return lang.code
+    }
+
+    /// Language parameter for the Mapbox Directions API (no regional Spanish there).
+    nonisolated static var mapboxLanguageCode: String {
+        let code = currentLanguageCode
+        if code.hasPrefix("es") { return "es" }
+        return code
+    }
+
     /// Returns the locale for the current language
     var currentLocale: Locale {
         if currentLanguage == .system {

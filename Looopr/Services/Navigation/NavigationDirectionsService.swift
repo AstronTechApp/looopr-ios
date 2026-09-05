@@ -160,13 +160,7 @@ actor LiveNavigationDirectionsService: NavigationDirecting {
     /// Returns true for any step instruction that indicates route arrival —
     /// used to filter mid-route "destination" artefacts from MKDirections.
     private func isArrivalStep(_ instruction: String) -> Bool {
-        let lower = instruction.lowercased()
-        return lower.contains("destination")
-            || lower.contains("arrive")
-            || lower.contains("arriving")
-            || lower.contains("arrived")
-            || lower.contains("you have reached")
-            || lower.contains("end of route")
+        NavigationSemantics.isArrival(instruction: instruction)
     }
 
     private func simplifyWaypoints(

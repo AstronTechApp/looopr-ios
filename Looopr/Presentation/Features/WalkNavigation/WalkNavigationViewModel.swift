@@ -65,6 +65,8 @@ final class WalkNavigationViewModel {
     private(set) var steps: [NavigationStep] = []
     private(set) var currentStepIndex: Int = 0
     private(set) var currentInstruction: String = L10n.WalkNavigation.preparingNavigation
+    /// The step behind `currentInstruction`, for language-independent arrows and street names.
+    private(set) var currentStep: NavigationStep?
     private(set) var nextInstruction: String?
     private(set) var distanceToNextStep: Double = 0
     private(set) var userLocation: CLLocationCoordinate2D?
@@ -591,7 +593,7 @@ final class WalkNavigationViewModel {
             // Auto-skip stray arrival instructions at non-final steps.
             while let stepNow = activeStep(at: 0),
                   currentStepIndex < steps.count - 1,
-                  isArrivalInstruction(stepNow.instruction) {
+                  NavigationSemantics.isArrival(stepNow) {
                 stepTracker.advance()
                 currentStepIndex = stepTracker.currentStepIndex
                 didAdvance = true
@@ -679,13 +681,15 @@ final class WalkNavigationViewModel {
 
     private func refreshCurrentStepPresentation(currentLocation: CLLocationCoordinate2D?) {
         guard let stepNow = activeStep(at: 0) else {
-            currentInstruction = "You've arrived!"
+            currentInstruction = L10n.WalkNavigation.arrived
+            currentStep = nil
             nextInstruction = nil
             distanceToNextStep = 0
             return
         }
 
         currentInstruction = stepNow.instruction
+        currentStep = stepNow
         nextInstruction = activeStep(at: 1)?.instruction
         if let currentLocation {
             distanceToNextStep = currentLocation.distance(to: stepNow.coordinate)
@@ -1229,16 +1233,6 @@ final class WalkNavigationViewModel {
         return diff
     }
 
-    private func isArrivalInstruction(_ instruction: String) -> Bool {
-        let lower = instruction.lowercased()
-        return lower.contains("destination")
-            || lower.contains("arrive")
-            || lower.contains("arriving")
-            || lower.contains("arrived")
-            || lower.contains("you have reached")
-            || lower.contains("end of route")
-    }
-
     private func startElapsedTimer() {
         elapsedTimer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { [weak self] _ in
             Task { @MainActor in
@@ -1278,7 +1272,7 @@ final class WalkNavigationViewModel {
         let nextPOI = findNextUpcomingPOI()
 
         // Parse turn-by-turn direction from current navigation instruction
-        let directionArrow = directionArrow(from: currentInstruction)
+        let directionArrow = currentStep.flatMap { NavigationSemantics.arrowGlyph(for: NavigationSemantics.turn(for: $0)) }
         let directionText = currentInstruction == L10n.WalkNavigation.preparingNavigation ? nil : currentInstruction
         let directionDistance: Double? = distanceToNextStep > 0 ? distanceToNextStep : nil
 
@@ -1292,42 +1286,6 @@ final class WalkNavigationViewModel {
             nextDirectionText: directionText,
             nextDirectionDistanceMeters: directionDistance
         )
-    }
-
-    /// Maps a navigation instruction string to a direction arrow character.
-    /// Parses keywords like "left", "right", "straight", "u-turn" from the instruction.
-    private func directionArrow(from instruction: String) -> String? {
-        let lower = instruction.lowercased()
-
-        // Check for specific turn types before generic directions
-        if lower.contains("u-turn") || lower.contains("u turn") || lower.contains("uturn") {
-            return "↩"
-        }
-        if lower.contains("sharp left") || lower.contains("hard left") {
-            return "↙"
-        }
-        if lower.contains("sharp right") || lower.contains("hard right") {
-            return "↘"
-        }
-        if lower.contains("slight left") || lower.contains("bear left") || lower.contains("keep left") {
-            return "↖"
-        }
-        if lower.contains("slight right") || lower.contains("bear right") || lower.contains("keep right") {
-            return "↗"
-        }
-        if lower.contains("turn left") || lower.contains("left") {
-            return "←"
-        }
-        if lower.contains("turn right") || lower.contains("right") {
-            return "→"
-        }
-        if lower.contains("straight") || lower.contains("continue") || lower.contains("head ") {
-            return "↑"
-        }
-        if lower.contains("arrive") || lower.contains("destination") {
-            return "📍"
-        }
-        return nil
     }
 
     /// Finds the next POI the user hasn't passed yet, based on distance along route.

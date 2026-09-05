@@ -294,7 +294,10 @@ final class MapboxRouteGenerationService: RouteGenerating, @unchecked Sendable {
                     return NavigationStep(
                         instruction: step.maneuver.instruction,
                         distanceMeters: step.distance,
-                        coordinate: coord
+                        coordinate: coord,
+                        maneuverType: step.maneuver.type,
+                        maneuverModifier: step.maneuver.modifier,
+                        streetName: step.name
                     )
                 }
             }
@@ -337,7 +340,10 @@ final class MapboxRouteGenerationService: RouteGenerating, @unchecked Sendable {
             URLQueryItem(name: "geometries",       value: "geojson"),
             URLQueryItem(name: "overview",         value: "full"),
             URLQueryItem(name: "steps",            value: "true"),
-            URLQueryItem(name: "continue_straight", value: "true")
+            URLQueryItem(name: "continue_straight", value: "true"),
+            // Turn instructions in the app's language (Mapbox falls back to English
+            // for languages it doesn't support).
+            URLQueryItem(name: "language",         value: LocalizationManager.mapboxLanguageCode)
         ]
 
         guard let url = components.url else {
@@ -426,6 +432,8 @@ private struct MapboxLeg: Codable {
 private struct MapboxStep: Codable {
     let maneuver: MapboxManeuver
     let distance: Double
+    /// Street name for the step, empty when unnamed.
+    let name: String?
     /// Transport mode for this step: "walking", "ferry", "cycling", etc.
     let mode: String?
 }
@@ -433,4 +441,6 @@ private struct MapboxStep: Codable {
 private struct MapboxManeuver: Codable {
     let instruction: String
     let location: [Double]
+    let type: String?
+    let modifier: String?
 }
