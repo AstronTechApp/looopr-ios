@@ -48,6 +48,10 @@ targets:
       path: Looopr/Info.plist
       properties:
         CFBundleDisplayName: Looopr
+        # Looopr uses only HTTPS and Apple's own crypto, so it qualifies for the
+        # exemption. Declaring it here stops App Store Connect asking the export
+        # compliance question on every single upload.
+        ITSAppUsesNonExemptEncryption: false
         UILaunchScreen:
           UIColorName: LaunchBackground
           UIImageName: LoooprLogo
