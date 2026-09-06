@@ -12,6 +12,7 @@ struct SettingsView: View {
     @State private var showingPrivacyPolicy = false
     @State private var showingTermsOfService = false
     @State private var showingSupport = false
+    @State private var showingFeedback = false
     @State private var showingCustomerCenter = false
     @State private var isPremiumSubscriber = false
 
@@ -77,8 +78,7 @@ struct SettingsView: View {
         }
         .sheet(isPresented: $showingShareSheet) {
             let message = L10n.Share.discoveringRoutes
-            // Replace APP_STORE_ID with actual ID when available
-            let appURL = URL(string: "https://apps.apple.com/app/idAPP_STORE_ID")!
+            let appURL = URL(string: "https://apps.apple.com/app/id6763516218")!
             ShareSheet(items: [message, appURL])
         }
         .sheet(isPresented: $showingPrivacyPolicy) {
@@ -89,6 +89,9 @@ struct SettingsView: View {
         }
         .sheet(isPresented: $showingSupport) {
             SafariView(url: URL(string: "https://looopr.app/support.html")!)
+        }
+        .sheet(isPresented: $showingFeedback) {
+            FeedbackSheetView()
         }
         .sheet(isPresented: $showingCustomerCenter, onDismiss: {
             // The user may have cancelled or changed plan inside Customer
@@ -460,8 +463,7 @@ struct SettingsView: View {
 
                 // Rate Looopr
                 Button {
-                    // Replace APP_STORE_ID with actual ID when available
-                    if let url = URL(string: "itms-apps://itunes.apple.com/app/idAPP_STORE_ID?action=write-review") {
+                    if let url = URL(string: "itms-apps://itunes.apple.com/app/id6763516218?action=write-review") {
                         UIApplication.shared.open(url)
                     }
                 } label: {
@@ -511,6 +513,21 @@ struct SettingsView: View {
                     showingTermsOfService = true
                 } label: {
                     SettingsRow(icon: "doc.text", title: L10n.Settings.termsOfService) {
+                        Image(systemName: "chevron.right")
+                            .font(.system(size: 12, weight: .semibold))
+                            .foregroundStyle(LoooprTheme.Colors.textTertiary)
+                    }
+                }
+                .buttonStyle(.plain)
+
+                Divider()
+                    .padding(.leading, 44)
+
+                // Send feedback (in-app, lands in the Supabase `feedback` table)
+                Button {
+                    showingFeedback = true
+                } label: {
+                    SettingsRow(icon: "bubble.left.and.bubble.right", title: L10n.Settings.sendFeedback) {
                         Image(systemName: "chevron.right")
                             .font(.system(size: 12, weight: .semibold))
                             .foregroundStyle(LoooprTheme.Colors.textTertiary)

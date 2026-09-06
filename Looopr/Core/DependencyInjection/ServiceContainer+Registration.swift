@@ -155,6 +155,16 @@ extension ServiceContainer {
         let analytics = LiveAnalyticsService(supabase: supabaseProvider)
         registerSingleton(AnalyticsTracking.self, instance: analytics)
 
+        // Feedback — insert-only letterbox in Supabase (feedback table).
+        // Needs a signed-in session, so it's only offered when Supabase is up.
+        if let supabaseProvider {
+            let feedback = LiveFeedbackService(
+                supabase: supabaseProvider,
+                subscription: resolveOptional(SubscriptionProviding.self)
+            )
+            registerSingleton(FeedbackSending.self, instance: feedback)
+        }
+
         // Live Activity
         registerSingleton(LiveActivityManager.self, instance: LiveActivityManager.shared)
     }

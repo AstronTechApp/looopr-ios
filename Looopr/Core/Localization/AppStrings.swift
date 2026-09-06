@@ -469,6 +469,7 @@ enum L10n {
         static var privacyPolicy: String { String(localized: "settings.privacyPolicy", defaultValue: "Privacy Policy", bundle: LocalizationManager.shared.localizedBundle) }
         static var termsOfService: String { String(localized: "settings.termsOfService", defaultValue: "Terms of Service", bundle: LocalizationManager.shared.localizedBundle) }
         static var support: String { String(localized: "settings.support", defaultValue: "Support", bundle: LocalizationManager.shared.localizedBundle) }
+        static var sendFeedback: String { String(localized: "settings.sendFeedback", defaultValue: "Send feedback", bundle: LocalizationManager.shared.localizedBundle) }
         static var notificationsDisabled: String { String(localized: "settings.notificationsDisabled", defaultValue: "Notifications Disabled", bundle: LocalizationManager.shared.localizedBundle) }
         static var openSettings: String { String(localized: "settings.openSettings", defaultValue: "Open Settings", bundle: LocalizationManager.shared.localizedBundle) }
         static var enableNotificationsMessage: String { String(localized: "settings.enableNotificationsMessage", defaultValue: "Enable notifications in Settings to use walk reminders.", bundle: LocalizationManager.shared.localizedBundle) }
@@ -636,6 +637,23 @@ enum L10n {
         static var loading: String { String(localized: "sharedRoute.loading", defaultValue: "Loading shared route...", bundle: LocalizationManager.shared.localizedBundle) }
         static var notFoundTitle: String { String(localized: "sharedRoute.notFoundTitle", defaultValue: "Route Not Found", bundle: LocalizationManager.shared.localizedBundle) }
         static var notFoundSubtitle: String { String(localized: "sharedRoute.notFoundSubtitle", defaultValue: "This route may have expired or been removed.", bundle: LocalizationManager.shared.localizedBundle) }
+    }
+
+    // MARK: - Send Feedback (Settings)
+    enum SendFeedback {
+        static var title: String { String(localized: "sendFeedback.title", defaultValue: "Send feedback", bundle: LocalizationManager.shared.localizedBundle) }
+        static var prompt: String { String(localized: "sendFeedback.prompt", defaultValue: "What works, what doesn't, and what should Looopr do next?", bundle: LocalizationManager.shared.localizedBundle) }
+        static var messagePlaceholder: String { String(localized: "sendFeedback.messagePlaceholder", defaultValue: "Your message", bundle: LocalizationManager.shared.localizedBundle) }
+        static var emailLabel: String { String(localized: "sendFeedback.emailLabel", defaultValue: "Email (optional)", bundle: LocalizationManager.shared.localizedBundle) }
+        static var emailHint: String { String(localized: "sendFeedback.emailHint", defaultValue: "Only used if we need to reply.", bundle: LocalizationManager.shared.localizedBundle) }
+        static var send: String { String(localized: "sendFeedback.send", defaultValue: "Send", bundle: LocalizationManager.shared.localizedBundle) }
+        static var sending: String { String(localized: "sendFeedback.sending", defaultValue: "Sending…", bundle: LocalizationManager.shared.localizedBundle) }
+        static var sentTitle: String { String(localized: "sendFeedback.sentTitle", defaultValue: "Thanks, got it", bundle: LocalizationManager.shared.localizedBundle) }
+        static var sentBody: String { String(localized: "sendFeedback.sentBody", defaultValue: "We read every message. If you left an email, we'll get back to you.", bundle: LocalizationManager.shared.localizedBundle) }
+        static var footer: String { String(localized: "sendFeedback.footer", defaultValue: "Sent with your app version and device model so we can reproduce what you saw.", bundle: LocalizationManager.shared.localizedBundle) }
+        static var errorSend: String { String(localized: "sendFeedback.errorSend", defaultValue: "Couldn't send right now. Check your connection and try again.", bundle: LocalizationManager.shared.localizedBundle) }
+        static var errorEmail: String { String(localized: "sendFeedback.errorEmail", defaultValue: "That email address doesn't look right.", bundle: LocalizationManager.shared.localizedBundle) }
+        static var errorSignIn: String { String(localized: "sendFeedback.errorSignIn", defaultValue: "Sign in to send feedback.", bundle: LocalizationManager.shared.localizedBundle) }
     }
 
     // MARK: - Miscellaneous

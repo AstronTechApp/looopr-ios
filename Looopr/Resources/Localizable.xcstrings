@@ -23609,6 +23609,258 @@
           }
         }
       }
+    },
+    "settings.sendFeedback" : {
+      "comment" : "Settings row that opens the in-app feedback sheet.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Send feedback"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Feedback sturen"
+          }
+        }
+      }
+    },
+    "sendFeedback.title" : {
+      "comment" : "Title of the feedback sheet.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Send feedback"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Feedback sturen"
+          }
+        }
+      }
+    },
+    "sendFeedback.prompt" : {
+      "comment" : "Prompt above the message box.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "What works, what doesn't, and what should Looopr do next?"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wat werkt goed, wat niet, en wat zou Looopr nog moeten kunnen?"
+          }
+        }
+      }
+    },
+    "sendFeedback.messagePlaceholder" : {
+      "comment" : "Placeholder in the message box.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your message"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Je bericht"
+          }
+        }
+      }
+    },
+    "sendFeedback.emailLabel" : {
+      "comment" : "Placeholder of the optional reply-address field.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Email (optional)"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "E-mail (optioneel)"
+          }
+        }
+      }
+    },
+    "sendFeedback.emailHint" : {
+      "comment" : "Hint under the email field.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Only used if we need to reply."
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alleen om te kunnen reageren."
+          }
+        }
+      }
+    },
+    "sendFeedback.send" : {
+      "comment" : "Send button.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Send"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Versturen"
+          }
+        }
+      }
+    },
+    "sendFeedback.sending" : {
+      "comment" : "Send button while the request is in flight.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sending…"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Versturen…"
+          }
+        }
+      }
+    },
+    "sendFeedback.sentTitle" : {
+      "comment" : "Title after a successful send.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Thanks, got it"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bedankt, ontvangen"
+          }
+        }
+      }
+    },
+    "sendFeedback.sentBody" : {
+      "comment" : "Body after a successful send.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "We read every message. If you left an email, we'll get back to you."
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "We lezen elk bericht. Heb je een e-mailadres achtergelaten, dan reageren we daarop."
+          }
+        }
+      }
+    },
+    "sendFeedback.footer" : {
+      "comment" : "Small print under the send button.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sent with your app version and device model so we can reproduce what you saw."
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wordt verstuurd met je appversie en toesteltype, zodat we kunnen nakijken wat je zag."
+          }
+        }
+      }
+    },
+    "sendFeedback.errorSend" : {
+      "comment" : "Network/server failure.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Couldn't send right now. Check your connection and try again."
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Versturen is niet gelukt. Controleer je verbinding en probeer het opnieuw."
+          }
+        }
+      }
+    },
+    "sendFeedback.errorEmail" : {
+      "comment" : "Email validation failure.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "That email address doesn't look right."
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dat e-mailadres klopt niet helemaal."
+          }
+        }
+      }
+    },
+    "sendFeedback.errorSignIn" : {
+      "comment" : "No signed-in session.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sign in to send feedback."
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Log in om feedback te sturen."
+          }
+        }
+      }
     }
   },
   "version" : "1.1"

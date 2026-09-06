@@ -8,6 +8,8 @@
 
 /* Begin PBXBuildFile section */
 		C9598D433C64507E1ED680DD /* NavigationSemantics.swift in Sources */ = {isa = PBXBuildFile; fileRef = 15D79F921873F946DC3C303F /* NavigationSemantics.swift */; };
+		FABFF4734CBA3AD7FB0573C8 /* FeedbackService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A89D47102D3B99AE5DEC57A8 /* FeedbackService.swift */; };
+		554A7ECBED8D7ED2420002FE /* FeedbackSheetView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D6E81ACB197049AC00C6FDC3 /* FeedbackSheetView.swift */; };
 		231F9A0AE7D5AE831BB434DA /* Localizable.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = F840EE71A683B8A0A86A0C3C /* Localizable.xcstrings */; };
 		C2E82D9C0FE37A0871B760ED /* FileStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0B93AB80F2F329EBC07E252 /* FileStore.swift */; };
 		385716D03C52F431761161F9 /* SubscriptionGateTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F733303B3AA9C49AB0C989F1 /* SubscriptionGateTests.swift */; };
@@ -210,6 +212,8 @@
 
 /* Begin PBXFileReference section */
 		15D79F921873F946DC3C303F /* NavigationSemantics.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NavigationSemantics.swift; sourceTree = "<group>"; };
+		A89D47102D3B99AE5DEC57A8 /* FeedbackService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FeedbackService.swift; sourceTree = "<group>"; };
+		D6E81ACB197049AC00C6FDC3 /* FeedbackSheetView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FeedbackSheetView.swift; sourceTree = "<group>"; };
 		F840EE71A683B8A0A86A0C3C /* Localizable.xcstrings */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; path = Localizable.xcstrings; sourceTree = "<group>"; };
 		A0B93AB80F2F329EBC07E252 /* FileStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileStore.swift; sourceTree = "<group>"; };
 		F733303B3AA9C49AB0C989F1 /* SubscriptionGateTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SubscriptionGateTests.swift; sourceTree = "<group>"; };
@@ -740,6 +744,7 @@
 				6A2078E2FBACED31F18C78DD /* Auth */,
 				BFCCF4DAA3B44F9A58968A94 /* Elevation */,
 				7C20CFE6CD57F66997BFF40C /* Experiences */,
+				F88DB182BAFD1B62E2AB37AE /* Feedback */,
 				82DF42D7794E40949D80E836 /* Health */,
 				BEAEEEAFABC2379085B71EC8 /* LiveActivity */,
 				BDE02A8D2C0E6860A41CE537 /* Location */,
@@ -775,6 +780,14 @@
 				05A80AA243EDD61DD765A51D /* AppRootView.swift */,
 			);
 			path = Presentation;
+			sourceTree = "<group>";
+		};
+		F88DB182BAFD1B62E2AB37AE /* Feedback */ = {
+			isa = PBXGroup;
+			children = (
+				A89D47102D3B99AE5DEC57A8 /* FeedbackService.swift */,
+			);
+			path = Feedback;
 			sourceTree = "<group>";
 		};
 		A35293ECA4D339BAC4C3E836 /* Analytics */ = {
@@ -928,6 +941,7 @@
 		E6C0E167E0D597C563709AF2 /* Settings */ = {
 			isa = PBXGroup;
 			children = (
+				D6E81ACB197049AC00C6FDC3 /* FeedbackSheetView.swift */,
 				3AF87D331080643C06E11581 /* HealthSettingsView.swift */,
 				B83449AB7F081DA7C1501D99 /* PrivacySettingsView.swift */,
 				3C2B0035F2ADBF9368F2277F /* SettingsView.swift */,
@@ -1228,6 +1242,8 @@
 			buildActionMask = 2147483647;
 			files = (
 				C9598D433C64507E1ED680DD /* NavigationSemantics.swift in Sources */,
+				FABFF4734CBA3AD7FB0573C8 /* FeedbackService.swift in Sources */,
+				554A7ECBED8D7ED2420002FE /* FeedbackSheetView.swift in Sources */,
 				B1F6727466704CB9991FDC45 /* HealthWorkoutSaving.swift in Sources */,
 				EDA764805B3BFF7DE324C10C /* ElevationProviding.swift in Sources */,
 				B7C1C730A36E356A5AAA463B /* LiveElevationService.swift in Sources */,
@@ -1404,7 +1420,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = Looopr/Looopr.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
-				CURRENT_PROJECT_VERSION = 2;
+				CURRENT_PROJECT_VERSION = 5;
 				GOOGLE_PLACES_API_KEY = "$(GOOGLE_PLACES_API_KEY)";
 				INFOPLIST_FILE = Looopr/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -1412,7 +1428,7 @@
 					"@executable_path/Frameworks",
 				);
 				MAPBOX_ACCESS_TOKEN = "$(MAPBOX_ACCESS_TOKEN)";
-				MARKETING_VERSION = 1.0.0;
+				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = nl.astrontech.looopr;
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = 1;
@@ -1564,14 +1580,14 @@
 		BEE7C37A373069041CCD8C48 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				CURRENT_PROJECT_VERSION = 2;
+				CURRENT_PROJECT_VERSION = 5;
 				INFOPLIST_FILE = LoooprLiveActivity/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 					"@executable_path/../../Frameworks",
 				);
-				MARKETING_VERSION = 1.0.0;
+				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = nl.astrontech.looopr.LoooprLiveActivity;
 				SDKROOT = iphoneos;
 				SKIP_INSTALL = YES;
@@ -1582,14 +1598,14 @@
 		D535D323A212142A93CE8F2F /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				CURRENT_PROJECT_VERSION = 2;
+				CURRENT_PROJECT_VERSION = 5;
 				INFOPLIST_FILE = LoooprLiveActivity/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 					"@executable_path/../../Frameworks",
 				);
-				MARKETING_VERSION = 1.0.0;
+				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = nl.astrontech.looopr.LoooprLiveActivity;
 				SDKROOT = iphoneos;
 				SKIP_INSTALL = YES;
@@ -1604,7 +1620,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = Looopr/Looopr.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
-				CURRENT_PROJECT_VERSION = 2;
+				CURRENT_PROJECT_VERSION = 5;
 				GOOGLE_PLACES_API_KEY = "$(GOOGLE_PLACES_API_KEY)";
 				INFOPLIST_FILE = Looopr/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -1612,7 +1628,7 @@
 					"@executable_path/Frameworks",
 				);
 				MAPBOX_ACCESS_TOKEN = "$(MAPBOX_ACCESS_TOKEN)";
-				MARKETING_VERSION = 1.0.0;
+				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = nl.astrontech.looopr;
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = 1;
