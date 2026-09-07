@@ -189,15 +189,13 @@ struct AppConfiguration: Sendable {
             wrongWayBearingBaselineMeters: 15,
             wrongWayMaxFlips: 1
         ),
-        freemium: Freemium(paywallEnabled: false, freeRouteLimit: 2, paidRouteLimit: 8)
+        freemium: Freemium(paywallEnabled: true, freeRouteLimit: 2, paidRouteLimit: 8)
     )
 
-    /// Debug builds mirror production in every respect except one: the
-    /// paywall is ON. That lets the RevenueCat paywall and the free-tier
-    /// limits be exercised on device — against the Test Store while the real
-    /// App Store products don't exist yet — without the shipped build
-    /// gating anyone. Release still reads `production`, where the paywall
-    /// stays off until launch.
+    /// Debug builds mirror production in every respect except the store they
+    /// buy from: Debug uses the RevenueCat Test Store key, Release the real
+    /// `appl_` key. The paywall is ON in both since launch — `production`
+    /// carries `paywallEnabled: true`.
     static let debug: AppConfiguration = {
         var config = production
         config.freemium = Freemium(
