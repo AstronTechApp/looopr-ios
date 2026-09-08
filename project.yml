@@ -52,6 +52,12 @@ targets:
         # exemption. Declaring it here stops App Store Connect asking the export
         # compliance question on every single upload.
         ITSAppUsesNonExemptEncryption: false
+        # Settings > Privacy & Data > Export My Data writes a JSON file to the
+        # app's Documents directory. These two keys make that directory show
+        # up in the Files app (On My iPhone > Looopr); without them the file
+        # is written but invisible to the user.
+        UIFileSharingEnabled: true
+        LSSupportsOpeningDocumentsInPlace: true
         UILaunchScreen:
           UIColorName: LaunchBackground
           UIImageName: LoooprLogo
@@ -109,7 +115,7 @@ targets:
         CODE_SIGN_ENTITLEMENTS: Looopr/Looopr.entitlements
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         MARKETING_VERSION: "1.0"
-        CURRENT_PROJECT_VERSION: "5"
+        CURRENT_PROJECT_VERSION: "6"
         TARGETED_DEVICE_FAMILY: "1"
         GOOGLE_PLACES_API_KEY: $(GOOGLE_PLACES_API_KEY)
         MAPBOX_ACCESS_TOKEN: $(MAPBOX_ACCESS_TOKEN)
@@ -139,7 +145,7 @@ targets:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: nl.astrontech.looopr.LoooprLiveActivity
         MARKETING_VERSION: "1.0"
-        CURRENT_PROJECT_VERSION: "5"
+        CURRENT_PROJECT_VERSION: "6"
         TARGETED_DEVICE_FAMILY: "1"
         SKIP_INSTALL: YES
 

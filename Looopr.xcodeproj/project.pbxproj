@@ -1420,7 +1420,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = Looopr/Looopr.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
-				CURRENT_PROJECT_VERSION = 5;
+				CURRENT_PROJECT_VERSION = 6;
 				GOOGLE_PLACES_API_KEY = "$(GOOGLE_PLACES_API_KEY)";
 				INFOPLIST_FILE = Looopr/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -1580,7 +1580,7 @@
 		BEE7C37A373069041CCD8C48 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				CURRENT_PROJECT_VERSION = 5;
+				CURRENT_PROJECT_VERSION = 6;
 				INFOPLIST_FILE = LoooprLiveActivity/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -1598,7 +1598,7 @@
 		D535D323A212142A93CE8F2F /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				CURRENT_PROJECT_VERSION = 5;
+				CURRENT_PROJECT_VERSION = 6;
 				INFOPLIST_FILE = LoooprLiveActivity/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -1620,7 +1620,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = Looopr/Looopr.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
-				CURRENT_PROJECT_VERSION = 5;
+				CURRENT_PROJECT_VERSION = 6;
 				GOOGLE_PLACES_API_KEY = "$(GOOGLE_PLACES_API_KEY)";
 				INFOPLIST_FILE = Looopr/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (

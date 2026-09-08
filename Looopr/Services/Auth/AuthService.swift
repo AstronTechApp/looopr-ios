@@ -87,6 +87,12 @@ final class AuthService: @unchecked Sendable {
         // The Edge Function derives the account to delete from the caller's
         // JWT — no user id is sent (or trusted) in the body.
         try await supabase.client.functions.invoke("delete-account")
+        // The auth user is gone server-side, but the SDK still holds the
+        // session (access + refresh token) in the keychain, and the access
+        // token stays valid until it expires. Drop it locally so the next
+        // launch can't restore a deleted account. `.local` skips the server
+        // call, which would 403 now that the user no longer exists.
+        try? await supabase.client.auth.signOut(scope: .local)
         clearSession()
     }
 
