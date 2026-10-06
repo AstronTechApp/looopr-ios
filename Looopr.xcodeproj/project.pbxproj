@@ -30,6 +30,7 @@
 		1C94274BDA914DA3020AD38A /* RevenueCat in Frameworks */ = {isa = PBXBuildFile; productRef = D27E1DC8B431F061DFA23CA5 /* RevenueCat */; };
 		1D6C64D9E681D83328442269 /* RouteArrowHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD5448B80A5DB3AA126DDBBA /* RouteArrowHelper.swift */; };
 		1F60D28A34847A3FB9ED4A3B /* GPXExporterTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 37E2FEC0301F219789C885EB /* GPXExporterTests.swift */; };
+		1FECD16FF46D3BCC550098F6 /* ApproachingPOIMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25856A1A51863C2D2EE7711B /* ApproachingPOIMonitor.swift */; };
 		21C19F299B7A78D23024D4C7 /* WalkLiveActivity.swift in Sources */ = {isa = PBXBuildFile; fileRef = AADFED3D9A4205B98DDD478D /* WalkLiveActivity.swift */; };
 		226EF7C286F87B4D7E4FE2A5 /* POIFilteringService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4900C7420CCC990BFB838A53 /* POIFilteringService.swift */; };
 		228AF7AE3447764436A1E83A /* GPXExporter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4F3D65EB41C3DB488DB0DA8B /* GPXExporter.swift */; };
@@ -118,6 +119,7 @@
 		9F47197B46CB0E25E722433E /* SupabaseClientProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2D4E506357D473BBC64ED07 /* SupabaseClientProvider.swift */; };
 		A0053F1370E9E3C8D5EA488C /* NavigationSemantics.swift in Sources */ = {isa = PBXBuildFile; fileRef = A230CB2E4794906BE8744750 /* NavigationSemantics.swift */; };
 		A184417F7EDA2D673E533313 /* AppRoute.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9ACB91C81159765DB0DE6311 /* AppRoute.swift */; };
+		A600907F37EC6CBCDDA450F8 /* ApproachingPOIMonitorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C5CD6057FC3B64D0D952644B /* ApproachingPOIMonitorTests.swift */; };
 		A6864D01B94D729E42067A54 /* RevenueCatSubscriptionService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8AFE9E4C6629981AB54B2518 /* RevenueCatSubscriptionService.swift */; };
 		A689022519397FF4E8C1A7E2 /* GetYourGuideAPI.swift in Sources */ = {isa = PBXBuildFile; fileRef = B563D8143D9D3D31187E6097 /* GetYourGuideAPI.swift */; };
 		A74BBCF95AF48764568F7BB3 /* RouteMapPreview.swift in Sources */ = {isa = PBXBuildFile; fileRef = 543D6B57B4D0EE1C31C063E7 /* RouteMapPreview.swift */; };
@@ -236,6 +238,7 @@
 		19CB0581550284AC1649744A /* WalkSession.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WalkSession.swift; sourceTree = "<group>"; };
 		21A604C99E7332341129ECCA /* POIAggregatorService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = POIAggregatorService.swift; sourceTree = "<group>"; };
 		242C16A2FD809544E1C4697F /* Looopr.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Looopr.entitlements; sourceTree = "<group>"; };
+		25856A1A51863C2D2EE7711B /* ApproachingPOIMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ApproachingPOIMonitor.swift; sourceTree = "<group>"; };
 		2681139FE02503BC9DD568B1 /* LoooprTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoooprTests.swift; sourceTree = "<group>"; };
 		26E5886C7A0696C05105BC72 /* Injected.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Injected.swift; sourceTree = "<group>"; };
 		27F5F5B698E080136A8B06BD /* KlookAPI.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KlookAPI.swift; sourceTree = "<group>"; };
@@ -346,6 +349,7 @@
 		C025EE990B8A54562D93A1F8 /* POIEnriching.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = POIEnriching.swift; sourceTree = "<group>"; };
 		C11D386ADA4F268ECA4BB921 /* FoodCheckInBannerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FoodCheckInBannerView.swift; sourceTree = "<group>"; };
 		C1C6606A5D0FB76976E4F31B /* TiqetsTicketProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TiqetsTicketProvider.swift; sourceTree = "<group>"; };
+		C5CD6057FC3B64D0D952644B /* ApproachingPOIMonitorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ApproachingPOIMonitorTests.swift; sourceTree = "<group>"; };
 		C5FFDE91CBD495EA92F37C42 /* Environment.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Environment.swift; sourceTree = "<group>"; };
 		C633326ED8EE31A422436446 /* RouteDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RouteDetailView.swift; sourceTree = "<group>"; };
 		C68292DD8A6946A6EB177CAB /* OverpassPOIDiscoveryService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OverpassPOIDiscoveryService.swift; sourceTree = "<group>"; };
@@ -825,6 +829,7 @@
 		B3DE42A6D1696928779426B7 /* Navigation */ = {
 			isa = PBXGroup;
 			children = (
+				25856A1A51863C2D2EE7711B /* ApproachingPOIMonitor.swift */,
 				EC1676D598E54CEE72B7E61B /* NavigationDirectionsService.swift */,
 				EB7EF97B85FB31C04C2467F7 /* OffRouteDetector.swift */,
 				B268678998A0B0C71DE4D912 /* ReentryPointFinder.swift */,
@@ -899,6 +904,7 @@
 		D6A734EFF9992DB57C901E06 /* LoooprTests */ = {
 			isa = PBXGroup;
 			children = (
+				C5CD6057FC3B64D0D952644B /* ApproachingPOIMonitorTests.swift */,
 				0C81F46741EF809DC612E590 /* ElevationCalculatorTests.swift */,
 				37E2FEC0301F219789C885EB /* GPXExporterTests.swift */,
 				2681139FE02503BC9DD568B1 /* LoooprTests.swift */,
@@ -1241,6 +1247,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				A600907F37EC6CBCDDA450F8 /* ApproachingPOIMonitorTests.swift in Sources */,
 				5CAF37B680A02523D1BD24FD /* ElevationCalculatorTests.swift in Sources */,
 				1F60D28A34847A3FB9ED4A3B /* GPXExporterTests.swift in Sources */,
 				CFADF9889409827D615330C3 /* LoooprTests.swift in Sources */,
@@ -1277,6 +1284,7 @@
 				F35184E04740DBEE4E516441 /* AppStrings.swift in Sources */,
 				0635E9179C2493B7BDD781F9 /* AppTheme.swift in Sources */,
 				2344720A1B9CE727AC4E31ED /* AppleMapKitDiscoveryService.swift in Sources */,
+				1FECD16FF46D3BCC550098F6 /* ApproachingPOIMonitor.swift in Sources */,
 				282F204B8252254E4DB3ABF7 /* AuthProviding.swift in Sources */,
 				0220930625959B549B97AC7D /* AuthService.swift in Sources */,
 				722FDC554293B5021049E064 /* AuthView.swift in Sources */,

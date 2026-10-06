@@ -63,6 +63,11 @@ final class WrongWayDetector {
 
     private(set) var debugSnapshot = WrongWayDetectorDebugSnapshot()
 
+    /// Last reversal state handed to `observeReversal`, so a prompt fires
+    /// once per reversal episode: after a dismissal nothing fires again
+    /// until the user walks forward and reverses anew.
+    private var wasReversed = false
+
     private var walkStartTime: Date?
     private var previousLocation: CLLocation?
     private var wrongWayDistance: CLLocationDistance = 0
@@ -116,6 +121,7 @@ final class WrongWayDetector {
         trail = []
         flipCount = 0
         awaitingUserResponse = false
+        wasReversed = false
         updateDebug(status: "idle", reason: "session started")
     }
 
@@ -124,6 +130,7 @@ final class WrongWayDetector {
         flipCount += 1
         clearWrongWayRun()
         awaitingUserResponse = false
+        wasReversed = false
         updateDebug(status: "flipped", reason: "user confirmed")
         // previousLocation is kept so the next check has a reference point.
     }
@@ -146,6 +153,7 @@ final class WrongWayDetector {
         previousLocation = nil
         trail = []
         cumulativeDistanceSinceSessionStart = 0
+        wasReversed = false
         updateDebug(status: "retry", reason: "flip failed; detector reset")
     }
 
@@ -158,6 +166,7 @@ final class WrongWayDetector {
         clearWrongWayRun()
         previousLocation = nil
         trail = []
+        wasReversed = false
         updateDebug(status: "reset", reason: "off-route/reroute reset")
     }
 
@@ -168,6 +177,44 @@ final class WrongWayDetector {
 
     func recordSkipped(reason: String) {
         updateDebug(status: "skipped", reason: reason)
+    }
+
+    // MARK: - Tracker-driven detection
+
+    /// Fires the prompt from `SmoothedLocationTracker.isReversed` — the
+    /// same signal that turns the puck arrow around — so arrow and prompt
+    /// always agree. The session rules (warm-up, flip limit, one prompt at
+    /// a time, no re-prompt until the reversal clears) still apply.
+    func observeReversal(_ isReversed: Bool) {
+        defer { wasReversed = isReversed }
+        guard flipCount < maxFlips else {
+            updateDebug(status: "inactive", reason: "flip limit reached")
+            return
+        }
+        guard !awaitingUserResponse else {
+            updateDebug(status: "awaiting", reason: "prompt visible")
+            return
+        }
+        guard let startTime = walkStartTime else {
+            updateDebug(status: "idle", reason: "session not started")
+            return
+        }
+        let elapsed = Date().timeIntervalSince(startTime)
+        guard elapsed >= warmupSeconds else {
+            updateDebug(status: "warming", reason: "\(Int(ceil(warmupSeconds - elapsed)))s left")
+            return
+        }
+        guard isReversed else {
+            updateDebug(status: "aligned", reason: "tracker: walking with route")
+            return
+        }
+        guard !wasReversed else {
+            updateDebug(status: "reversed", reason: "already prompted this episode")
+            return
+        }
+        awaitingUserResponse = true
+        updateDebug(status: "triggered", reason: "tracker reversal")
+        onWrongWayDetected?()
     }
 
     // MARK: - Core detection

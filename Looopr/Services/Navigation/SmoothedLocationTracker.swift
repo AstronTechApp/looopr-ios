@@ -34,6 +34,12 @@ final class SmoothedLocationTracker: NSObject {
     private(set) var frame: Int = 0
     /// True when the drawn position is the route projection rather than the raw fix.
     private(set) var isSnappedToRoute = false
+    /// True while the user is walking the route against its planned
+    /// direction. The puck arrow then faces route bearing + 180° and
+    /// between-fix extrapolation runs backwards along the polyline. Has
+    /// hysteresis (see `reversalEnterDegrees` …) so a glance sideways or a
+    /// noisy course sample can't flip it. Reset by `setRoute`.
+    private(set) var isReversed = false
 
     // MARK: - Tuning
 
@@ -54,6 +60,17 @@ final class SmoothedLocationTracker: NSObject {
     var teleportDistanceMeters: Double = 60
     /// Below this speed (m/s) the user is treated as standing still.
     var movingSpeedThreshold: Double = 0.5
+    /// Reversal detection: the user is walking the route backwards once the
+    /// GPS course differs from the route bearing by more than
+    /// `reversalEnterDegrees` continuously for `reversalEnterSeconds` while
+    /// moving (valid course, speed ≥ `movingSpeedThreshold`). It clears again
+    /// once the difference stays below `reversalExitDegrees` for
+    /// `reversalExitSeconds`. The dead band between the two angles keeps
+    /// the state where it is.
+    var reversalEnterDegrees: Double = 120
+    var reversalExitDegrees: Double = 60
+    var reversalEnterSeconds: TimeInterval = 3
+    var reversalExitSeconds: TimeInterval = 3
 
     // MARK: - State
 
@@ -66,6 +83,10 @@ final class SmoothedLocationTracker: NSObject {
     private var smoothedSpeed: Double = 0
     private var courseBearing: CLLocationDirection?
     private var compassHeading: CLLocationDirection?
+    /// Fix timestamps at which the current run of "against the route" /
+    /// "with the route" course samples began (nil = no run in progress).
+    private var reversedRunSince: TimeInterval?
+    private var forwardRunSince: TimeInterval?
 
     private var polyline: [CLLocationCoordinate2D] = []
     private var displayLink: CADisplayLink?
@@ -101,6 +122,9 @@ final class SmoothedLocationTracker: NSObject {
     /// The polyline fixes are snapped to. Call again after a reroute.
     func setRoute(_ coordinates: [CLLocationCoordinate2D]) {
         polyline = coordinates
+        isReversed = false
+        reversedRunSince = nil
+        forwardRunSince = nil
     }
 
     // MARK: - Input
@@ -148,7 +172,43 @@ final class SmoothedLocationTracker: NSObject {
             isSnappedToRoute = false
         }
 
+        updateReversal(location: location, speed: speed)
+
         if displayCoordinate == nil { displayCoordinate = anchor }
+    }
+
+    /// Hysteresis on the angle between GPS course and route bearing. Only
+    /// snapped, moving fixes with a valid course count; anything else breaks
+    /// the "continuously" requirement and restarts the timers.
+    private func updateReversal(location: CLLocation, speed: Double) {
+        guard isSnappedToRoute, let routeBearing = anchorRouteBearing,
+              location.course >= 0, speed >= movingSpeedThreshold
+        else {
+            reversedRunSince = nil
+            forwardRunSince = nil
+            return
+        }
+        let difference = abs(Self.angleDelta(location.course, routeBearing))
+        let timestamp = location.timestamp.timeIntervalSinceReferenceDate
+        if difference > reversalEnterDegrees {
+            forwardRunSince = nil
+            let since = reversedRunSince ?? timestamp
+            reversedRunSince = since
+            if !isReversed, timestamp - since >= reversalEnterSeconds { isReversed = true }
+        } else if difference < reversalExitDegrees {
+            reversedRunSince = nil
+            let since = forwardRunSince ?? timestamp
+            forwardRunSince = since
+            if isReversed, timestamp - since >= reversalExitSeconds { isReversed = false }
+        } else {
+            reversedRunSince = nil
+            forwardRunSince = nil
+        }
+    }
+
+    /// Route bearing in the user's actual direction of travel.
+    private var travelRouteBearing: CLLocationDirection? {
+        anchorRouteBearing.map { isReversed ? Self.normalize($0 + 180) : $0 }
     }
 
     func ingestHeading(_ heading: CLLocationDirection) {
@@ -180,8 +240,9 @@ final class SmoothedLocationTracker: NSObject {
         let sinceFix = min(max(now - latestFixTime, 0), maxExtrapolationSeconds)
         let moving = smoothedSpeed >= movingSpeedThreshold
         if moving, sinceFix > 0 {
-            // Along the route when snapped, else along the GPS course.
-            if let bearing = anchorRouteBearing ?? courseBearing {
+            // Along the route (backwards when reversed) when snapped, else
+            // along the GPS course.
+            if let bearing = travelRouteBearing ?? courseBearing {
                 target = anchor.coordinate(at: smoothedSpeed * sinceFix, bearing: bearing)
                 if isSnappedToRoute,
                    let reprojected = Self.project(target, onto: polyline),
@@ -213,7 +274,7 @@ final class SmoothedLocationTracker: NSObject {
         // lets the map turn with the user.
         let moving = smoothedSpeed >= movingSpeedThreshold
         let target: CLLocationDirection?
-        if moving, let route = anchorRouteBearing {
+        if moving, let route = travelRouteBearing {
             target = route
         } else if moving, let course = courseBearing {
             target = course
@@ -234,6 +295,8 @@ final class SmoothedLocationTracker: NSObject {
         let coordinate: CLLocationCoordinate2D
         let distanceMeters: Double
         let segmentBearing: CLLocationDirection
+        /// Arc length from the polyline's first vertex to `coordinate`.
+        let distanceAlongRouteMeters: Double
     }
 
     /// Nearest point on `polyline` to `point`, computed in a local
@@ -249,10 +312,12 @@ final class SmoothedLocationTracker: NSObject {
         }
 
         var best: RouteProjection?
+        var walked = 0.0
         for i in 0..<(polyline.count - 1) {
             let a = toXY(polyline[i]), b = toXY(polyline[i + 1])
             let dx = b.x - a.x, dy = b.y - a.y
             let len2 = dx * dx + dy * dy
+            let len = len2.squareRoot()
             var t = 0.0
             if len2 > 0 { t = min(max((-a.x * dx + -a.y * dy) / len2, 0), 1) }
             let px = a.x + dx * t, py = a.y + dy * t
@@ -263,8 +328,11 @@ final class SmoothedLocationTracker: NSObject {
                     longitude: point.longitude + px / metersPerDegLon
                 )
                 let bearing = normalize(atan2(dx, dy) * 180 / .pi)
-                best = RouteProjection(coordinate: coord, distanceMeters: dist, segmentBearing: bearing)
+                best = RouteProjection(coordinate: coord, distanceMeters: dist,
+                                       segmentBearing: bearing,
+                                       distanceAlongRouteMeters: walked + len * t)
             }
+            walked += len
         }
         return best
     }

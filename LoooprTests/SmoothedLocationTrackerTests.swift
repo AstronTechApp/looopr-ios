@@ -165,6 +165,119 @@ final class SmoothedLocationTrackerTests: XCTestCase {
         XCTAssertEqual(tracker.displayHeading, 0, accuracy: 1, "map faces along the street, not the phone")
     }
 
+    // MARK: - Reverse-direction walking
+
+    /// Feeds one fix per second walking from `start` along `bearing` with
+    /// the GPS course set to that bearing. Returns the last fix time.
+    @discardableResult
+    private func walk(_ tracker: SmoothedLocationTracker, from start: CLLocationCoordinate2D,
+                      bearing: Double, course: Double? = nil, seconds: Int,
+                      startingAt t0: TimeInterval, speed: Double = 1.4) -> TimeInterval {
+        var t = t0
+        for i in 0...seconds {
+            t = t0 + Double(i)
+            let position = start.coordinate(at: speed * Double(i), bearing: bearing)
+            tracker.ingest(fix(position, speed: speed, course: course ?? bearing, at: t), now: 1_000 + t)
+        }
+        return t
+    }
+
+    func testWalkingAgainstRouteSetsReversedOnlyAfterHoldTime() {
+        let tracker = makeTracker()
+        let top = origin.coordinate(at: 150, bearing: 0)
+        // Heading south on a northbound street: 180° off.
+        walk(tracker, from: top, bearing: 180, seconds: 2, startingAt: 0)
+        XCTAssertFalse(tracker.isReversed, "2 s is not enough to count as a reversal")
+        walk(tracker, from: top.coordinate(at: 1.4 * 3, bearing: 180), bearing: 180, seconds: 1, startingAt: 3)
+        XCTAssertTrue(tracker.isReversed, "3 s of walking against the route flips the state")
+    }
+
+    func testReversalClearsOnlyAfterWalkingForwardForHoldTime() {
+        let tracker = makeTracker()
+        let top = origin.coordinate(at: 150, bearing: 0)
+        walk(tracker, from: top, bearing: 180, seconds: 4, startingAt: 0)
+        XCTAssertTrue(tracker.isReversed)
+
+        // Turn around and walk north again.
+        let turn = top.coordinate(at: 1.4 * 4, bearing: 180)
+        walk(tracker, from: turn, bearing: 0, seconds: 2, startingAt: 5)
+        XCTAssertTrue(tracker.isReversed, "still reversed after 2 s forward")
+        walk(tracker, from: turn.coordinate(at: 1.4 * 3, bearing: 0), bearing: 0, seconds: 1, startingAt: 8)
+        XCTAssertFalse(tracker.isReversed, "3 s forward clears the reversal")
+    }
+
+    func testReversalHysteresisDeadBandHoldsState() {
+        let tracker = makeTracker()
+        let top = origin.coordinate(at: 150, bearing: 0)
+        // Course 90° off while the fixes stay on the street: not enough to
+        // enter (>120°) and not enough to exit (<60°).
+        walk(tracker, from: top, bearing: 180, course: 90, seconds: 6, startingAt: 0)
+        XCTAssertFalse(tracker.isReversed, "a sideways course never enters the reversed state")
+
+        walk(tracker, from: top, bearing: 180, seconds: 4, startingAt: 10)
+        XCTAssertTrue(tracker.isReversed)
+        // Sideways course for a long time: must not clear either.
+        walk(tracker, from: top, bearing: 180, course: 90, seconds: 6, startingAt: 20)
+        XCTAssertTrue(tracker.isReversed, "the dead band keeps the current state")
+    }
+
+    func testReversalRunIsBrokenByStandingStill() {
+        let tracker = makeTracker()
+        let top = origin.coordinate(at: 150, bearing: 0)
+        walk(tracker, from: top, bearing: 180, seconds: 2, startingAt: 0)
+        // Pause for a fix (no valid course, no speed), then 2 more seconds.
+        tracker.ingest(fix(top.coordinate(at: 2.8, bearing: 180), speed: 0, course: -1, at: 3), now: 1_003)
+        walk(tracker, from: top.coordinate(at: 2.8, bearing: 180), bearing: 180, seconds: 2, startingAt: 4)
+        XCTAssertFalse(tracker.isReversed, "'continuously' means a pause restarts the 3 s clock")
+    }
+
+    func testReversalThresholdsAreTunable() {
+        let tracker = makeTracker()
+        tracker.reversalEnterSeconds = 1
+        let top = origin.coordinate(at: 150, bearing: 0)
+        walk(tracker, from: top, bearing: 180, seconds: 1, startingAt: 0)
+        XCTAssertTrue(tracker.isReversed)
+    }
+
+    func testSetRouteResetsReversal() {
+        let tracker = makeTracker()
+        walk(tracker, from: origin.coordinate(at: 150, bearing: 0), bearing: 180, seconds: 4, startingAt: 0)
+        XCTAssertTrue(tracker.isReversed)
+        tracker.setRoute(street)
+        XCTAssertFalse(tracker.isReversed)
+    }
+
+    func testHeadingFacesBackAlongRouteWhenReversed() {
+        let tracker = makeTracker()
+        tracker.ingestHeading(0)
+        let top = origin.coordinate(at: 150, bearing: 0)
+        let t = walk(tracker, from: top, bearing: 180, seconds: 4, startingAt: 0)
+        XCTAssertTrue(tracker.isReversed)
+        _ = run(tracker, from: 1_000 + t, seconds: 3)
+        XCTAssertEqual(tracker.displayHeading, 180, accuracy: 1,
+                       "puck arrow points down the street the way the user is actually walking")
+    }
+
+    func testExtrapolationRunsBackwardsWhenReversed() {
+        let tracker = makeTracker()
+        let top = origin.coordinate(at: 150, bearing: 0)
+        let t = walk(tracker, from: top, bearing: 180, seconds: 4, startingAt: 0)
+        let lastFix = top.coordinate(at: 1.4 * 4, bearing: 180)
+        _ = run(tracker, from: 1_000 + t, seconds: 1.5)
+        let shown = tracker.displayCoordinate!
+        let alongFromOrigin = SmoothedLocationTracker.project(shown, onto: street)!.distanceAlongRouteMeters
+        let lastFixAlong = SmoothedLocationTracker.project(lastFix, onto: street)!.distanceAlongRouteMeters
+        XCTAssertLessThan(alongFromOrigin, lastFixAlong - 0.5,
+                          "between fixes the puck keeps moving toward the route start, not its end")
+        XCTAssertTrue(tracker.isSnappedToRoute)
+    }
+
+    func testProjectionReportsDistanceAlongRoute() {
+        let point = origin.coordinate(at: 130, bearing: 0).coordinate(at: 4, bearing: 270)
+        let projection = SmoothedLocationTracker.project(point, onto: street)!
+        XCTAssertEqual(projection.distanceAlongRouteMeters, 130, accuracy: 0.3)
+    }
+
     func testAngleDelta() {
         XCTAssertEqual(SmoothedLocationTracker.angleDelta(350, 10), 20)
         XCTAssertEqual(SmoothedLocationTracker.angleDelta(10, 350), -20)

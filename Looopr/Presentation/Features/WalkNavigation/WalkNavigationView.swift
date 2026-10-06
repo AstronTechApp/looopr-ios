@@ -484,14 +484,9 @@ struct WalkNavigationView: View {
 
             Spacer(minLength: 0)
 
-            VStack(alignment: .trailing, spacing: 2) {
-                Text(info.distanceMeters.formattedDistance())
-                    .font(.system(size: 16, weight: .bold, design: .rounded))
-                    .foregroundStyle(.white)
-                Text(L10n.WalkNavigation.approximateMinutes(info.estimatedMinutes))
-                    .font(.system(size: 11, design: .rounded))
-                    .foregroundStyle(.white.opacity(0.7))
-            }
+            Text(info.distanceMeters.formattedDistance())
+                .font(.system(size: 16, weight: .bold, design: .rounded))
+                .foregroundStyle(.white)
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 10)

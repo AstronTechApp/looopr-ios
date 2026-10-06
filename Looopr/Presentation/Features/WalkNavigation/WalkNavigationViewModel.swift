@@ -5,13 +5,6 @@ import UIKit
 
 // MARK: - Supporting types
 
-struct ApproachingPOIInfo: Equatable {
-    let poi: POI
-    let distanceMeters: Double
-
-    var estimatedMinutes: Int { max(1, Int(ceil(distanceMeters / 80.0))) }
-}
-
 /// Which way the user is walking through `activePolyline`.
 ///
 /// Direction is read state for the active route. Reroutes and wrong-way flips
@@ -127,6 +120,7 @@ final class WalkNavigationViewModel {
 
     // Contextual nav overlays
     private(set) var approachingPOI: ApproachingPOIInfo?
+    private let approachingPOIMonitor = ApproachingPOIMonitor()
     private(set) var currentStreetName: String = ""
 
     var session: WalkSession
@@ -289,6 +283,7 @@ final class WalkNavigationViewModel {
         }
 
         tracker.setRoute(activePolyline)
+        approachingPOIMonitor.setRoute(activePolyline, pois: route.attractions)
         tracker.start(initialCoordinate: userLocation ?? route.startLocation.clCoordinate,
                       initialHeading: heading)
         subscribeToLocation()
@@ -510,7 +505,7 @@ final class WalkNavigationViewModel {
         checkFoodSpotProximity(coordinate)
 
         // Attraction proximity banner + street name
-        checkApproachingPOI(coordinate)
+        updateApproachingPOI(coordinate)
         updateStreetNameIfNeeded(clLocation)
 
         updateStepInstructionProgress(from: coordinate)
@@ -577,13 +572,9 @@ final class WalkNavigationViewModel {
             return
         }
 
-        let startBearings = wrongWayLoopStartBearings()
-        wrongWayDetector.check(
-            userLocation: clLocation,
-            expectedBearing: currentRouteBearing,
-            intendedStartBearing: startBearings?.forward,
-            reverseStartBearing: startBearings?.reverse
-        )
+        // The tracker's reversal state is what turns the puck arrow
+        // around; driving the prompt from it keeps the two in agreement.
+        wrongWayDetector.observeReversal(tracker.isReversed)
         syncWrongWayDebug()
     }
 
@@ -847,6 +838,7 @@ final class WalkNavigationViewModel {
         steps = result.steps
         activePolyline = result.polyline
         tracker.setRoute(result.polyline)
+        approachingPOIMonitor.setRoute(result.polyline, pois: route.attractions)
         // Recomputed routes are generated from the user's current location
         // toward the desired remaining path, so they are always read forward.
         walkDirection = .forward
@@ -862,26 +854,6 @@ final class WalkNavigationViewModel {
     private func recordRouteFlipFailure(_ message: String) {
         routeFlipPhase = .failed(message)
         debugRouteFlipMessage = message
-    }
-
-    private func wrongWayLoopStartBearings() -> (forward: CLLocationDirection, reverse: CLLocationDirection)? {
-        let polyline = route.pathCoordinates
-        guard polyline.count >= 3,
-              let start = polyline.first,
-              let end = polyline.last
-        else {
-            return nil
-        }
-
-        let overlapThreshold = max(40, config.navigation.gpsAccuracyThresholdMeters * 3)
-        guard start.distance(to: end) <= overlapThreshold,
-              let forward = Self.firstDistinctBearing(from: start, candidates: Array(polyline.dropFirst())),
-              let reverse = Self.firstDistinctBearing(from: start, candidates: Array(polyline.dropLast().reversed()))
-        else {
-            return nil
-        }
-
-        return (forward, reverse)
     }
 
     static func makeRouteFlipPath(
@@ -901,16 +873,6 @@ final class WalkNavigationViewModel {
             deduped.append(fallback)
         }
         return deduped
-    }
-
-    private static func firstDistinctBearing(
-        from start: CLLocationCoordinate2D,
-        candidates: [CLLocationCoordinate2D]
-    ) -> CLLocationDirection? {
-        for coordinate in candidates where start.distance(to: coordinate) >= 8 {
-            return start.bearing(to: coordinate)
-        }
-        return nil
     }
 
     private func showRouteFlipFailedToast() {
@@ -1183,7 +1145,11 @@ final class WalkNavigationViewModel {
             let lookAhead = 100
             let lowerBound: Int
             let upperBound: Int
-            switch walkDirection {
+            // While the tracker sees the user walking the route backwards,
+            // "ahead" is the other way, so the window flips with them —
+            // otherwise progress would stick at the back-buffer edge.
+            let searchDirection = tracker.isReversed ? walkDirection.toggled : walkDirection
+            switch searchDirection {
             case .forward:
                 lowerBound = max(0, lastClosestPolylineIndex - backBuffer)
                 upperBound = min(activePolyline.count - 1, lastClosestPolylineIndex + lookAhead)
@@ -1328,15 +1294,40 @@ final class WalkNavigationViewModel {
 
     // MARK: - POI Proximity (attractions)
 
-    private func checkApproachingPOI(_ coordinate: CLLocationCoordinate2D) {
-        var nearest: (poi: POI, dist: Double)?
-        for poi in route.attractions {
-            let dist = coordinate.distance(to: poi.location.clCoordinate)
-            if dist <= 300, nearest == nil || dist < nearest!.dist {
-                nearest = (poi, dist)
-            }
+    /// Fixes further than this from the route don't drive the banner —
+    /// their along-route position is meaningless.
+    private static let approachingPOIMaxOffRouteMeters: Double = 50
+
+    private func updateApproachingPOI(_ coordinate: CLLocationCoordinate2D) {
+        let along = userDistanceAlongRoute(coordinate).flatMap {
+            $0.offRouteMeters <= Self.approachingPOIMaxOffRouteMeters ? $0.alongMeters : nil
         }
-        approachingPOI = nearest.map { ApproachingPOIInfo(poi: $0.poi, distanceMeters: $0.dist) }
+        let reversed = tracker.isReversed != (walkDirection == .reverse)
+        let info = approachingPOIMonitor.update(userAlongRouteMeters: along, isReversed: reversed)
+        if info != approachingPOI { approachingPOI = info }
+    }
+
+    /// The user's arc-length position on `activePolyline`, projected onto
+    /// the segments around the monotonic progress index rather than the
+    /// whole polyline, so on a loop route the start isn't mistaken for the
+    /// end.
+    private func userDistanceAlongRoute(_ coordinate: CLLocationCoordinate2D)
+        -> (alongMeters: Double, offRouteMeters: Double)? {
+        guard activePolyline.count >= 2,
+              activePolylineCumulativeDistances.count == activePolyline.count else { return nil }
+        let lower = max(0, lastClosestPolylineIndex - 1)
+        let upper = min(activePolyline.count - 1, lastClosestPolylineIndex + 1)
+        guard upper > lower,
+              let projection = SmoothedLocationTracker.project(coordinate, onto: Array(activePolyline[lower...upper]))
+        else { return nil }
+        return (activePolylineCumulativeDistances[lower] + projection.distanceAlongRouteMeters,
+                projection.distanceMeters)
+    }
+
+    /// Hides the current "Approaching" banner for the rest of the walk.
+    func dismissApproachingPOI() {
+        approachingPOIMonitor.dismiss()
+        approachingPOI = nil
     }
 
     // MARK: - Reverse Geocoding
