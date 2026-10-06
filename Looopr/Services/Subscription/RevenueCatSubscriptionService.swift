@@ -23,6 +23,16 @@ enum LoooprProductID {
     /// Apple grants one introductory offer per *subscription group*, so the
     /// trial lives here and a user who trials annual cannot also trial monthly.
     static let yearly = "nl.astrontech.looopr.pro.yearly"
+
+    /// Short plan name for analytics: "monthly", "yearly", or "unknown" for
+    /// a product identifier this build doesn't know about.
+    static func plan(for productID: String) -> String {
+        switch productID {
+        case monthly: return "monthly"
+        case yearly: return "yearly"
+        default: return "unknown"
+        }
+    }
 }
 
 /// RevenueCat-backed implementation of `SubscriptionProviding`.

@@ -70,6 +70,10 @@ final class WalkNavigationViewModel {
     private(set) var nextInstruction: String?
     private(set) var distanceToNextStep: Double = 0
     private(set) var userLocation: CLLocationCoordinate2D?
+    /// Smoothed, route-snapped position and heading for drawing the puck and
+    /// aiming the camera. Everything else (track recording, off-route and
+    /// step logic) keeps using the raw `userLocation` / `heading`.
+    let tracker = SmoothedLocationTracker()
     /// Direction the map camera should face (0 = N, 90 = E …). Driven by
     /// the compass so the map rotates as the user turns, like Google Maps'
     /// walking mode. Seeded with the route's opening bearing so the map
@@ -274,6 +278,7 @@ final class WalkNavigationViewModel {
         ))
         wrongWayDetector.startSession()
         syncWrongWayDebug()
+        locationService.setHighFrequencyUpdates(true)
         locationService.startUpdating()
         pedometerService.startCounting()
         elevationService.startTracking()
@@ -283,6 +288,9 @@ final class WalkNavigationViewModel {
             userLocation = existing
         }
 
+        tracker.setRoute(activePolyline)
+        tracker.start(initialCoordinate: userLocation ?? route.startLocation.clCoordinate,
+                      initialHeading: heading)
         subscribeToLocation()
         startElapsedTimer()
 
@@ -308,15 +316,19 @@ final class WalkNavigationViewModel {
         }
     }
 
-    func stop() {
+    func stop() async {
+        tracker.stop()
+        locationService.setHighFrequencyUpdates(false)
         locationService.stopUpdating()
         locationCancellable?.cancel()
         headingCancellable?.cancel()
         elapsedTimer?.invalidate()
-        pedometerService.stopCounting()
         elevationService.stopTracking()
         session.finishedAt = Date()
         session.durationSeconds = Date().timeIntervalSince(startTime)
+        // Authoritative total from CoreMotion's history — the live count the
+        // timer was mirroring can lag or never update on a short walk.
+        stepCount = await pedometerService.stopCounting()
         session.stepCount = stepCount
         // Read the barometer *after* stopping it, so the figure covers the
         // whole walk. Stays nil on a device without one.
@@ -328,13 +340,14 @@ final class WalkNavigationViewModel {
         liveActivityManager.endActivity()
     }
 
-    func finish() {
-        stop()
+    func finish() async {
+        await stop()
         analytics.track(.walkCompleted(
             routeId: route.id,
             durationSeconds: session.durationSeconds,
             distanceMeters: session.distanceWalkedMeters,
             stepCount: session.stepCount,
+            motionAuthorized: !pedometerService.isAuthorizationDenied,
             plannedMinutes: session.plannedDurationMinutes,
             flipCount: flipCount,
             rerouteCount: rerouteCount
@@ -460,6 +473,7 @@ final class WalkNavigationViewModel {
         if hasCompassHeading, abs(Self.angleDelta(heading, normalized)) < 2 { return }
         hasCompassHeading = true
         heading = normalized
+        tracker.ingestHeading(normalized)
     }
 
     private func handleLocationUpdate(_ clLocation: CLLocation) {
@@ -469,6 +483,7 @@ final class WalkNavigationViewModel {
 
         userLocation = coordinate
         currentAccuracy = accuracy
+        tracker.ingest(clLocation)
         recordTrackPoint(clLocation)
         // Heading is driven by `handleHeadingUpdate` (compass). Until the
         // compass reports, fall back to the GPS course when the user is
@@ -831,6 +846,7 @@ final class WalkNavigationViewModel {
     private func applyRecomputedNavigation(_ result: RerouteResult) {
         steps = result.steps
         activePolyline = result.polyline
+        tracker.setRoute(result.polyline)
         // Recomputed routes are generated from the user's current location
         // toward the desired remaining path, so they are always read forward.
         walkDirection = .forward

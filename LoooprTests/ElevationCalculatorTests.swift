@@ -56,7 +56,9 @@ final class ElevationCalculatorTests: XCTestCase {
     }
 
     func testRepeatedClimbsBothCount() {
-        let hill = (0..<50).map { Double($0) * 0.4 } + (0..<50).map { 20 - Double($0) * 0.4 }
+        let ascent: [Double] = (0..<50).map { Double($0) * 0.4 }
+        let descent: [Double] = (0..<50).map { 20 - Double($0) * 0.4 }
+        let hill: [Double] = ascent + descent
         let gain = ElevationAccumulator.gain(for: hill + hill)
         XCTAssertGreaterThan(gain, 36, "Two 20 m hills should total roughly 40 m, got \(gain)")
         XCTAssertLessThan(gain, 42, "Two 20 m hills should total roughly 40 m, got \(gain)")

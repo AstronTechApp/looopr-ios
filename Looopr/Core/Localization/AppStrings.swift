@@ -694,4 +694,40 @@ enum L10n {
         static var restartLater: String { String(localized: "languageRestart.restartLater", defaultValue: "Restart Later", bundle: LocalizationManager.shared.localizedBundle) }
         static var restart: String { String(localized: "languageRestart.restart", defaultValue: "OK", bundle: LocalizationManager.shared.localizedBundle) }
     }
+
+    // MARK: - Onboarding (first launch)
+    enum Onboarding {
+        private static var b: Bundle { LocalizationManager.shared.localizedBundle }
+        static var skip: String { String(localized: "onboarding.skip", defaultValue: "Skip", bundle: b) }
+        static var next: String { String(localized: "onboarding.next", defaultValue: "Next", bundle: b) }
+        static var getStarted: String { String(localized: "onboarding.getStarted", defaultValue: "Get started", bundle: b) }
+        static var locationNote: String { String(localized: "onboarding.locationNote", defaultValue: "Looopr uses your location to build loops around you.", bundle: b) }
+        static func pageIndicator(_ page: Int, _ total: Int) -> String {
+            String(format: String(localized: "onboarding.pageIndicator", defaultValue: "Page %1$d of %2$d", bundle: b), page, total)
+        }
+
+        static var page1Eyebrow: String { String(localized: "onboarding.page1.eyebrow", defaultValue: "Pick a time", bundle: b) }
+        static var page1Title: String { String(localized: "onboarding.page1.title", defaultValue: "Say how long.\nGet a loop.", bundle: b) }
+        static var page1Body: String { String(localized: "onboarding.page1.body", defaultValue: "Choose 15 minutes to 3 hours. We\u{2019}ll plan a walk that ends right where you started.", bundle: b) }
+
+        static var page2Eyebrow: String { String(localized: "onboarding.page2.eyebrow", defaultValue: "Along the way", bundle: b) }
+        static var page2Title: String { String(localized: "onboarding.page2.title", defaultValue: "Something to see\non every walk", bundle: b) }
+        static var page2Body: String { String(localized: "onboarding.page2.body", defaultValue: "Parks, landmarks and local spots along your route, with ratings and opening hours.", bundle: b) }
+
+        static var page3Eyebrow: String { String(localized: "onboarding.page3.eyebrow", defaultValue: "Walk it", bundle: b) }
+        static var page3Title: String { String(localized: "onboarding.page3.title", defaultValue: "Just walk.\nWe\u{2019}ll guide you.", bundle: b) }
+        static var page3Body: String { String(localized: "onboarding.page3.body", defaultValue: "Turn-by-turn directions, even on your lock screen. Every walk is saved to Apple Health.", bundle: b) }
+
+        // Illustration labels
+        static var minutesUnit: String { String(localized: "onboarding.illustration.minutesUnit", defaultValue: "min", bundle: b) }
+        static var sampleRouteName: String { String(localized: "onboarding.illustration.sampleRouteName", defaultValue: "South Loop (4.0 km)", bundle: b) }
+        static var pointsOfInterest: String { String(localized: "onboarding.illustration.pointsOfInterest", defaultValue: "POINTS OF INTEREST", bundle: b) }
+        static func onRoute(_ distance: String) -> String {
+            String(format: String(localized: "onboarding.illustration.onRoute", defaultValue: "On route · %@", bundle: b), distance)
+        }
+        static var sampleNextTurn: String { String(localized: "onboarding.illustration.nextTurn", defaultValue: "Then turn right onto Keizersgracht", bundle: b) }
+        static var statTime: String { String(localized: "onboarding.illustration.statTime", defaultValue: "Time", bundle: b) }
+        static var statDistance: String { String(localized: "onboarding.illustration.statDistance", defaultValue: "Distance", bundle: b) }
+        static var statRemaining: String { String(localized: "onboarding.illustration.statRemaining", defaultValue: "Remaining", bundle: b) }
+    }
 }

@@ -18,4 +18,11 @@ protocol LocationProviding: AnyObject, Sendable {
     func requestAuthorization()
     func startUpdating()
     func stopUpdating()
+    /// While a walk is being navigated, every GPS fix (~1 Hz) is wanted so
+    /// the map can animate smoothly; elsewhere a distance filter saves power.
+    func setHighFrequencyUpdates(_ enabled: Bool)
+}
+
+extension LocationProviding {
+    func setHighFrequencyUpdates(_ enabled: Bool) {}
 }

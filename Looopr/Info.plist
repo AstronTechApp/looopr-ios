@@ -12,12 +12,6 @@
 	<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
-	<key>ITSAppUsesNonExemptEncryption</key>
-	<false/>
-	<key>LSSupportsOpeningDocumentsInPlace</key>
-	<true/>
-	<key>UIFileSharingEnabled</key>
-	<true/>
 	<key>CFBundleName</key>
 	<string>$(PRODUCT_NAME)</string>
 	<key>CFBundlePackageType</key>
@@ -41,34 +35,44 @@
 	<string>$(GETYOURGUIDE_API_KEY)</string>
 	<key>GOOGLE_PLACES_API_KEY</key>
 	<string>$(GOOGLE_PLACES_API_KEY)</string>
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
 	<key>KLOOK_API_KEY</key>
 	<string>$(KLOOK_API_KEY)</string>
+	<key>LSSupportsOpeningDocumentsInPlace</key>
+	<true/>
 	<key>MAPBOX_ACCESS_TOKEN</key>
 	<string>$(MAPBOX_ACCESS_TOKEN)</string>
 	<key>MUSEMENT_API_KEY</key>
 	<string>$(MUSEMENT_API_KEY)</string>
-	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>Looopr needs your location to generate walking routes nearby, and to record the route you actually walk while a walk is in progress.</string>
-	<key>UIBackgroundModes</key>
-	<array>
-		<string>location</string>
-	</array>
-	<key>NSHealthUpdateUsageDescription</key>
-	<string>Looopr saves your completed walks to Apple Health as walking workouts, with the distance and the route you walked.</string>
 	<key>NSHealthShareUsageDescription</key>
 	<string>Looopr only writes walks to Apple Health and never reads your health data.</string>
+	<key>NSHealthUpdateUsageDescription</key>
+	<string>Looopr saves your completed walks to Apple Health as walking workouts, with the distance and the route you walked.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Looopr needs your location to generate walking routes nearby, and to record the route you actually walk while a walk is in progress.</string>
 	<key>NSMotionUsageDescription</key>
 	<string>Looopr counts your steps during walks to show your activity.</string>
 	<key>NSSupportsLiveActivities</key>
 	<true/>
 	<key>NSSupportsLiveActivitiesFrequentUpdates</key>
 	<true/>
+	<key>REVENUECAT_API_KEY</key>
+	<string>$(REVENUECAT_API_KEY)</string>
+	<key>SENTRY_DSN</key>
+	<string>$(SENTRY_DSN)</string>
 	<key>SUPABASE_ANON_KEY</key>
 	<string>$(SUPABASE_ANON_KEY)</string>
 	<key>SUPABASE_URL</key>
 	<string>$(SUPABASE_URL)</string>
 	<key>TIQETS_API_KEY</key>
 	<string>$(TIQETS_API_KEY)</string>
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>location</string>
+	</array>
+	<key>UIFileSharingEnabled</key>
+	<true/>
 	<key>UILaunchScreen</key>
 	<dict>
 		<key>UIColorName</key>
@@ -80,10 +84,6 @@
 	<array>
 		<string>UIInterfaceOrientationPortrait</string>
 	</array>
-	<key>REVENUECAT_API_KEY</key>
-	<string>$(REVENUECAT_API_KEY)</string>
-	<key>SENTRY_DSN</key>
-	<string>$(SENTRY_DSN)</string>
 	<key>VIATOR_API_KEY</key>
 	<string>$(VIATOR_API_KEY)</string>
 </dict>

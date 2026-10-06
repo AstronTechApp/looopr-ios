@@ -6,6 +6,7 @@ struct AppRootView: View {
     @State private var localization = LocalizationManager.shared
     @State private var hasCheckedSession = false
     @State private var selectedTab: LoooprTab = .home
+    @State private var onboarding = OnboardingState.shared
 
     var body: some View {
         Group {
@@ -21,6 +22,10 @@ struct AppRootView: View {
                             .tint(LoooprTheme.Colors.primary)
                     }
                 }
+            } else if !authService.isSignedIn && !onboarding.hasCompleted {
+                // First launch only: three intro pages before sign-in.
+                OnboardingView { onboarding.markCompleted() }
+                    .transition(.opacity)
             } else if !authService.isSignedIn {
                 AuthView(authService: authService)
             } else {
@@ -30,11 +35,17 @@ struct AppRootView: View {
         .task {
             await authService.restoreSession()
             authService.observeAuthChanges()
+            // Existing users updating to this version already have a session;
+            // never show them the first-launch intro, even if they sign out later.
+            if authService.isSignedIn {
+                onboarding.markCompleted()
+            }
             hasCheckedSession = true
             // Fired after session restore so the event carries the signed-in
             // user; dropped silently when nobody is signed in yet.
             ServiceContainer.shared.resolve(AnalyticsTracking.self).track(.appOpened)
         }
+        .animation(.easeInOut(duration: LoooprTheme.Animation.normal), value: onboarding.hasCompleted)
         .environment(\.locale, localization.currentLocale)
         // Force light color scheme app-wide.
         // The LoooprTheme palette uses hardcoded hex colors that don't adapt to dark mode,

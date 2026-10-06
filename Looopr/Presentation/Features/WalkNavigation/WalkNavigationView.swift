@@ -1,5 +1,6 @@
 import SwiftUI
 import MapKit
+import QuartzCore
 
 struct WalkNavigationView: View {
     @Environment(AppRouter.self) private var router
@@ -19,6 +20,9 @@ struct WalkNavigationView: View {
     /// Tracks the live map camera heading so the user-location arrow can be
     /// rotated relative to the map.
     @State private var currentMapHeading: CLLocationDirection = 0
+    /// While the re-center animation is in flight, per-frame follow updates
+    /// are suspended so they don't cut it short.
+    @State private var recenterAnimationEndsAt: TimeInterval = 0
     /// 0→1 cycling value that drives the "marching" wave along route arrows.
     @State private var arrowPhase: Double = 0
     /// Drives `arrowPhase`. Stored so it can be invalidated in `onDisappear` —
@@ -62,21 +66,31 @@ struct WalkNavigationView: View {
 
     private var nextStepBearing: Double { viewModel.currentRouteBearing }
 
-    /// Re-aims the camera at the user with the current compass heading.
-    /// Called on every location *and* heading change while following, so
-    /// the map keeps rotating with the user even when they stand still and
-    /// turn around.
-    private func updateFollowCamera(duration: Double) {
-        guard isFollowingUser, let location = viewModel.userLocation else { return }
-        withAnimation(.easeOut(duration: duration)) {
-            cameraPosition = .camera(navigationCamera(at: location, heading: viewModel.heading))
+    /// Re-aims the camera at the smoothed user position and heading.
+    /// Called every display frame (~30 fps) by `SmoothedLocationTracker`
+    /// while following. The tracker already eases position and heading, so
+    /// the camera is set directly — wrapping each tiny step in its own
+    /// `withAnimation` is what made the old implementation stutter.
+    private func updateFollowCamera() {
+        guard isFollowingUser,
+              CACurrentMediaTime() >= recenterAnimationEndsAt,
+              let location = viewModel.tracker.displayCoordinate else { return }
+        var transaction = Transaction()
+        transaction.disablesAnimations = true
+        withTransaction(transaction) {
+            cameraPosition = .camera(navigationCamera(at: location, heading: viewModel.tracker.displayHeading))
         }
     }
 
     private func snapToNavigationCamera() {
         isFollowingUser = true
         followDistance = navigationDistance
-        updateFollowCamera(duration: 0.6)
+        guard let location = viewModel.tracker.displayCoordinate ?? viewModel.userLocation else { return }
+        let duration = 0.6
+        recenterAnimationEndsAt = CACurrentMediaTime() + duration
+        withAnimation(.easeOut(duration: duration)) {
+            cameraPosition = .camera(navigationCamera(at: location, heading: viewModel.tracker.displayHeading))
+        }
     }
 
     private func stopFollowingUser() {
@@ -202,9 +216,9 @@ struct WalkNavigationView: View {
         .toolbar(.hidden, for: .navigationBar, .tabBar)
         .statusBarHidden()
         .confirmationDialog(L10n.WalkNavigation.endWalk, isPresented: $showStopConfirmation) {
-            Button(L10n.WalkNavigation.saveAndFinish) { viewModel.finish() }
+            Button(L10n.WalkNavigation.saveAndFinish) { Task { await viewModel.finish() } }
             Button(L10n.WalkNavigation.endWalkButton, role: .destructive) {
-                viewModel.stop()
+                Task { await viewModel.stop() }
                 router.popToRoot()
             }
             Button(L10n.Misc.cancel, role: .cancel) { }
@@ -249,16 +263,16 @@ struct WalkNavigationView: View {
                 horizontalAccuracy: viewModel.currentAccuracy,
                 routePolyline: viewModel.activePolyline
             )
-            updateFollowCamera(duration: 0.4)
         }
-        .onChange(of: viewModel.heading) { _, _ in
-            updateFollowCamera(duration: 0.3)
+        .onChange(of: viewModel.tracker.frame) { _, _ in
+            updateFollowCamera()
         }
         .onMapCameraChange(frequency: .continuous) { context in
             currentMapHeading = context.camera.heading
         }
         .onMapCameraChange(frequency: .onEnd) { context in
-            guard isFollowingUser, let location = viewModel.userLocation else { return }
+            guard isFollowingUser,
+                  let location = viewModel.tracker.displayCoordinate ?? viewModel.userLocation else { return }
             // Safety net in case the drag gesture below doesn't fire: while
             // following, the camera always settles within `navigationLookAhead`
             // of the user, so a centre far away from them was a user pan.
@@ -324,14 +338,14 @@ struct WalkNavigationView: View {
             // The chevron stays upright in screen space at constant size so it can
             // never distort with camera pitch; the pitch-squashed halo + shadow
             // ellipses on the ground plane beneath it are what anchor it in 3D.
-            if let location = viewModel.userLocation {
+            // Position and rotation come from the smoothed tracker, which
+            // already animates them frame by frame.
+            if let location = viewModel.tracker.displayCoordinate ?? viewModel.userLocation {
                 Annotation("", coordinate: location) {
                     UserPuckMarker(
-                        rotation: viewModel.heading - currentMapHeading,
+                        rotation: viewModel.tracker.displayHeading - currentMapHeading,
                         pitchSquash: cos(navigationPitch * .pi / 180)
                     )
-                    .animation(.easeOut(duration: 0.25), value: viewModel.heading)
-                    .animation(.easeOut(duration: 0.25), value: currentMapHeading)
                 }
             }
 

@@ -75,19 +75,60 @@ final class PaywallViewModel {
     }
 
     func handlePurchaseCompleted(_ customerInfo: CustomerInfo) {
-        let unlocked = customerInfo.entitlements[RevenueCatSubscriptionService.entitlementID]?.isActive == true
+        let entitlement = customerInfo.entitlements[RevenueCatSubscriptionService.entitlementID]
+        let unlocked = entitlement?.isActive == true
         logger.info("Purchase completed via paywall; looopr_pro active: \(unlocked)")
-        if unlocked {
-            analytics.track(.subscriptionStarted)
-            didUnlock = true
-        }
+        guard unlocked, let entitlement else { return }
+        didUnlock = true
+        Task { await trackSubscriptionStarted(entitlement) }
     }
 
     func handleRestoreCompleted(_ customerInfo: CustomerInfo) {
-        let unlocked = customerInfo.entitlements[RevenueCatSubscriptionService.entitlementID]?.isActive == true
+        let entitlement = customerInfo.entitlements[RevenueCatSubscriptionService.entitlementID]
+        let unlocked = entitlement?.isActive == true
         logger.info("Restore completed via paywall; looopr_pro active: \(unlocked)")
-        if unlocked {
-            didUnlock = true
+        guard unlocked, let entitlement else { return }
+        didUnlock = true
+        analytics.track(.subscriptionRestored(
+            productId: entitlement.productIdentifier,
+            plan: LoooprProductID.plan(for: entitlement.productIdentifier),
+            isSandbox: entitlement.isSandbox
+        ))
+    }
+
+    // MARK: - Private
+
+    /// Enriches the purchase event with what the reporting side needs for
+    /// MRR: which product, its store price and currency, and whether the
+    /// period that just began is a free trial. Price comes from StoreKit
+    /// via RevenueCat (`CustomerInfo` carries no pricing), so it is fetched
+    /// after the fact; the event is still sent if that lookup fails.
+    private func trackSubscriptionStarted(_ entitlement: EntitlementInfo) async {
+        let productId = entitlement.productIdentifier
+        let periodType: String
+        switch entitlement.periodType {
+        case .trial: periodType = "trial"
+        case .intro: periodType = "intro"
+        case .normal: periodType = "normal"
+        default: periodType = "unknown"
         }
+
+        var price: Double?
+        var currency: String?
+        if let product = await Purchases.shared.products([productId]).first {
+            price = NSDecimalNumber(decimal: product.price).doubleValue
+            currency = product.currencyCode
+        } else {
+            logger.warning("Could not load StoreProduct for \(productId); subscription_started sent without price")
+        }
+
+        analytics.track(.subscriptionStarted(
+            productId: productId,
+            plan: LoooprProductID.plan(for: productId),
+            price: price,
+            currency: currency,
+            periodType: periodType,
+            isSandbox: entitlement.isSandbox
+        ))
     }
 }

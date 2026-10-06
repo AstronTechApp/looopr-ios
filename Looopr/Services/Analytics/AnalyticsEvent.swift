@@ -46,6 +46,9 @@ enum AnalyticsEvent: Sendable {
         durationSeconds: TimeInterval,
         distanceMeters: Double,
         stepCount: Int,
+        /// False when Motion & Fitness is denied — a zero `stepCount` then
+        /// means "no permission", not "no steps".
+        motionAuthorized: Bool,
         plannedMinutes: Int?,
         flipCount: Int,
         rerouteCount: Int
@@ -58,7 +61,23 @@ enum AnalyticsEvent: Sendable {
     case gpxExported(routeId: UUID, pointCount: Int)
     case feedbackSubmitted(rating: Int, tags: [String])
     case paywallShown
-    case subscriptionStarted
+    /// A purchase completed on the paywall and `looopr_pro` became active.
+    /// `price` is the store price of the product in `currency` (what the
+    /// user will be charged per period once any trial ends); `periodType`
+    /// is "trial", "intro" or "normal" for the period that just started, so
+    /// a trial contributes nothing to MRR until it converts. `isSandbox`
+    /// marks TestFlight/sandbox purchases so reporting can exclude them.
+    case subscriptionStarted(
+        productId: String,
+        plan: String,
+        price: Double?,
+        currency: String?,
+        periodType: String,
+        isSandbox: Bool
+    )
+    /// Restore Purchases re-activated `looopr_pro` on this account. Not new
+    /// revenue — tracked separately so it is never counted as a sale.
+    case subscriptionRestored(productId: String, plan: String, isSandbox: Bool)
     case offRouteDetected(routeId: UUID)
     case rerouteTriggered(routeId: UUID)
 
@@ -79,6 +98,7 @@ enum AnalyticsEvent: Sendable {
         case .feedbackSubmitted:   return "feedback_submitted"
         case .paywallShown:        return "paywall_shown"
         case .subscriptionStarted: return "subscription_started"
+        case .subscriptionRestored: return "subscription_restored"
         case .offRouteDetected:    return "off_route_detected"
         case .rerouteTriggered:    return "reroute_triggered"
         }
@@ -105,12 +125,13 @@ enum AnalyticsEvent: Sendable {
                 "planned_minutes": .int(plannedMinutes),
                 "planned_distance_km": .double(plannedKm)
             ]
-        case .walkCompleted(let routeId, let duration, let distance, let steps, let planned, let flips, let reroutes):
+        case .walkCompleted(let routeId, let duration, let distance, let steps, let motionAuthorized, let planned, let flips, let reroutes):
             var props: [String: AnalyticsValue] = [
                 "route_id": .string(routeId.uuidString),
                 "duration_seconds": .double(duration),
                 "distance_meters": .double(distance),
                 "step_count": .int(steps),
+                "motion_authorized": .bool(motionAuthorized),
                 "flip_count": .int(flips),
                 "reroute_count": .int(reroutes)
             ]
@@ -128,8 +149,24 @@ enum AnalyticsEvent: Sendable {
             return ["route_id": .string(routeId.uuidString), "point_count": .int(pointCount)]
         case .feedbackSubmitted(let rating, let tags):
             return ["rating": .int(rating), "tags": .stringArray(tags)]
-        case .paywallShown, .subscriptionStarted:
+        case .paywallShown:
             return [:]
+        case .subscriptionStarted(let productId, let plan, let price, let currency, let periodType, let isSandbox):
+            var props: [String: AnalyticsValue] = [
+                "product_id": .string(productId),
+                "plan": .string(plan),
+                "period_type": .string(periodType),
+                "is_sandbox": .bool(isSandbox)
+            ]
+            if let price { props["price"] = .double(price) }
+            if let currency { props["currency"] = .string(currency) }
+            return props
+        case .subscriptionRestored(let productId, let plan, let isSandbox):
+            return [
+                "product_id": .string(productId),
+                "plan": .string(plan),
+                "is_sandbox": .bool(isSandbox)
+            ]
         case .offRouteDetected(let routeId), .rerouteTriggered(let routeId):
             return ["route_id": .string(routeId.uuidString)]
         }

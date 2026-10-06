@@ -48,6 +48,11 @@ targets:
       path: Looopr/Info.plist
       properties:
         CFBundleDisplayName: Looopr
+        # Pinned to the build settings so every XcodeGen version emits the
+        # variables, never literals. A literal here ships every upload as
+        # build "1" regardless of CURRENT_PROJECT_VERSION.
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
         # Looopr uses only HTTPS and Apple's own crypto, so it qualifies for the
         # exemption. Declaring it here stops App Store Connect asking the export
         # compliance question on every single upload.
@@ -114,8 +119,8 @@ targets:
         PRODUCT_BUNDLE_IDENTIFIER: nl.astrontech.looopr
         CODE_SIGN_ENTITLEMENTS: Looopr/Looopr.entitlements
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
-        MARKETING_VERSION: "1.0"
-        CURRENT_PROJECT_VERSION: "6"
+        MARKETING_VERSION: "1.1"
+        CURRENT_PROJECT_VERSION: "10"
         TARGETED_DEVICE_FAMILY: "1"
         GOOGLE_PLACES_API_KEY: $(GOOGLE_PLACES_API_KEY)
         MAPBOX_ACCESS_TOKEN: $(MAPBOX_ACCESS_TOKEN)
@@ -139,13 +144,15 @@ targets:
       path: LoooprLiveActivity/Info.plist
       properties:
         CFBundleDisplayName: LoooprLiveActivity
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
         NSExtension:
           NSExtensionPointIdentifier: com.apple.widgetkit-extension
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: nl.astrontech.looopr.LoooprLiveActivity
-        MARKETING_VERSION: "1.0"
-        CURRENT_PROJECT_VERSION: "6"
+        MARKETING_VERSION: "1.1"
+        CURRENT_PROJECT_VERSION: "10"
         TARGETED_DEVICE_FAMILY: "1"
         SKIP_INSTALL: YES
 

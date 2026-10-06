@@ -48,7 +48,7 @@ final class LiveLocationService: NSObject, LocationProviding, CLLocationManagerD
         super.init()
         manager.delegate = self
         manager.desiredAccuracy = kCLLocationAccuracyBest
-        manager.distanceFilter = 5
+        manager.distanceFilter = Self.idleDistanceFilter
         // Only report heading changes of >= 2° so the map camera isn't
         // re-targeted on compass micro-jitter.
         manager.headingFilter = 2
@@ -70,6 +70,13 @@ final class LiveLocationService: NSObject, LocationProviding, CLLocationManagerD
         // full of deliberate stops at food and POI spots — exactly what that
         // heuristic mistakes for "finished" — so it stays off.
         manager.pausesLocationUpdatesAutomatically = false
+    }
+
+    /// Outside navigation a fix every 5 m is plenty and saves power.
+    private static let idleDistanceFilter: CLLocationDistance = 5
+
+    func setHighFrequencyUpdates(_ enabled: Bool) {
+        manager.distanceFilter = enabled ? kCLDistanceFilterNone : Self.idleDistanceFilter
     }
 
     func requestAuthorization() {
