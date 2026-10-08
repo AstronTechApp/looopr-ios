@@ -18337,6 +18337,126 @@
         }
       }
     },
+    "routeSelection.locationUnavailableBody" : {
+      "comment" : "Empty state body when no GPS fix arrived.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Routen starten dort, wo du bist. Stelle sicher, dass Looopr auf den Standort zugreifen darf, und versuche es erneut."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Routes start from where you are. Make sure Location is allowed for Looopr, then try again."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Las rutas empiezan donde estás. Asegúrate de que Looopr tiene permiso de ubicación y vuelve a intentarlo."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Las rutas empiezan donde estás. Asegúrate de que Looopr tenga permiso de ubicación y vuelve a intentarlo."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Les itinéraires partent de l'endroit où vous êtes. Vérifiez que Looopr est autorisé à utiliser la position, puis réessayez."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "I percorsi partono da dove sei. Assicurati che Looopr possa usare la posizione, poi riprova."
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Routes beginnen waar je bent. Controleer of Looopr je locatie mag gebruiken en probeer het opnieuw."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "As rotas começam de onde você está. Verifique se o Looopr tem permissão de localização e tente de novo."
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "As rotas começam onde está. Confirme que o Looopr tem permissão de localização e tente novamente."
+          }
+        }
+      }
+    },
+    "routeSelection.locationUnavailableTitle" : {
+      "comment" : "Empty state title when no GPS fix arrived.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Standort nicht gefunden"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Couldn't find your location"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No pudimos encontrar tu ubicación"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No pudimos encontrar tu ubicación"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Position introuvable"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Posizione non trovata"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Je locatie is niet gevonden"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Não encontramos sua localização"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Não encontrámos a sua localização"
+          }
+        }
+      }
+    },
     "routeSelection.loopLabel" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -18396,6 +18516,126 @@
         }
       }
     },
+    "routeSelection.noRoutesBody" : {
+      "comment" : "Empty state body when a route search returns nothing and a longer duration can be suggested.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Von hier aus konnten wir keine so kurze Runde bauen. Kurze Spaziergänge sind am schwersten unterzubringen – ein längerer klappt meistens."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "We couldn't build a loop this short from here. Shorter walks are the hardest to fit — a longer one usually works."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No pudimos crear un circuito tan corto desde aquí. Los paseos cortos son los más difíciles de encajar; uno más largo suele funcionar."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No pudimos crear un circuito tan corto desde aquí. Los paseos cortos son los más difíciles de encajar; uno más largo suele funcionar."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Impossible de créer une boucle aussi courte d'ici. Les balades courtes sont les plus difficiles à caser — une plus longue fonctionne généralement."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Non siamo riusciti a creare un anello così breve da qui. Le passeggiate brevi sono le più difficili da far entrare: una più lunga di solito funziona."
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "We konden vanaf hier geen rondje van deze lengte maken. Korte wandelingen zijn het lastigst in te passen – een langere lukt meestal wel."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Não conseguimos criar um circuito tão curto a partir daqui. Caminhadas curtas são as mais difíceis de encaixar — uma mais longa costuma funcionar."
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Não conseguimos criar um circuito tão curto a partir daqui. Caminhadas curtas são as mais difíceis de encaixar — uma mais longa costuma resultar."
+          }
+        }
+      }
+    },
+    "routeSelection.noRoutesBodyShort" : {
+      "comment" : "Empty state body when a route search returns nothing and no longer duration can be suggested.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Von hier aus konnten wir keine Runde dieser Länge bauen. Versuche es erneut oder starte an einem anderen Ort."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "We couldn't build a loop of this length from here. Try again, or start from a different spot."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No pudimos crear un circuito de esta duración desde aquí. Inténtalo de nuevo o empieza desde otro lugar."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No pudimos crear un circuito de esta duración desde aquí. Inténtalo de nuevo o empieza desde otro lugar."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Impossible de créer une boucle de cette durée d'ici. Réessayez ou partez d'un autre endroit."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Non siamo riusciti a creare un anello di questa durata da qui. Riprova o parti da un altro punto."
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "We konden vanaf hier geen rondje van deze lengte maken. Probeer het opnieuw of start op een andere plek."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Não conseguimos criar um circuito com essa duração a partir daqui. Tente de novo ou comece de outro lugar."
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Não conseguimos criar um circuito com esta duração a partir daqui. Tente novamente ou comece noutro local."
+          }
+        }
+      }
+    },
     "routeSelection.noRoutesFound" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -18451,6 +18691,66 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Nenhuma rota encontrada nas proximidades"
+          }
+        }
+      }
+    },
+    "routeSelection.searchFailedBody" : {
+      "comment" : "Empty state body when route generation failed with an error.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Beim Suchen der Routen ist etwas schiefgelaufen. Prüfe deine Verbindung und versuche es erneut."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Something went wrong while finding routes. Check your connection and try again."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Algo salió mal al buscar rutas. Comprueba tu conexión e inténtalo de nuevo."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Algo salió mal al buscar rutas. Revisa tu conexión e inténtalo de nuevo."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Une erreur s'est produite lors de la recherche d'itinéraires. Vérifiez votre connexion et réessayez."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Qualcosa è andato storto durante la ricerca dei percorsi. Controlla la connessione e riprova."
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Er ging iets mis bij het zoeken naar routes. Controleer je verbinding en probeer het opnieuw."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Algo deu errado ao buscar rotas. Verifique sua conexão e tente de novo."
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Algo correu mal ao procurar rotas. Verifique a sua ligação e tente novamente."
           }
         }
       }
@@ -18870,6 +19170,126 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "%1$@ rotas encontradas · caminhada de %2$@"
+          }
+        }
+      }
+    },
+    "routeSelection.tryAgain" : {
+      "comment" : "Retry button on the empty route search state.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Erneut versuchen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Try again"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Intentar de nuevo"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Intentar de nuevo"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Réessayer"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Riprova"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Opnieuw proberen"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tentar de novo"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tentar novamente"
+          }
+        }
+      }
+    },
+    "routeSelection.tryLongerWalk" : {
+      "comment" : "Button on the empty route search state. %@ = walk duration like '45min'.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@-Spaziergang versuchen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Try a %@ walk"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Probar un paseo de %@"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Probar un paseo de %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Essayer une balade de %@"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Prova una passeggiata di %@"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Probeer een wandeling van %@"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tentar uma caminhada de %@"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tentar uma caminhada de %@"
           }
         }
       }

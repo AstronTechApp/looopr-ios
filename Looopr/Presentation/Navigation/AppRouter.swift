@@ -65,6 +65,20 @@ final class AppRouter {
         presentedSheet = route
     }
 
+    /// Swaps the top of the stack for `route` without a visible pop — used
+    /// to re-run a route search with a different duration from the empty
+    /// state.
+    func replaceTop(with route: AppRoute) {
+        if case .routeSelection(let minutes, let location) = route {
+            lastExploreMinutes = minutes
+            lastExploreLocation = location
+        }
+        if !path.isEmpty { path.removeLast() }
+        if !routeStack.isEmpty { routeStack.removeLast() }
+        path.append(route)
+        routeStack.append(route)
+    }
+
     func pop() {
         guard !path.isEmpty else { return }
         path.removeLast()

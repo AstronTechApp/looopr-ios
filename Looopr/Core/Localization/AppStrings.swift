@@ -110,6 +110,15 @@ enum L10n {
         static var walkLabel: String { String(localized: "routeSelection.walkLabel", defaultValue: "walk", bundle: LocalizationManager.shared.localizedBundle) }
         static var noRoutesFound: String { String(localized: "routeSelection.noRoutesFound", defaultValue: "No routes found nearby", bundle: LocalizationManager.shared.localizedBundle) }
         static var findingMore: String { String(localized: "routeSelection.findingMore", defaultValue: "Finding more routes…", bundle: LocalizationManager.shared.localizedBundle) }
+        static var noRoutesBody: String { String(localized: "routeSelection.noRoutesBody", defaultValue: "We couldn't build a loop this short from here. Shorter walks are the hardest to fit — a longer one usually works.", bundle: LocalizationManager.shared.localizedBundle) }
+        static var noRoutesBodyShort: String { String(localized: "routeSelection.noRoutesBodyShort", defaultValue: "We couldn't build a loop of this length from here. Try again, or start from a different spot.", bundle: LocalizationManager.shared.localizedBundle) }
+        static var searchFailedBody: String { String(localized: "routeSelection.searchFailedBody", defaultValue: "Something went wrong while finding routes. Check your connection and try again.", bundle: LocalizationManager.shared.localizedBundle) }
+        static var locationUnavailableTitle: String { String(localized: "routeSelection.locationUnavailableTitle", defaultValue: "Couldn't find your location", bundle: LocalizationManager.shared.localizedBundle) }
+        static var locationUnavailableBody: String { String(localized: "routeSelection.locationUnavailableBody", defaultValue: "Routes start from where you are. Make sure Location is allowed for Looopr, then try again.", bundle: LocalizationManager.shared.localizedBundle) }
+        static var tryAgain: String { String(localized: "routeSelection.tryAgain", defaultValue: "Try again", bundle: LocalizationManager.shared.localizedBundle) }
+        static func tryLongerWalk(_ duration: String) -> String {
+            String(format: NSLocalizedString("routeSelection.tryLongerWalk", tableName: nil, bundle: LocalizationManager.shared.localizedBundle, value: "Try a %@ walk", comment: ""), duration)
+        }
         static var upgradeTitle: String { String(localized: "routeSelection.upgradeTitle", defaultValue: "Want more options?", bundle: LocalizationManager.shared.localizedBundle) }
         static var upgradeBody: String { String(localized: "routeSelection.upgradeBody", defaultValue: "Looopr Premium finds up to 8 loops per walk and shows the cafés along the way.", bundle: LocalizationManager.shared.localizedBundle) }
         static var upgradeCTA: String { String(localized: "routeSelection.upgradeCTA", defaultValue: "See Premium", bundle: LocalizationManager.shared.localizedBundle) }

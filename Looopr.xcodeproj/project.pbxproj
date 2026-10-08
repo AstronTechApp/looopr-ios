@@ -99,6 +99,7 @@
 		877953D43B2F93CBF476BFF2 /* LocationProviding.swift in Sources */ = {isa = PBXBuildFile; fileRef = 526DB4727286105D8FBA8DCD /* LocationProviding.swift */; };
 		89C9358A2C304AB3316061E5 /* LoooprLiveActivity.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 5209841053BC3D479FD8746D /* LoooprLiveActivity.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		8B771D600475C31464E6632F /* FeedbackSectionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D28A1226B95C2BA753B5E877 /* FeedbackSectionView.swift */; };
+		8C822A6A53EB6AC361D3389A /* RouteSelectionViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 39E27ACF7BC4E1D83C938076 /* RouteSelectionViewModelTests.swift */; };
 		8E0E93153E3EA0B8E9D0774B /* TicketAggregatorService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 80B6C1143C26015B9CE528B2 /* TicketAggregatorService.swift */; };
 		8E18FA353E6DADAF0C179FD2 /* LiveSubscriptionService.swift in Sources */ = {isa = PBXBuildFile; fileRef = CF07ECEDB173CA6F7B8DD181 /* LiveSubscriptionService.swift */; };
 		8F99566954DE62BBD63A431C /* POIOpeningHoursTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 932CA0366246995E1DC46C40 /* POIOpeningHoursTests.swift */; };
@@ -259,6 +260,7 @@
 		376160DB4CA0B64D0442C4BA /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		37E2FEC0301F219789C885EB /* GPXExporterTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GPXExporterTests.swift; sourceTree = "<group>"; };
 		381D9D1BE8CC12E4BF15DDC2 /* AuthService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthService.swift; sourceTree = "<group>"; };
+		39E27ACF7BC4E1D83C938076 /* RouteSelectionViewModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RouteSelectionViewModelTests.swift; sourceTree = "<group>"; };
 		3AF87D331080643C06E11581 /* HealthSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HealthSettingsView.swift; sourceTree = "<group>"; };
 		3BF11064C425FEF63FFD920B /* RouteSelectionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RouteSelectionView.swift; sourceTree = "<group>"; };
 		3C2B0035F2ADBF9368F2277F /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
@@ -910,6 +912,7 @@
 				2681139FE02503BC9DD568B1 /* LoooprTests.swift */,
 				932CA0366246995E1DC46C40 /* POIOpeningHoursTests.swift */,
 				E498E2984E49683D65FAEC5E /* RerouteLoopTests.swift */,
+				39E27ACF7BC4E1D83C938076 /* RouteSelectionViewModelTests.swift */,
 				3EE12D4DF5F555EE343A6713 /* SmoothedLocationTrackerTests.swift */,
 				298EDCA930BFE4AC429C2489 /* SubscriptionGateTests.swift */,
 			);
@@ -1253,6 +1256,7 @@
 				CFADF9889409827D615330C3 /* LoooprTests.swift in Sources */,
 				8F99566954DE62BBD63A431C /* POIOpeningHoursTests.swift in Sources */,
 				AB7134DB198F2C0AC4ACAA72 /* RerouteLoopTests.swift in Sources */,
+				8C822A6A53EB6AC361D3389A /* RouteSelectionViewModelTests.swift in Sources */,
 				3D5BC5A9459E2915102AD093 /* SmoothedLocationTrackerTests.swift in Sources */,
 				9DBE314BAED4C93DCAB2E769 /* SubscriptionGateTests.swift in Sources */,
 			);

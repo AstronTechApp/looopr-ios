@@ -8,6 +8,50 @@ final class RouteSelectionViewModel {
 
     private(set) var routes: [Route] = []
     private(set) var isLoading = true
+    /// Why the last search ended without routes. Nil while loading, after a
+    /// successful search, and when the search was merely cancelled (the
+    /// view went away) — a cancelled search is not a failed one.
+    private(set) var failure: SearchFailure?
+
+    enum SearchFailure: Equatable {
+        /// The generator finished (or threw `RouteError.noRoutesFound`)
+        /// without a single loop of this length from this start.
+        case noRoutes
+        /// No GPS fix within the wait window.
+        case locationUnavailable
+        /// Network / directions / anything else.
+        case generation(String)
+
+        /// Short machine-readable reason for analytics.
+        var analyticsReason: String {
+            switch self {
+            case .noRoutes: return "no_routes"
+            case .locationUnavailable: return "location_unavailable"
+            case .generation: return "generation_error"
+            }
+        }
+    }
+
+    /// True only when a search finished and produced routes. The free-tier
+    /// upgrade card hangs off this, never off "not loading" — a failed or
+    /// empty search must not end in a paywall.
+    var didFindRoutes: Bool { !isLoading && failure == nil && !routes.isEmpty }
+
+    /// A longer duration to offer when the short end comes up empty, or nil
+    /// at the top of the slider.
+    var suggestedLongerMinutes: Int? {
+        let longer = walkDurationMinutes + Self.longerWalkStepMinutes
+        return longer <= Self.maxWalkMinutes ? longer : nil
+    }
+    static let longerWalkStepMinutes = 15
+    static let maxWalkMinutes = 180
+
+    /// The location the search ran from, so a retry with another duration
+    /// can keep it.
+    var searchLocation: CustomRouteLocation? { customLocation }
+
+    /// How long `loadRoutes` waits for a first GPS fix before giving up.
+    var locationWaitSeconds: TimeInterval = 15
 
     // TODO: v2 — Route filter tabs (Quiet, Parks, Scenic, Cafés)
     // Restore when route generation tags routes by character type
@@ -111,7 +155,10 @@ final class RouteSelectionViewModel {
         self.walkDurationMinutes = walkDurationMinutes
         self.customLocation      = customLocation
         self.routeGeneration     = routeGeneration     ?? ServiceContainer.shared.resolve(RouteGenerating.self)
-        self.mapboxGeneration    = mapboxGeneration     ?? ServiceContainer.shared.resolveOptional(MapboxRouteGenerationService.self)
+        // An explicitly injected generator is the one to use (tests, previews);
+        // only fall back to the container's Mapbox service when nothing was given.
+        self.mapboxGeneration    = mapboxGeneration
+            ?? (routeGeneration == nil ? ServiceContainer.shared.resolveOptional(MapboxRouteGenerationService.self) : nil)
         self.subscriptionService = subscriptionService  ?? ServiceContainer.shared.resolve(SubscriptionProviding.self)
         self.locationService     = locationService      ?? ServiceContainer.shared.resolve(LocationProviding.self)
         self.analytics           = analytics            ?? ServiceContainer.shared.resolve(AnalyticsTracking.self)
@@ -122,6 +169,7 @@ final class RouteSelectionViewModel {
 
     func loadRoutes() async {
         isLoading = true
+        failure = nil
         analytics.track(.routeSearchStarted(
             minutes: walkDurationMinutes,
             usingCustomLocation: customLocation != nil
@@ -138,14 +186,12 @@ final class RouteSelectionViewModel {
         locationService.requestAuthorization()
         locationService.startUpdating()
 
-        // Wait up to 15 seconds for a location fix
+        // Wait up to `locationWaitSeconds` for a location fix
         var coordinate = locationService.currentCoordinate
         if coordinate == nil {
-            for _ in 0..<30 {
-                guard !Task.isCancelled else {
-                    isLoading = false
-                    return
-                }
+            let polls = max(1, Int(locationWaitSeconds / 0.5))
+            for _ in 0..<polls {
+                guard !Task.isCancelled else { return }
                 try? await Task.sleep(for: .milliseconds(500))
                 coordinate = locationService.currentCoordinate
                 if coordinate != nil { break }
@@ -153,8 +199,9 @@ final class RouteSelectionViewModel {
         }
 
         guard let coordinate else {
+            if Task.isCancelled { return }
             logger.error("Timed out waiting for location")
-            isLoading = false
+            fail(.locationUnavailable)
             return
         }
 
@@ -176,11 +223,37 @@ final class RouteSelectionViewModel {
                 collected.sort { $0.durationMinutes < $1.durationMinutes }
                 routes = collected
             }
+            // A cancelled generator ends its stream quietly, so a torn-down
+            // view used to log "0 routes" here and skew the failure stats.
+            // Leave the state as it is; nobody is looking at it any more.
+            if Task.isCancelled { return }
             logger.info("Loaded \(collected.count) routes for \(walkDurationMinutes) min walk")
             analytics.track(.routeGenerated(count: collected.count, minutes: walkDurationMinutes))
+            if collected.isEmpty {
+                fail(.noRoutes)
+                return
+            }
+        } catch is CancellationError {
+            return
         } catch {
+            if Task.isCancelled { return }
             logger.error("Route generation failed: \(error)")
+            routes = []
+            if let routeError = error as? RouteError, routeError == .noRoutesFound {
+                fail(.noRoutes)
+            } else if let routeError = error as? RouteError, routeError == .cancelled {
+                // Generator-level cancellation (e.g. superseded request).
+            } else {
+                fail(.generation(String(describing: error)))
+            }
+            return
         }
         isLoading = false
+    }
+
+    private func fail(_ reason: SearchFailure) {
+        failure = reason
+        isLoading = false
+        analytics.track(.routeSearchFailed(minutes: walkDurationMinutes, reason: reason.analyticsReason))
     }
 }

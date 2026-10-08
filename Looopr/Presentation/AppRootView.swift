@@ -68,8 +68,31 @@ struct AppRootView: View {
 
     // MARK: - Shared Navigation Destination
 
+    /// Every tab's `NavigationStack` is bound to the same `router.path`, so
+    /// a push lands in all of them at once. On iOS 26's `TabView` the
+    /// hidden tabs still build and run their destinations, which meant two
+    /// `RouteSelectionView`s per search: two Mapbox requests, and a bogus
+    /// "0 routes" event when the hidden copy was torn down. Only the tab
+    /// that will show a destination hosts it; the others get a blank.
+    /// Route selection always lives in Explore — `onChange(of: routeStack)`
+    /// switches there the moment it is pushed.
+    private func hosts(_ route: AppRoute, in tab: LoooprTab?) -> Bool {
+        guard let tab else { return true }
+        if case .routeSelection = route { return tab == .explore }
+        return tab == selectedTab
+    }
+
     @ViewBuilder
-    private func destinationView(for route: AppRoute) -> some View {
+    private func destinationView(for route: AppRoute, in tab: LoooprTab? = nil) -> some View {
+        if hosts(route, in: tab) {
+            hostedDestinationView(for: route)
+        } else {
+            LoooprTheme.Colors.background.ignoresSafeArea()
+        }
+    }
+
+    @ViewBuilder
+    private func hostedDestinationView(for route: AppRoute) -> some View {
         switch route {
         case .home:
             HomeView()
@@ -103,7 +126,7 @@ struct AppRootView: View {
                 NavigationStack(path: $router.path) {
                     HomeView()
                         .navigationDestination(for: AppRoute.self) { route in
-                            destinationView(for: route)
+                            destinationView(for: route, in: .home)
                         }
                 }
             }
@@ -112,7 +135,7 @@ struct AppRootView: View {
                 NavigationStack(path: $router.path) {
                     HomeView()
                         .navigationDestination(for: AppRoute.self) { route in
-                            destinationView(for: route)
+                            destinationView(for: route, in: .explore)
                         }
                 }
             }
@@ -121,7 +144,7 @@ struct AppRootView: View {
                 NavigationStack(path: $router.path) {
                     SavedRoutesView()
                         .navigationDestination(for: AppRoute.self) { route in
-                            destinationView(for: route)
+                            destinationView(for: route, in: .savedRoutes)
                         }
                 }
             }
@@ -130,7 +153,7 @@ struct AppRootView: View {
                 NavigationStack(path: $router.path) {
                     ProfileView()
                         .navigationDestination(for: AppRoute.self) { route in
-                            destinationView(for: route)
+                            destinationView(for: route, in: .profile)
                         }
                 }
             }

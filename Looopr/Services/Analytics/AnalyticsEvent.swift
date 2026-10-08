@@ -39,6 +39,10 @@ enum AnalyticsEvent: Sendable {
     case appOpened
     case routeSearchStarted(minutes: Int, usingCustomLocation: Bool)
     case routeGenerated(count: Int, minutes: Int)
+    /// A search ended without routes to show: `reason` is one of
+    /// `no_routes`, `location_unavailable`, `generation_error`. Cancelled
+    /// searches (the user left the screen) are not reported at all.
+    case routeSearchFailed(minutes: Int, reason: String)
     case routeSelected(routeId: UUID, durationMinutes: Int, distanceKm: Double)
     case walkStarted(routeId: UUID, plannedMinutes: Int, plannedDistanceKm: Double)
     case walkCompleted(
@@ -87,6 +91,7 @@ enum AnalyticsEvent: Sendable {
         case .appOpened:           return "app_opened"
         case .routeSearchStarted:  return "route_search_started"
         case .routeGenerated:      return "route_generated"
+        case .routeSearchFailed:   return "route_search_failed"
         case .routeSelected:       return "route_selected"
         case .walkStarted:         return "walk_started"
         case .walkCompleted:       return "walk_completed"
@@ -113,6 +118,8 @@ enum AnalyticsEvent: Sendable {
             return ["minutes": .int(minutes), "custom_location": .bool(custom)]
         case .routeGenerated(let count, let minutes):
             return ["count": .int(count), "minutes": .int(minutes)]
+        case .routeSearchFailed(let minutes, let reason):
+            return ["minutes": .int(minutes), "reason": .string(reason)]
         case .routeSelected(let routeId, let duration, let distanceKm):
             return [
                 "route_id": .string(routeId.uuidString),

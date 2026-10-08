@@ -118,17 +118,7 @@ struct RouteSelectionView: View {
             }
             .padding(.horizontal, LoooprTheme.Spacing.screenHorizontal)
         } else if viewModel.routes.isEmpty {
-            VStack(spacing: LoooprTheme.Spacing.sm) {
-                Image(systemName: "map")
-                    .font(.system(size: 48, weight: .light))
-                    .foregroundStyle(LoooprTheme.Colors.textTertiary)
-
-                Text(L10n.RouteSelection.noRoutesFound)
-                    .font(.system(size: 14, weight: .medium, design: .rounded))
-                    .foregroundStyle(LoooprTheme.Colors.textSecondary)
-            }
-            .frame(maxWidth: .infinity)
-            .padding(.top, LoooprTheme.Spacing.huge)
+            emptyState
         } else {
             LazyVStack(spacing: LoooprTheme.Spacing.xl) {
                 ForEach(Array(viewModel.routes.enumerated()), id: \.element.id) { index, route in
@@ -156,7 +146,7 @@ struct RouteSelectionView: View {
 
                 if viewModel.isLoading {
                     findingMoreRow
-                } else if viewModel.isFreeTier {
+                } else if viewModel.didFindRoutes && viewModel.isFreeTier {
                     UpgradeCard {
                         // PaywallView tracks `.paywallShown` itself on appear.
                         router.presentPaywall()
@@ -164,6 +154,84 @@ struct RouteSelectionView: View {
                 }
             }
             .padding(.horizontal, LoooprTheme.Spacing.screenHorizontal)
+        }
+    }
+
+    // MARK: - Empty / failed search
+
+    /// Shown when a search ends with nothing to show. Always offers a way
+    /// forward (retry, or a longer walk when the short end came up empty);
+    /// never the upgrade card — a failed search is not a sales moment.
+    private var emptyState: some View {
+        VStack(spacing: LoooprTheme.Spacing.md) {
+            Image(systemName: viewModel.failure == .locationUnavailable ? "location.slash" : "map")
+                .font(.system(size: 48, weight: .light))
+                .foregroundStyle(LoooprTheme.Colors.textTertiary)
+
+            VStack(spacing: LoooprTheme.Spacing.xs) {
+                Text(viewModel.failure == .locationUnavailable
+                     ? L10n.RouteSelection.locationUnavailableTitle
+                     : L10n.RouteSelection.noRoutesFound)
+                    .font(.system(size: 16, weight: .semibold, design: .rounded))
+                    .foregroundStyle(LoooprTheme.Colors.textPrimary)
+
+                Text(emptyStateBody)
+                    .font(.system(size: 14, weight: .regular, design: .rounded))
+                    .foregroundStyle(LoooprTheme.Colors.textSecondary)
+                    .multilineTextAlignment(.center)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            .padding(.horizontal, LoooprTheme.Spacing.lg)
+
+            VStack(spacing: LoooprTheme.Spacing.sm) {
+                if viewModel.failure != .locationUnavailable,
+                   let longer = viewModel.suggestedLongerMinutes {
+                    Button {
+                        router.replaceTop(with: .routeSelection(
+                            walkMinutes: longer,
+                            customLocation: viewModel.searchLocation
+                        ))
+                    } label: {
+                        Text(L10n.RouteSelection.tryLongerWalk(RouteSelectionViewModel.formattedMinutes(longer)))
+                            .font(LoooprTheme.Typography.button)
+                            .foregroundStyle(.white)
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 14)
+                            .background(LoooprTheme.Colors.primary)
+                            .clipShape(Capsule())
+                    }
+                    .buttonStyle(.plain)
+                }
+
+                Button {
+                    Task { await viewModel.loadRoutes() }
+                } label: {
+                    Text(L10n.RouteSelection.tryAgain)
+                        .font(LoooprTheme.Typography.button)
+                        .foregroundStyle(LoooprTheme.Colors.primary)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 14)
+                        .background(LoooprTheme.Colors.primaryLight)
+                        .clipShape(Capsule())
+                }
+                .buttonStyle(.plain)
+            }
+            .padding(.horizontal, LoooprTheme.Spacing.xl)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.top, LoooprTheme.Spacing.huge)
+    }
+
+    private var emptyStateBody: String {
+        switch viewModel.failure {
+        case .locationUnavailable:
+            return L10n.RouteSelection.locationUnavailableBody
+        case .generation:
+            return L10n.RouteSelection.searchFailedBody
+        case .noRoutes, .none:
+            return viewModel.suggestedLongerMinutes == nil
+                ? L10n.RouteSelection.noRoutesBodyShort
+                : L10n.RouteSelection.noRoutesBody
         }
     }
 
