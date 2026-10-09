@@ -8,8 +8,25 @@ struct AuthView: View {
     @State private var appleSignInDelegate: AppleSignInDelegate?
     @State private var appeared = false
 
-    init(authService: AuthService) {
+    /// Shown under the sign-in buttons on the root sign-in screen so the app
+    /// can be used without an account (guideline 5.1.1(v)). Nil hides it.
+    private let onContinueAsGuest: (() -> Void)?
+    /// Replaces the generic subtitle when a guest is asked to sign in for a
+    /// specific feature (e.g. sharing a route).
+    private let message: String?
+    /// Non-nil when presented as a sheet; shows a close button.
+    private let onClose: (() -> Void)?
+
+    init(
+        authService: AuthService,
+        message: String? = nil,
+        onContinueAsGuest: (() -> Void)? = nil,
+        onClose: (() -> Void)? = nil
+    ) {
         _authService = State(initialValue: authService)
+        self.message = message
+        self.onContinueAsGuest = onContinueAsGuest
+        self.onClose = onClose
     }
 
     var body: some View {
@@ -36,7 +53,7 @@ struct AuthView: View {
                             .font(LoooprTheme.Typography.largeTitle)
                             .foregroundStyle(LoooprTheme.Colors.textPrimary)
 
-                        Text(L10n.Auth.discoverRoutesDescription)
+                        Text(message ?? L10n.Auth.discoverRoutesDescription)
                             .font(LoooprTheme.Typography.body)
                             .foregroundStyle(LoooprTheme.Colors.textSecondary)
                     }
@@ -120,16 +137,49 @@ struct AuthView: View {
                     .animation(LoooprTheme.Animation.standard, value: errorMessage)
 
                     // GDPR consent
-                    Text(L10n.Auth.privacyAgreement)
+                    // LocalizedStringKey so the [Privacy Policy](…) markdown renders as a link
+                    Text(LocalizedStringKey(L10n.Auth.privacyAgreement))
                         .font(LoooprTheme.Typography.caption)
                         .foregroundStyle(LoooprTheme.Colors.textTertiary)
                         .multilineTextAlignment(.center)
                         .tint(LoooprTheme.Colors.primary)
+
+                    // Use the app without an account (guideline 5.1.1(v))
+                    if let onContinueAsGuest {
+                        Button {
+                            onContinueAsGuest()
+                        } label: {
+                            Text(L10n.Auth.continueWithoutAccount)
+                                .font(LoooprTheme.Typography.button)
+                                .foregroundStyle(LoooprTheme.Colors.primary)
+                                .frame(maxWidth: .infinity)
+                                .frame(minHeight: 44)
+                                .contentShape(Rectangle())
+                        }
+                        .buttonStyle(AuthButtonStyle())
+                        .disabled(isLoading)
+                    }
                 }
                 .padding(.horizontal, LoooprTheme.Spacing.screenHorizontal)
                 .padding(.bottom, LoooprTheme.Spacing.xxl)
                 .opacity(appeared ? 1 : 0)
                 .offset(y: appeared ? 0 : 24)
+            }
+        }
+        .overlay(alignment: .topTrailing) {
+            if let onClose {
+                Button {
+                    onClose()
+                } label: {
+                    Image(systemName: "xmark")
+                        .font(.system(size: 15, weight: .semibold))
+                        .foregroundStyle(LoooprTheme.Colors.textPrimary)
+                        .frame(width: 36, height: 36)
+                        .background(LoooprTheme.Colors.surface, in: Circle())
+                }
+                .accessibilityLabel(L10n.Settings.cancel)
+                .padding(.top, LoooprTheme.Spacing.md)
+                .padding(.trailing, LoooprTheme.Spacing.screenHorizontal)
             }
         }
         .onAppear {

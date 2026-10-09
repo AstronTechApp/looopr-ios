@@ -81,6 +81,9 @@ final class SavedRoutesViewModel {
             let url = try await routeShareService.uploadRoute(route)
             shareURL = url
             return url
+        } catch RouteShareService.ShareError.notSignedIn {
+            // The sign-in sheet is already up (AccountPrompt); no error alert.
+            return nil
         } catch {
             shareError = error.localizedDescription
             logger.error("Failed to share route: \(error)")

@@ -113,7 +113,8 @@ struct WalkDetailView: View {
                     if let url = await viewModel.shareRoute() {
                         shareURL = url
                         showShareSheet = true
-                    } else {
+                    } else if AccountPrompt.shared.reason == nil {
+                        // No error alert when the guest sign-in sheet is showing instead.
                         showShareError = true
                     }
                 }
@@ -448,7 +449,8 @@ struct WalkDetailView: View {
                 if let url = await viewModel.shareRoute() {
                     shareURL = url
                     showShareSheet = true
-                } else {
+                } else if AccountPrompt.shared.reason == nil {
+                    // No error alert when the guest sign-in sheet is showing instead.
                     showShareError = true
                 }
             }

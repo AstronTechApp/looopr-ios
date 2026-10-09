@@ -136,6 +136,71 @@ final class AuthService: @unchecked Sendable {
     }
 }
 
+// MARK: - Guest Mode
+
+/// Lets people use Looopr without an account (App Review guideline 5.1.1(v)).
+///
+/// Route search, navigation, walk recording, saved routes, walk history and
+/// Premium all work on-device without signing in. Only features that need a
+/// server-side identity — cloud sync, route sharing, feedback, data export
+/// and account deletion — ask for an account, via `AccountPrompt`.
+///
+/// Stored in UserDefaults so a guest goes straight to Home on the next launch.
+@Observable
+final class GuestSession {
+    static let shared = GuestSession()
+
+    private static let key = "auth.continuedAsGuest"
+    private let defaults: UserDefaults
+
+    /// True once the person tapped "Continue without an account" and has not
+    /// signed in since.
+    private(set) var isActive: Bool
+
+    init(defaults: UserDefaults = .standard) {
+        self.defaults = defaults
+        self.isActive = defaults.bool(forKey: Self.key)
+    }
+
+    func continueAsGuest() {
+        guard !isActive else { return }
+        isActive = true
+        defaults.set(true, forKey: Self.key)
+    }
+
+    /// Called once a real session exists. Signing out later returns to the
+    /// sign-in screen (which still offers to continue without an account).
+    func end() {
+        guard isActive else { return }
+        isActive = false
+        defaults.removeObject(forKey: Self.key)
+    }
+}
+
+/// Asks a guest to sign in when they reach a feature that needs an account.
+/// `AppRootView` observes `reason` and presents the sign-in sheet.
+@MainActor
+@Observable
+final class AccountPrompt {
+    static let shared = AccountPrompt()
+
+    enum Reason: Equatable {
+        case settings
+        case shareRoute
+        case feedback
+    }
+
+    var reason: Reason?
+
+    func request(_ reason: Reason) {
+        self.reason = reason
+    }
+
+    func dismiss() {
+        reason = nil
+    }
+}
+
 // MARK: - AuthProviding Conformance
 
 extension AuthService: AuthProviding {

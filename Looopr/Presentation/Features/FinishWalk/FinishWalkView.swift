@@ -331,7 +331,8 @@ struct FinishWalkView: View {
                 Task {
                     if let _ = await viewModel.shareRoute() {
                         showShareSheet = true
-                    } else {
+                    } else if AccountPrompt.shared.reason == nil {
+                        // No error alert when the guest sign-in sheet is showing instead.
                         showShareError = true
                     }
                 }

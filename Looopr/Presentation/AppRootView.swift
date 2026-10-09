@@ -7,6 +7,8 @@ struct AppRootView: View {
     @State private var hasCheckedSession = false
     @State private var selectedTab: LoooprTab = .home
     @State private var onboarding = OnboardingState.shared
+    @State private var guest = GuestSession.shared
+    @State private var accountPrompt = AccountPrompt.shared
 
     var body: some View {
         Group {
@@ -22,15 +24,36 @@ struct AppRootView: View {
                             .tint(LoooprTheme.Colors.primary)
                     }
                 }
-            } else if !authService.isSignedIn && !onboarding.hasCompleted {
+            } else if !authService.isSignedIn && !guest.isActive && !onboarding.hasCompleted {
                 // First launch only: three intro pages before sign-in.
                 OnboardingView { onboarding.markCompleted() }
                     .transition(.opacity)
-            } else if !authService.isSignedIn {
-                AuthView(authService: authService)
+            } else if !authService.isSignedIn && !guest.isActive {
+                // Signing in is optional (guideline 5.1.1(v)): everything
+                // except cloud sync, sharing and feedback works without it.
+                AuthView(
+                    authService: authService,
+                    onContinueAsGuest: { guest.continueAsGuest() }
+                )
             } else {
                 mainContent
             }
+        }
+        // A guest reached a feature that needs an account.
+        .sheet(isPresented: Binding(
+            get: { accountPrompt.reason != nil },
+            set: { if !$0 { accountPrompt.dismiss() } }
+        )) {
+            AuthView(
+                authService: authService,
+                message: accountPromptMessage,
+                onClose: { accountPrompt.dismiss() }
+            )
+        }
+        .onChange(of: authService.isSignedIn) { _, signedIn in
+            guard signedIn else { return }
+            guest.end()
+            accountPrompt.dismiss()
         }
         .task {
             await authService.restoreSession()
@@ -39,6 +62,7 @@ struct AppRootView: View {
             // never show them the first-launch intro, even if they sign out later.
             if authService.isSignedIn {
                 onboarding.markCompleted()
+                guest.end()
             }
             hasCheckedSession = true
             // Fired after session restore so the event carries the signed-in
@@ -53,6 +77,14 @@ struct AppRootView: View {
         // when iOS is in dark mode. Until the theme is refactored with dynamic colors,
         // we lock the app to light mode for visual consistency.
         .preferredColorScheme(.light)
+    }
+
+    private var accountPromptMessage: String {
+        switch accountPrompt.reason {
+        case .shareRoute: L10n.Auth.signInToShare
+        case .feedback: L10n.Auth.signInToSendFeedback
+        case .settings, nil: L10n.Auth.signInToSync
+        }
     }
 
     // MARK: - Main Content (version branching)

@@ -5,6 +5,7 @@ import RevenueCatUI
 struct SettingsView: View {
     @Environment(AppRouter.self) private var router
     @Environment(\.dismiss) private var dismiss
+    @Environment(AuthService.self) private var authService
     @State private var settings = SettingsManager.shared
     @State private var localization = LocalizationManager.shared
     @State private var showingNotificationDenied = false
@@ -390,6 +391,27 @@ struct SettingsView: View {
 
     private var privacySection: some View {
         SettingsSectionCard(title: L10n.Settings.privacyAndData) {
+            if authService.isSignedIn {
+                signedInPrivacyRows
+            } else {
+                // Guest (guideline 5.1.1(v)): there is no account to export or
+                // delete yet; offer to create one instead.
+                Button {
+                    AccountPrompt.shared.request(.settings)
+                } label: {
+                    SettingsRow(icon: "person.crop.circle", title: L10n.Settings.signIn) {
+                        Image(systemName: "chevron.right")
+                            .font(.system(size: 12, weight: .semibold))
+                            .foregroundStyle(LoooprTheme.Colors.textTertiary)
+                    }
+                }
+                .buttonStyle(.plain)
+            }
+        }
+    }
+
+    private var signedInPrivacyRows: some View {
+        Group {
             VStack(spacing: 0) {
                 NavigationLink {
                     PrivacySettingsView()
@@ -523,9 +545,14 @@ struct SettingsView: View {
                 Divider()
                     .padding(.leading, 44)
 
-                // Send feedback (in-app, lands in the Supabase `feedback` table)
+                // Send feedback (in-app, lands in the Supabase `feedback` table,
+                // whose RLS needs a signed-in user — guests are asked to sign in)
                 Button {
-                    showingFeedback = true
+                    if authService.isSignedIn {
+                        showingFeedback = true
+                    } else {
+                        AccountPrompt.shared.request(.feedback)
+                    }
                 } label: {
                     SettingsRow(icon: "bubble.left.and.bubble.right", title: L10n.Settings.sendFeedback) {
                         Image(systemName: "chevron.right")

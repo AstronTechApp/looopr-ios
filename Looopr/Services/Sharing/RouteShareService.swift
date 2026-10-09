@@ -11,6 +11,13 @@ actor RouteShareService {
 
     /// Uploads a route to Supabase and returns a shareable URL.
     func uploadRoute(_ route: Route) async throws -> URL {
+        // Share links are stored under the sharer's account (RLS), so guests
+        // are asked to sign in first instead of hitting a silent failure.
+        guard supabase.client.auth.currentSession != nil else {
+            await MainActor.run { AccountPrompt.shared.request(.shareRoute) }
+            throw ShareError.notSignedIn
+        }
+
         let shareID = route.id
 
         // Encode route to JSON
@@ -113,12 +120,14 @@ actor RouteShareService {
         case invalidConfiguration
         case uploadFailed
         case routeNotFound
+        case notSignedIn
 
         var errorDescription: String? {
             switch self {
             case .invalidConfiguration: "Sharing is not configured."
             case .uploadFailed: "Failed to upload route. Please try again."
             case .routeNotFound: "This route is no longer available."
+            case .notSignedIn: "Sign in to share routes."
             }
         }
     }

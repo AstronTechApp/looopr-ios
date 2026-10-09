@@ -113,7 +113,8 @@ struct SavedRoutesView: View {
             shareURL = url
             shareTitle = L10n.SavedRoutes.shareTitle(L10n.RouteName.localized(route.baseName))
             showShareSheet = true
-        } else {
+        } else if AccountPrompt.shared.reason == nil {
+            // No error alert when the guest sign-in sheet is showing instead.
             showShareError = true
         }
     }

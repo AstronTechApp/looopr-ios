@@ -36,6 +36,10 @@ enum L10n {
     enum Auth {
         static var welcome: String { String(localized: "auth.welcome", defaultValue: "Welcome to Looopr", bundle: LocalizationManager.shared.localizedBundle) }
         static var discoverRoutesDescription: String { String(localized: "auth.discoverRoutesDescription", defaultValue: "Discover walking routes around you", bundle: LocalizationManager.shared.localizedBundle) }
+        static var continueWithoutAccount: String { String(localized: "auth.continueWithoutAccount", defaultValue: "Continue without an account", bundle: LocalizationManager.shared.localizedBundle) }
+        static var signInToShare: String { String(localized: "auth.signInToShare", defaultValue: "Sign in to share routes with a link.", bundle: LocalizationManager.shared.localizedBundle) }
+        static var signInToSendFeedback: String { String(localized: "auth.signInToSendFeedback", defaultValue: "Sign in to send us feedback.", bundle: LocalizationManager.shared.localizedBundle) }
+        static var signInToSync: String { String(localized: "auth.signInToSync", defaultValue: "Sign in to back up your walks and saved routes, and use them on your other devices.", bundle: LocalizationManager.shared.localizedBundle) }
         static var signInGoogle: String { String(localized: "auth.signInGoogle", defaultValue: "Sign in with Google", bundle: LocalizationManager.shared.localizedBundle) }
         static var signingIn: String { String(localized: "auth.signingIn", defaultValue: "Signing in...", bundle: LocalizationManager.shared.localizedBundle) }
         static var appleIDCredentialsFailed: String { String(localized: "auth.appleIDCredentialsFailed", defaultValue: "Failed to get Apple ID credentials.", bundle: LocalizationManager.shared.localizedBundle) }
@@ -468,6 +472,7 @@ enum L10n {
         static var privacyAndData: String { String(localized: "settings.privacyAndData", defaultValue: "PRIVACY & DATA", bundle: LocalizationManager.shared.localizedBundle) }
         static var privacyAndDataLink: String { String(localized: "settings.privacyAndDataLink", defaultValue: "Privacy & Data", bundle: LocalizationManager.shared.localizedBundle) }
         static var manage: String { String(localized: "settings.manage", defaultValue: "Manage", bundle: LocalizationManager.shared.localizedBundle) }
+        static var signIn: String { String(localized: "settings.signIn", defaultValue: "Sign In", bundle: LocalizationManager.shared.localizedBundle) }
         static var signOut: String { String(localized: "settings.signOut", defaultValue: "Sign Out", bundle: LocalizationManager.shared.localizedBundle) }
         static var cancel: String { String(localized: "settings.cancel", defaultValue: "Cancel", bundle: LocalizationManager.shared.localizedBundle) }
         static var about: String { String(localized: "settings.about", defaultValue: "ABOUT", bundle: LocalizationManager.shared.localizedBundle) }
