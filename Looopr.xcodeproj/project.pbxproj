@@ -170,6 +170,7 @@
 		E1F86D940F464EB509F9DE28 /* RouteGenerating.swift in Sources */ = {isa = PBXBuildFile; fileRef = 368798BE230046B94B09DB90 /* RouteGenerating.swift */; };
 		E4A2CD5EE0CEE45BBEBC03AD /* WalkNavigationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A260DD71FA5379D191758352 /* WalkNavigationView.swift */; };
 		E55607BA9E4BF61FC585C999 /* RevenueCatUI in Frameworks */ = {isa = PBXBuildFile; productRef = 4004FB47ADB6CD2F3E25AB3D /* RevenueCatUI */; };
+		E6E40137632C834F7DDEB585 /* GoogleSignIn in Frameworks */ = {isa = PBXBuildFile; productRef = 16630DCF2FE996CF772E8178 /* GoogleSignIn */; };
 		E8AB9ECB08CA64C931F018D8 /* Double+FormattedDistance.swift in Sources */ = {isa = PBXBuildFile; fileRef = D5454DE548C0542104D7EF5F /* Double+FormattedDistance.swift */; };
 		ECBFA74C324F0045538ED112 /* SavedRoutesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 16FF5D1976F4F081078D7126 /* SavedRoutesView.swift */; };
 		EDA79C811D375A3DBBA63E87 /* NavigationError.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9C1240B6B84099FF0CA0835F /* NavigationError.swift */; };
@@ -411,6 +412,7 @@
 				1C94274BDA914DA3020AD38A /* RevenueCat in Frameworks */,
 				E55607BA9E4BF61FC585C999 /* RevenueCatUI in Frameworks */,
 				2AF59294269C5B7D79E3B657 /* Sentry in Frameworks */,
+				E6E40137632C834F7DDEB585 /* GoogleSignIn in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1128,6 +1130,7 @@
 				D27E1DC8B431F061DFA23CA5 /* RevenueCat */,
 				4004FB47ADB6CD2F3E25AB3D /* RevenueCatUI */,
 				BB5381D3734C98FB1D057C3E /* Sentry */,
+				16630DCF2FE996CF772E8178 /* GoogleSignIn */,
 			);
 			productName = Looopr;
 			productReference = 6063EA7767E792C6FA9481DB /* Looopr.app */;
@@ -1171,6 +1174,7 @@
 			mainGroup = E7B35B8E670CE327397DED24;
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
+				2D7EB4F81E74F2D6402C2C0B /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */,
 				B8C58F987A725EE46DAA9EB7 /* XCRemoteSwiftPackageReference "purchases-ios-spm" */,
 				0B4C82CB8D18B45F610AD944 /* XCRemoteSwiftPackageReference "sentry-cocoa" */,
 				171DCFB299E507081D1189AC /* XCRemoteSwiftPackageReference "supabase-swift" */,
@@ -1464,7 +1468,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = Looopr/Looopr.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
-				CURRENT_PROJECT_VERSION = 11;
+				CURRENT_PROJECT_VERSION = 13;
 				GOOGLE_PLACES_API_KEY = "$(GOOGLE_PLACES_API_KEY)";
 				INFOPLIST_FILE = Looopr/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -1624,7 +1628,7 @@
 		BEE7C37A373069041CCD8C48 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				CURRENT_PROJECT_VERSION = 11;
+				CURRENT_PROJECT_VERSION = 13;
 				INFOPLIST_FILE = LoooprLiveActivity/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -1642,7 +1646,7 @@
 		D535D323A212142A93CE8F2F /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				CURRENT_PROJECT_VERSION = 11;
+				CURRENT_PROJECT_VERSION = 13;
 				INFOPLIST_FILE = LoooprLiveActivity/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -1664,7 +1668,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = Looopr/Looopr.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
-				CURRENT_PROJECT_VERSION = 11;
+				CURRENT_PROJECT_VERSION = 13;
 				GOOGLE_PLACES_API_KEY = "$(GOOGLE_PLACES_API_KEY)";
 				INFOPLIST_FILE = Looopr/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -1754,6 +1758,14 @@
 				minimumVersion = 2.0.0;
 			};
 		};
+		2D7EB4F81E74F2D6402C2C0B /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/google/GoogleSignIn-iOS";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 9.0.0;
+			};
+		};
 		B8C58F987A725EE46DAA9EB7 /* XCRemoteSwiftPackageReference "purchases-ios-spm" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/RevenueCat/purchases-ios-spm";
@@ -1765,6 +1777,11 @@
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
+		16630DCF2FE996CF772E8178 /* GoogleSignIn */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 2D7EB4F81E74F2D6402C2C0B /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */;
+			productName = GoogleSignIn;
+		};
 		4004FB47ADB6CD2F3E25AB3D /* RevenueCatUI */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = B8C58F987A725EE46DAA9EB7 /* XCRemoteSwiftPackageReference "purchases-ios-spm" */;

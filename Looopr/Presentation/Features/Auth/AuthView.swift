@@ -227,6 +227,8 @@ struct AuthView: View {
 
         do {
             try await authService.signInWithGoogle()
+        } catch is CancellationError {
+            // User closed Google's sheet — not an error.
         } catch {
             errorMessage = error.localizedDescription
         }

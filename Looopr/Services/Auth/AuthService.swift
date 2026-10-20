@@ -1,6 +1,7 @@
 import Foundation
 import AuthenticationServices
 import Supabase
+import GoogleSignIn
 
 @Observable
 final class AuthService: @unchecked Sendable {
@@ -65,17 +66,72 @@ final class AuthService: @unchecked Sendable {
 
     // MARK: - Google Sign In
 
+    /// Native Google Sign-In (Google's own sheet / account picker), then hands
+    /// the ID token to Supabase — same pattern as Sign in with Apple. Users
+    /// never see the `*.supabase.co` address. Falls back to Supabase's web
+    /// OAuth flow when no iOS client ID is configured.
+    @MainActor
     func signInWithGoogle() async throws {
-        try await supabase.client.auth.signInWithOAuth(
-            provider: .google,
-            redirectTo: URL(string: "looopr://auth-callback")
+        guard Secrets.hasGoogleIOSClientID else {
+            try await supabase.client.auth.signInWithOAuth(
+                provider: .google,
+                redirectTo: URL(string: "looopr://auth-callback")
+            )
+            return
+        }
+        guard let presenter = Self.topViewController() else {
+            throw AuthError.missingIDToken
+        }
+
+        GIDSignIn.sharedInstance.configuration = GIDConfiguration(clientID: Secrets.googleIOSClientID)
+
+        // Google embeds the hashed nonce in the ID token; Supabase checks it
+        // against the raw one, so a captured token can't be replayed.
+        let rawNonce = String.randomNonce()
+        let result: GIDSignInResult
+        do {
+            result = try await GIDSignIn.sharedInstance.signIn(
+                withPresenting: presenter,
+                hint: nil,
+                additionalScopes: nil,
+                nonce: rawNonce.sha256
+            )
+        } catch let error as NSError where error.domain == kGIDSignInErrorDomain
+            && error.code == GIDSignInError.canceled.rawValue {
+            throw CancellationError()
+        }
+
+        guard let idToken = result.user.idToken?.tokenString else {
+            throw AuthError.missingIDToken
+        }
+        let session = try await supabase.client.auth.signInWithIdToken(
+            credentials: .init(
+                provider: .google,
+                idToken: idToken,
+                accessToken: result.user.accessToken.tokenString,
+                nonce: rawNonce
+            )
         )
+        applySession(session)
+    }
+
+    @MainActor
+    private static func topViewController() -> UIViewController? {
+        let root = UIApplication.shared.connectedScenes
+            .compactMap { $0 as? UIWindowScene }
+            .flatMap(\.windows)
+            .first { $0.isKeyWindow }?
+            .rootViewController
+        var top = root
+        while let presented = top?.presentedViewController { top = presented }
+        return top
     }
 
     // MARK: - Sign Out
 
     @MainActor
     func signOut() async throws {
+        GIDSignIn.sharedInstance.signOut()
         try await supabase.client.auth.signOut()
         clearSession()
     }

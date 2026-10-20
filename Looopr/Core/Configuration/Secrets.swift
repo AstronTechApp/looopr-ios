@@ -45,6 +45,20 @@ enum Secrets {
 
     static var hasRevenueCatKey: Bool { !revenueCatAPIKey.isEmpty }
 
+    // MARK: - Google Sign-In
+
+    /// iOS OAuth client ID for native Google Sign-In
+    /// (`<prefix>.apps.googleusercontent.com`). Empty when
+    /// `GOOGLE_IOS_CLIENT_ID_PREFIX` isn't set in Secrets.xcconfig, in which
+    /// case Google sign-in falls back to Supabase's web flow.
+    static var googleIOSClientID: String {
+        let id = Bundle.main.infoDictionary?["GOOGLE_IOS_CLIENT_ID"] as? String ?? ""
+        // An empty prefix still yields ".apps.googleusercontent.com".
+        return id.hasPrefix(".") ? "" : id
+    }
+
+    static var hasGoogleIOSClientID: Bool { !googleIOSClientID.isEmpty }
+
     // MARK: - Crash reporting
 
     /// Sentry DSN (public; safe to ship). Empty = crash reporting off.

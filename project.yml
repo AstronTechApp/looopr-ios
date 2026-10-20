@@ -17,6 +17,9 @@ packages:
   Sentry:
     url: https://github.com/getsentry/sentry-cocoa
     from: "9.0.0"
+  GoogleSignIn:
+    url: https://github.com/google/GoogleSignIn-iOS
+    from: "9.0.0"
 
 settings:
   base:
@@ -83,6 +86,13 @@ targets:
           - CFBundleURLName: nl.astrontech.looopr
             CFBundleURLSchemes:
               - looopr
+          # Native Google Sign-In returns to the app on its reversed client ID.
+          - CFBundleURLName: google-sign-in
+            CFBundleURLSchemes:
+              - $(GOOGLE_IOS_REVERSED_CLIENT_ID)
+        # Native Google Sign-In client IDs (Secrets.xcconfig). Empty iOS prefix =
+        # fall back to Supabase web OAuth (which shows the supabase.co address).
+        GOOGLE_IOS_CLIENT_ID: $(GOOGLE_IOS_CLIENT_ID)
         GOOGLE_PLACES_API_KEY: $(GOOGLE_PLACES_API_KEY)
         MAPBOX_ACCESS_TOKEN: $(MAPBOX_ACCESS_TOKEN)
         SUPABASE_URL: $(SUPABASE_URL)
@@ -125,7 +135,7 @@ targets:
         CODE_SIGN_ENTITLEMENTS: Looopr/Looopr.entitlements
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         MARKETING_VERSION: "1.1"
-        CURRENT_PROJECT_VERSION: "11"
+        CURRENT_PROJECT_VERSION: "13"
         TARGETED_DEVICE_FAMILY: "1"
         GOOGLE_PLACES_API_KEY: $(GOOGLE_PLACES_API_KEY)
         MAPBOX_ACCESS_TOKEN: $(MAPBOX_ACCESS_TOKEN)
@@ -137,6 +147,8 @@ targets:
         product: RevenueCatUI
       - package: Sentry
         product: Sentry
+      - package: GoogleSignIn
+        product: GoogleSignIn
       - target: LoooprLiveActivity
         embed: true
 
@@ -157,7 +169,7 @@ targets:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: nl.astrontech.looopr.LoooprLiveActivity
         MARKETING_VERSION: "1.1"
-        CURRENT_PROJECT_VERSION: "11"
+        CURRENT_PROJECT_VERSION: "13"
         TARGETED_DEVICE_FAMILY: "1"
         SKIP_INSTALL: YES
 
