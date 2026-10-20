@@ -1248,7 +1248,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "# Xcode runs scripts with a minimal PATH; add Homebrew (Apple Silicon + Intel).\nexport PATH=\"$PATH:/opt/homebrew/bin:/usr/local/bin\"\nif which xcodegen > /dev/null 2>&1; then\n  cd \"$SRCROOT\" && xcodegen generate --quiet\nelse\n  echo \"warning: xcodegen not found — run: brew install xcodegen\"\nfi\n";
+			shellScript = "# Xcode runs scripts with a minimal PATH; add Homebrew (Apple Silicon + Intel).\nexport PATH=\"$PATH:/opt/homebrew/bin:/usr/local/bin\"\n# Only regenerate when project.yml changed since the last generation.\n# Rewriting project.pbxproj in the middle of an Xcode (GUI) build makes\n# Xcode reload the project and cancel the build (\"Build Canceled\").\nif [ ! \"$SRCROOT/project.yml\" -nt \"$SRCROOT/Looopr.xcodeproj/project.pbxproj\" ]; then\n  exit 0\nfi\nif which xcodegen > /dev/null 2>&1; then\n  cd \"$SRCROOT\" && xcodegen generate --quiet\nelse\n  echo \"warning: xcodegen not found — run: brew install xcodegen\"\nfi\n";
 		};
 /* End PBXShellScriptBuildPhase section */
 

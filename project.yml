@@ -109,6 +109,12 @@ targets:
         script: |
           # Xcode runs scripts with a minimal PATH; add Homebrew (Apple Silicon + Intel).
           export PATH="$PATH:/opt/homebrew/bin:/usr/local/bin"
+          # Only regenerate when project.yml changed since the last generation.
+          # Rewriting project.pbxproj in the middle of an Xcode (GUI) build makes
+          # Xcode reload the project and cancel the build ("Build Canceled").
+          if [ ! "$SRCROOT/project.yml" -nt "$SRCROOT/Looopr.xcodeproj/project.pbxproj" ]; then
+            exit 0
+          fi
           if which xcodegen > /dev/null 2>&1; then
             cd "$SRCROOT" && xcodegen generate --quiet
           else
