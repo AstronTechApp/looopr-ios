@@ -1225,7 +1225,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "if [ \"$CONFIGURATION\" != \"Release\" ]; then exit 0; fi\nif [ ! -f \"$SRCROOT/.sentryclirc\" ]; then echo \"note: no .sentryclirc — skipping Sentry dSYM upload\"; exit 0; fi\nif ! which sentry-cli > /dev/null 2>&1; then echo \"warning: sentry-cli not found — run: brew install getsentry/tools/sentry-cli\"; exit 0; fi\ncd \"$SRCROOT\" && sentry-cli debug-files upload --include-sources \"$DWARF_DSYM_FOLDER_PATH\"\n";
+			shellScript = "if [ \"$CONFIGURATION\" != \"Release\" ]; then exit 0; fi\n# Xcode runs scripts with a minimal PATH; add Homebrew (Apple Silicon + Intel).\nexport PATH=\"$PATH:/opt/homebrew/bin:/usr/local/bin\"\nif [ ! -f \"$SRCROOT/.sentryclirc\" ]; then echo \"note: no .sentryclirc — skipping Sentry dSYM upload\"; exit 0; fi\nif ! which sentry-cli > /dev/null 2>&1; then echo \"warning: sentry-cli not found — run: brew install getsentry/tools/sentry-cli\"; exit 0; fi\n# A failed upload (e.g. offline) must not fail the archive.\ncd \"$SRCROOT\" && sentry-cli debug-files upload --include-sources \"$DWARF_DSYM_FOLDER_PATH\" || echo \"warning: Sentry dSYM upload failed — upload manually with sentry-cli debug-files upload\"\n";
 		};
 		E211404B4A1C8DE183C78DE5 /* XcodeGen — sync project.yml */ = {
 			isa = PBXShellScriptBuildPhase;
@@ -1244,7 +1244,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "if which xcodegen > /dev/null 2>&1; then\n  cd \"$SRCROOT\" && xcodegen generate --quiet\nelse\n  echo \"warning: xcodegen not found — run: brew install xcodegen\"\nfi\n";
+			shellScript = "# Xcode runs scripts with a minimal PATH; add Homebrew (Apple Silicon + Intel).\nexport PATH=\"$PATH:/opt/homebrew/bin:/usr/local/bin\"\nif which xcodegen > /dev/null 2>&1; then\n  cd \"$SRCROOT\" && xcodegen generate --quiet\nelse\n  echo \"warning: xcodegen not found — run: brew install xcodegen\"\nfi\n";
 		};
 /* End PBXShellScriptBuildPhase section */
 

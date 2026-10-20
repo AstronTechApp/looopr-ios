@@ -97,6 +97,8 @@ targets:
     preBuildScripts:
       - name: "XcodeGen — sync project.yml"
         script: |
+          # Xcode runs scripts with a minimal PATH; add Homebrew (Apple Silicon + Intel).
+          export PATH="$PATH:/opt/homebrew/bin:/usr/local/bin"
           if which xcodegen > /dev/null 2>&1; then
             cd "$SRCROOT" && xcodegen generate --quiet
           else
@@ -110,9 +112,12 @@ targets:
       - name: "Sentry — upload dSYMs"
         script: |
           if [ "$CONFIGURATION" != "Release" ]; then exit 0; fi
+          # Xcode runs scripts with a minimal PATH; add Homebrew (Apple Silicon + Intel).
+          export PATH="$PATH:/opt/homebrew/bin:/usr/local/bin"
           if [ ! -f "$SRCROOT/.sentryclirc" ]; then echo "note: no .sentryclirc — skipping Sentry dSYM upload"; exit 0; fi
           if ! which sentry-cli > /dev/null 2>&1; then echo "warning: sentry-cli not found — run: brew install getsentry/tools/sentry-cli"; exit 0; fi
-          cd "$SRCROOT" && sentry-cli debug-files upload --include-sources "$DWARF_DSYM_FOLDER_PATH"
+          # A failed upload (e.g. offline) must not fail the archive.
+          cd "$SRCROOT" && sentry-cli debug-files upload --include-sources "$DWARF_DSYM_FOLDER_PATH" || echo "warning: Sentry dSYM upload failed — upload manually with sentry-cli debug-files upload"
         basedOnDependencyAnalysis: false
     settings:
       base:
