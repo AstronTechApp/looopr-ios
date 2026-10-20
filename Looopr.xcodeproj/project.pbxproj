@@ -26,6 +26,7 @@
 		0DE5E8CBDE068AD695DB0613 /* TicketAggregating.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9C4E614A5618A732F56797FA /* TicketAggregating.swift */; };
 		1154BD3F88F138AFF0BBB3D2 /* NetworkError.swift in Sources */ = {isa = PBXBuildFile; fileRef = CFAC382EA741C87FF9461D1F /* NetworkError.swift */; };
 		1688B269894BDDDA1337F3E8 /* POIDiscoveryService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 58B413F729B346B79085038E /* POIDiscoveryService.swift */; };
+		1826CE5A0A85AB428B2D263B /* WalkDistanceAccumulationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4C02A3D1B23BADFEB6EDB94 /* WalkDistanceAccumulationTests.swift */; };
 		18A9CD54135F57026D9CF41D /* RouteRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = 288FFE58D03BC53D5174447B /* RouteRepository.swift */; };
 		1C94274BDA914DA3020AD38A /* RevenueCat in Frameworks */ = {isa = PBXBuildFile; productRef = D27E1DC8B431F061DFA23CA5 /* RevenueCat */; };
 		1D6C64D9E681D83328442269 /* RouteArrowHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD5448B80A5DB3AA126DDBBA /* RouteArrowHelper.swift */; };
@@ -366,6 +367,7 @@
 		D28A1226B95C2BA753B5E877 /* FeedbackSectionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FeedbackSectionView.swift; sourceTree = "<group>"; };
 		D35A2047E04538BF9E4FCB25 /* ElevationProviding.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ElevationProviding.swift; sourceTree = "<group>"; };
 		D4064157810D818E1DD09091 /* AppStrings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppStrings.swift; sourceTree = "<group>"; };
+		D4C02A3D1B23BADFEB6EDB94 /* WalkDistanceAccumulationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WalkDistanceAccumulationTests.swift; sourceTree = "<group>"; };
 		D5454DE548C0542104D7EF5F /* Double+FormattedDistance.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Double+FormattedDistance.swift"; sourceTree = "<group>"; };
 		D7DD4CCB810F07946A66ECEB /* NearbyExperiencesWidget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NearbyExperiencesWidget.swift; sourceTree = "<group>"; };
 		D925E45752A25EF4FEC8DAA5 /* MapboxRouteGenerationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapboxRouteGenerationService.swift; sourceTree = "<group>"; };
@@ -915,6 +917,7 @@
 				39E27ACF7BC4E1D83C938076 /* RouteSelectionViewModelTests.swift */,
 				3EE12D4DF5F555EE343A6713 /* SmoothedLocationTrackerTests.swift */,
 				298EDCA930BFE4AC429C2489 /* SubscriptionGateTests.swift */,
+				D4C02A3D1B23BADFEB6EDB94 /* WalkDistanceAccumulationTests.swift */,
 			);
 			path = LoooprTests;
 			sourceTree = "<group>";
@@ -1259,6 +1262,7 @@
 				8C822A6A53EB6AC361D3389A /* RouteSelectionViewModelTests.swift in Sources */,
 				3D5BC5A9459E2915102AD093 /* SmoothedLocationTrackerTests.swift in Sources */,
 				9DBE314BAED4C93DCAB2E769 /* SubscriptionGateTests.swift in Sources */,
+				1826CE5A0A85AB428B2D263B /* WalkDistanceAccumulationTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

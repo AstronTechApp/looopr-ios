@@ -76,6 +76,21 @@ final class WalkNavigationViewModel {
     private(set) var hasCompassHeading = false
     private(set) var currentAccuracy: Double = 0
     private(set) var distanceWalked: Double = 0
+    /// Last fix that was *counted* toward `distanceWalked`. Distance is
+    /// measured from here, not from the previous fix: during a walk fixes
+    /// arrive at ~1 Hz (see `setHighFrequencyUpdates`), i.e. ~1.2 m apart,
+    /// and measuring fix-to-fix with a noise floor threw away most of them —
+    /// a 65-minute, 4,800-step walk was recorded as 1.25 km. Moving the
+    /// anchor only when the user has clearly moved keeps the noise floor
+    /// and counts every metre.
+    private var distanceAnchor: CLLocationCoordinate2D?
+    /// Movement below this (metres from the anchor) is GPS jitter, not
+    /// walking. Matches the 5 m `distanceFilter` the app used before
+    /// high-frequency updates, so totals stay comparable with older walks.
+    static let distanceStepMinMeters: Double = 5
+    /// A jump of this much or more from the anchor is a GPS glitch or a
+    /// tunnel exit: re-anchor without counting it.
+    static let distanceStepMaxMeters: Double = 100
     private(set) var elapsedSeconds: TimeInterval = 0
     private(set) var isLoading = true
     private(set) var error: NavigationError?
@@ -474,7 +489,6 @@ final class WalkNavigationViewModel {
     private func handleLocationUpdate(_ clLocation: CLLocation) {
         let coordinate = clLocation.coordinate
         let accuracy = clLocation.horizontalAccuracy
-        let previous = userLocation
 
         userLocation = coordinate
         currentAccuracy = accuracy
@@ -487,14 +501,7 @@ final class WalkNavigationViewModel {
             heading = clLocation.course
         }
 
-        // Track distance walked
-        if let prev = previous {
-            let delta = prev.distance(to: coordinate)
-            if delta > 2 && delta < 100 {
-                distanceWalked += delta
-                session.distanceWalkedMeters = distanceWalked
-            }
-        }
+        accumulateDistance(to: coordinate)
 
         // Refresh progress index, remaining distance, and route bearing now
         // that the user has moved.
@@ -509,6 +516,23 @@ final class WalkNavigationViewModel {
         updateStreetNameIfNeeded(clLocation)
 
         updateStepInstructionProgress(from: coordinate)
+    }
+
+    /// Adds the distance from the last counted position to `coordinate`
+    /// once the user has clearly moved. Internal so tests can feed fixes.
+    func accumulateDistance(to coordinate: CLLocationCoordinate2D) {
+        guard let anchor = distanceAnchor else {
+            distanceAnchor = coordinate
+            return
+        }
+        let delta = anchor.distance(to: coordinate)
+        if delta >= Self.distanceStepMaxMeters {
+            distanceAnchor = coordinate
+        } else if delta > Self.distanceStepMinMeters {
+            distanceWalked += delta
+            session.distanceWalkedMeters = distanceWalked
+            distanceAnchor = coordinate
+        }
     }
 
     /// Fixes less accurate than this (metres) are left out of the recorded
