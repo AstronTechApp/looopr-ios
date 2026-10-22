@@ -64,8 +64,6 @@ struct WalkNavigationView: View {
                   pitch: navigationPitch)
     }
 
-    private var nextStepBearing: Double { viewModel.currentRouteBearing }
-
     /// Re-aims the camera at the smoothed user position and heading.
     /// Called every display frame (~30 fps) by `SmoothedLocationTracker`
     /// while following. The tracker already eases position and heading, so
@@ -349,20 +347,23 @@ struct WalkNavigationView: View {
                 }
             }
 
-            // Next step target badge
+            // Next step target badge: the maneuver to make at that point
+            // (same icon as the instruction banner), drawn upright and never
+            // rotated. It used to show an arrow for the segment the user is
+            // currently on, rotated by camera heading, so it swung around as
+            // the user moved and didn't say which way to turn.
             if let target = viewModel.currentStepCoordinate {
                 Annotation("", coordinate: target) {
                     ZStack {
                         Circle().fill(.white).frame(width: 44, height: 44)
                             .shadow(color: .black.opacity(0.25), radius: 4, y: 2)
                         Circle().fill(routeColor).frame(width: 36, height: 36)
-                        Image(systemName: "arrow.up")
-                            .font(.system(size: 22, weight: .heavy))
+                        Image(systemName: directionIcon(for: viewModel.currentInstruction, step: viewModel.currentStep))
+                            .font(.system(size: 18, weight: .heavy))
                             .foregroundStyle(.white)
-                            .rotationEffect(.degrees(nextStepBearing - currentMapHeading))
-                            .animation(.easeOut(duration: 0.25), value: nextStepBearing)
-                            .animation(.easeOut(duration: 0.25), value: currentMapHeading)
+                            .contentTransition(.symbolEffect(.replace))
                     }
+                    .accessibilityLabel(viewModel.currentInstruction)
                 }
             }
 

@@ -66,7 +66,7 @@ struct AppRootView: View {
             }
             hasCheckedSession = true
             // Fired after session restore so the event carries the signed-in
-            // user; dropped silently when nobody is signed in yet.
+            // user when there is one; guests are counted by install ID.
             ServiceContainer.shared.resolve(AnalyticsTracking.self).track(.appOpened)
         }
         .animation(.easeInOut(duration: LoooprTheme.Animation.normal), value: onboarding.hasCompleted)
