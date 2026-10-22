@@ -280,12 +280,15 @@ struct LoooprPrimaryButtonStyle: ButtonStyle {
             .frame(maxWidth: .infinity)
             .frame(height: 60)
             .background(
-                LinearGradient(
-                    colors: [Color(hex: "#1B5E20"), Color(hex: "#66BB6A")],
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
-                )
-                .opacity(configuration.isPressed ? 0.85 : 1.0)
+                Capsule()
+                    .fill(
+                        LinearGradient(
+                            colors: [Color(hex: "#1B5E20"), Color(hex: "#66BB6A")],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
+                    .opacity(configuration.isPressed ? 0.85 : 1.0)
             )
             .clipShape(Capsule())
             .shadow(color: LoooprTheme.Colors.primary.opacity(0.2), radius: 12, y: 6)
