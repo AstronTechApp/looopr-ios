@@ -348,10 +348,12 @@ struct WalkNavigationView: View {
             }
 
             // Next step target badge: the maneuver to make at that point
-            // (same icon as the instruction banner), drawn upright and never
-            // rotated. It used to show an arrow for the segment the user is
-            // currently on, rotated by camera heading, so it swung around as
-            // the user moved and didn't say which way to turn.
+            // (same icon as the instruction banner), drawn in map space. The
+            // icon's stem is aligned with the street the user arrives on, so
+            // it rotates with the map and stays glued to the junction however
+            // the phone is held. Walking toward the turn in heading-up mode
+            // that is simply upright; a screen-upright icon instead read
+            // "right" relative to wherever the user was facing.
             if let target = viewModel.currentStepCoordinate {
                 Annotation("", coordinate: target) {
                     ZStack {
@@ -362,6 +364,8 @@ struct WalkNavigationView: View {
                             .font(.system(size: 18, weight: .heavy))
                             .foregroundStyle(.white)
                             .contentTransition(.symbolEffect(.replace))
+                            .rotationEffect(.degrees(nextStepIconRotation))
+                            .animation(.easeOut(duration: 0.25), value: currentMapHeading)
                     }
                     .accessibilityLabel(viewModel.currentInstruction)
                 }
@@ -702,6 +706,16 @@ struct WalkNavigationView: View {
     }
 
     // MARK: - Instruction helpers
+
+    /// Map-space rotation for the next-turn badge icon. Zero (upright) when
+    /// the route's approach bearing is unknown or the step is the finish
+    /// flag, which has no direction.
+    private var nextStepIconRotation: Double {
+        guard let bearing = viewModel.currentStepApproachBearing,
+              directionIcon(for: viewModel.currentInstruction, step: viewModel.currentStep) != "flag.fill"
+        else { return 0 }
+        return bearing - currentMapHeading
+    }
 
     private func directionIcon(for text: String, step: NavigationStep?) -> String {
         let turn = step.map(NavigationSemantics.turn(for:)) ?? NavigationSemantics.turn(fromText: text)

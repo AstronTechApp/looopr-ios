@@ -151,6 +151,29 @@ final class WalkNavigationViewModel {
         activeStep(at: 0)?.coordinate
     }
 
+    /// Compass bearing of the route as it arrives at the current step, taken
+    /// from roughly the last 15 m of polyline before the step. Used to draw
+    /// the next-turn badge in map space: its stem aligns with the street the
+    /// user arrives on, so the icon stays glued to the map however the phone
+    /// is held, instead of reading "right" relative to the screen.
+    var currentStepApproachBearing: Double? {
+        guard let target = currentStepCoordinate, activePolyline.count >= 2 else { return nil }
+        let endIdx = closestPolylineIndex(to: target, in: activePolyline)
+        guard endIdx > 0 else {
+            return activePolyline[0].bearing(to: activePolyline[1])
+        }
+        var startIdx = endIdx
+        var walked: Double = 0
+        while startIdx > 0 && walked < 15 {
+            walked += activePolyline[startIdx - 1].distance(to: activePolyline[startIdx])
+            startIdx -= 1
+        }
+        let from = activePolyline[startIdx]
+        let to = activePolyline[endIdx]
+        guard from.distance(to: to) > 1 else { return nil }
+        return from.bearing(to: to)
+    }
+
     var remainingSteps: Int {
         max(0, steps.count - currentStepIndex)
     }
