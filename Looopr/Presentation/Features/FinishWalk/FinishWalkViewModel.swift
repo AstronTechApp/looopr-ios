@@ -129,6 +129,39 @@ final class FinishWalkViewModel {
         }
     }
 
+    // MARK: - App Store rating
+
+    /// Decides whether to ask iOS for the App Store rating sheet on this
+    /// finish screen. The ask happens once, after the user's second finished
+    /// walk of at least five minutes, so people who have actually used the
+    /// app are asked at a happy moment (the celebration screen) and never
+    /// after a tap-to-test walk. iOS applies its own limits on top (about
+    /// three sheets a year), so calling it more often would not help. It is
+    /// re-armed for each new app version, which is also when Apple would
+    /// let the sheet appear again.
+    func shouldRequestAppReview() -> Bool {
+        guard session.durationSeconds >= 300 else { return false }
+        let defaults = UserDefaults.standard
+        let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "0"
+        if defaults.string(forKey: Self.reviewPromptedVersionKey) == version { return false }
+        return completedWalkCount() >= 2
+    }
+
+    /// Records that the rating sheet was requested so it is not asked again
+    /// in this app version.
+    func markAppReviewRequested() {
+        let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "0"
+        UserDefaults.standard.set(version, forKey: Self.reviewPromptedVersionKey)
+        analytics.track(.appReviewRequested(walkCount: completedWalkCount()))
+        logger.info("App Store review requested")
+    }
+
+    private static let reviewPromptedVersionKey = "appReview.promptedVersion"
+
+    private func completedWalkCount() -> Int {
+        (try? walkHistoryRepository.loadAll().count) ?? 0
+    }
+
     /// Writes the walk to Apple Health as a workout. Safe to call more than
     /// once: an already-saved walk is a no-op, and the service's sync
     /// identifier turns any retry into an update rather than a duplicate.

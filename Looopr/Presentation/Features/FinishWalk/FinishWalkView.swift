@@ -1,8 +1,10 @@
 import SwiftUI
 import MapKit
+import StoreKit
 
 struct FinishWalkView: View {
     @Environment(AppRouter.self) private var router
+    @Environment(\.requestReview) private var requestReview
     @State private var viewModel: FinishWalkViewModel
     @State private var showShareSheet = false
     @State private var showShareError = false
@@ -101,6 +103,15 @@ struct FinishWalkView: View {
         // screen must never lose the walk.
         .onAppear { viewModel.persistWalkIfNeeded() }
         .onDisappear { viewModel.finalizeFeedbackIfNeeded() }
+        .task {
+            // Ask for an App Store rating once the celebration has landed,
+            // not on top of the confetti. Cancelled if the user leaves first.
+            guard viewModel.shouldRequestAppReview() else { return }
+            try? await Task.sleep(for: .seconds(2.5))
+            guard !Task.isCancelled else { return }
+            viewModel.markAppReviewRequested()
+            requestReview()
+        }
         .task {
             withAnimation(.spring(response: 0.6, dampingFraction: 0.7)) {
                 appear = true

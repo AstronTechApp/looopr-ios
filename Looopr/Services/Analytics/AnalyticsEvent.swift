@@ -64,6 +64,10 @@ enum AnalyticsEvent: Sendable {
     case routeShared(routeId: UUID, platform: String)
     case gpxExported(routeId: UUID, pointCount: Int)
     case feedbackSubmitted(rating: Int, tags: [String])
+    /// The system App Store rating sheet was requested after a finished
+    /// walk. iOS decides whether it actually shows, so this counts asks,
+    /// not ratings. `walkCount` is the user's total finished walks.
+    case appReviewRequested(walkCount: Int)
     case paywallShown
     /// A purchase completed on the paywall and `looopr_pro` became active.
     /// `price` is the store price of the product in `currency` (what the
@@ -101,6 +105,7 @@ enum AnalyticsEvent: Sendable {
         case .routeShared:         return "route_shared"
         case .gpxExported:         return "gpx_exported"
         case .feedbackSubmitted:   return "feedback_submitted"
+        case .appReviewRequested:  return "app_review_requested"
         case .paywallShown:        return "paywall_shown"
         case .subscriptionStarted: return "subscription_started"
         case .subscriptionRestored: return "subscription_restored"
@@ -156,6 +161,8 @@ enum AnalyticsEvent: Sendable {
             return ["route_id": .string(routeId.uuidString), "point_count": .int(pointCount)]
         case .feedbackSubmitted(let rating, let tags):
             return ["rating": .int(rating), "tags": .stringArray(tags)]
+        case .appReviewRequested(let walkCount):
+            return ["walk_count": .int(walkCount)]
         case .paywallShown:
             return [:]
         case .subscriptionStarted(let productId, let plan, let price, let currency, let periodType, let isSandbox):
