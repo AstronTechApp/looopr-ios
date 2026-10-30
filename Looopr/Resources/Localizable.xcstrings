@@ -2651,9 +2651,7 @@
         }
       }
     },
-    "G" : {
-
-    },
+    "G" : {},
     "gpx.exportFailed" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -25885,6 +25883,186 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Não, manter rota"
+          }
+        }
+      }
+    },
+    "routeSelection.stillSearching" : {
+      "comment" : "Shown under the loading cards when a route search takes longer than a few seconds.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Still finding the best loops around you…"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "We zoeken nog naar de mooiste rondjes in de buurt…"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wir suchen noch nach den besten Runden in deiner Nähe…"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nous cherchons encore les meilleures boucles autour de vous…"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Seguimos buscando las mejores rutas circulares cerca de ti…"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Seguimos buscando las mejores rutas circulares cerca de ti…"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stiamo ancora cercando i giri migliori vicino a te…"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ainda estamos a procurar os melhores percursos perto de si…"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ainda estamos procurando os melhores percursos perto de você…"
+          }
+        }
+      }
+    },
+    "routeSelection.searchTimedOutTitle" : {
+      "comment" : "Title when a route search gave up after the time limit.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "This is taking too long"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dit duurt te lang"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Das dauert zu lange"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cela prend trop de temps"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Esto está tardando demasiado"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Esto está tardando demasiado"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ci sta mettendo troppo"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Isto está a demorar demasiado"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Isso está demorando demais"
+          }
+        }
+      }
+    },
+    "routeSelection.searchTimedOutBody" : {
+      "comment" : "Body when a route search gave up after the time limit.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Finding routes is slower than usual right now. Check your connection and try again."
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Routes zoeken gaat nu trager dan normaal. Controleer je verbinding en probeer het opnieuw."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die Routensuche ist gerade langsamer als sonst. Prüfe deine Verbindung und versuche es erneut."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La recherche d'itinéraires est plus lente que d'habitude. Vérifiez votre connexion et réessayez."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La búsqueda de rutas va más lenta de lo normal. Comprueba tu conexión y vuelve a intentarlo."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La búsqueda de rutas está más lenta de lo normal. Revisa tu conexión e inténtalo de nuevo."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La ricerca dei percorsi è più lenta del solito. Controlla la connessione e riprova."
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A procura de percursos está mais lenta do que o habitual. Verifique a ligação e tente novamente."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A busca de percursos está mais lenta que o normal. Verifique sua conexão e tente de novo."
           }
         }
       }

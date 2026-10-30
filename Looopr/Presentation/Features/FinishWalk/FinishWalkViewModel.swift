@@ -229,10 +229,12 @@ final class FinishWalkViewModel {
         do {
             if isRouteSaved {
                 try routeRepository.removeSavedRoute(route.id)
+                analytics.track(.routeUnsaved(routeId: route.id, source: "finish_walk"))
                 isRouteSaved = false
                 logger.info("Route unsaved: \(route.id)")
             } else {
                 try routeRepository.saveRoute(route)
+                analytics.track(.routeSaved(routeId: route.id, source: "finish_walk"))
                 isRouteSaved = true
                 logger.info("Route saved: \(route.id)")
             }

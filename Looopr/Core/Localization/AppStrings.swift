@@ -120,6 +120,9 @@ enum L10n {
         static var locationUnavailableTitle: String { String(localized: "routeSelection.locationUnavailableTitle", defaultValue: "Couldn't find your location", bundle: LocalizationManager.shared.localizedBundle) }
         static var locationUnavailableBody: String { String(localized: "routeSelection.locationUnavailableBody", defaultValue: "Routes start from where you are. Make sure Location is allowed for Looopr, then try again.", bundle: LocalizationManager.shared.localizedBundle) }
         static var tryAgain: String { String(localized: "routeSelection.tryAgain", defaultValue: "Try again", bundle: LocalizationManager.shared.localizedBundle) }
+        static var stillSearching: String { String(localized: "routeSelection.stillSearching", defaultValue: "Still finding the best loops around you…", bundle: LocalizationManager.shared.localizedBundle) }
+        static var searchTimedOutTitle: String { String(localized: "routeSelection.searchTimedOutTitle", defaultValue: "This is taking too long", bundle: LocalizationManager.shared.localizedBundle) }
+        static var searchTimedOutBody: String { String(localized: "routeSelection.searchTimedOutBody", defaultValue: "Finding routes is slower than usual right now. Check your connection and try again.", bundle: LocalizationManager.shared.localizedBundle) }
         static func tryLongerWalk(_ duration: String) -> String {
             String(format: NSLocalizedString("routeSelection.tryLongerWalk", tableName: nil, bundle: LocalizationManager.shared.localizedBundle, value: "Try a %@ walk", comment: ""), duration)
         }

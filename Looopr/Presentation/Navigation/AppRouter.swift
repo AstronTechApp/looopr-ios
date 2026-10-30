@@ -3,7 +3,17 @@ import SwiftUI
 @MainActor
 @Observable
 final class AppRouter {
-    var path = NavigationPath()
+    var path = NavigationPath() {
+        didSet {
+            // A swipe-back or system back button shortens `path` through the
+            // NavigationStack binding without going through pop(). Trim the
+            // shadow stack to match, so `routeStack.last` is always the
+            // screen actually on top.
+            if routeStack.count > path.count {
+                routeStack.removeLast(routeStack.count - path.count)
+            }
+        }
+    }
     var presentedSheet: AppRoute?
 
     /// The paywall is presented as a full-screen cover, never pushed.
@@ -52,6 +62,11 @@ final class AppRouter {
     }
 
     func navigate(to route: AppRoute) {
+        // A second tap on the same button before the push animation ends
+        // used to stack an identical screen (and, for route search, start a
+        // second paid search). Pushing the screen that is already on top is
+        // never intended.
+        if routeStack.last == route { return }
         // Remember explore parameters for tab restoration
         if case .routeSelection(let minutes, let location) = route {
             lastExploreMinutes = minutes
@@ -73,18 +88,15 @@ final class AppRouter {
             lastExploreMinutes = minutes
             lastExploreLocation = location
         }
+        // Removing from `path` trims `routeStack` too (see didSet).
         if !path.isEmpty { path.removeLast() }
-        if !routeStack.isEmpty { routeStack.removeLast() }
         path.append(route)
         routeStack.append(route)
     }
 
     func pop() {
         guard !path.isEmpty else { return }
-        path.removeLast()
-        if !routeStack.isEmpty {
-            routeStack.removeLast()
-        }
+        path.removeLast() // trims routeStack too (see didSet)
     }
 
     func popToRoot() {

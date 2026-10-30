@@ -8,6 +8,12 @@ final class RouteSelectionViewModel {
 
     private(set) var routes: [Route] = []
     private(set) var isLoading = true
+    /// True once a search has gone `slowHintSeconds` without a first route,
+    /// so the screen can say it's still working instead of looking stuck.
+    private(set) var isTakingLong = false
+    /// Guards against overlapping searches on one screen (e.g. a quick
+    /// double tap on "Try again").
+    private var searchInFlight = false
     /// Why the last search ended without routes. Nil while loading, after a
     /// successful search, and when the search was merely cancelled (the
     /// view went away) — a cancelled search is not a failed one.
@@ -21,6 +27,8 @@ final class RouteSelectionViewModel {
         case locationUnavailable
         /// Network / directions / anything else.
         case generation(String)
+        /// No route arrived within `firstRouteTimeoutSeconds`.
+        case timeout
 
         /// Short machine-readable reason for analytics.
         var analyticsReason: String {
@@ -28,6 +36,7 @@ final class RouteSelectionViewModel {
             case .noRoutes: return "no_routes"
             case .locationUnavailable: return "location_unavailable"
             case .generation: return "generation_error"
+            case .timeout: return "timeout"
             }
         }
     }
@@ -52,6 +61,13 @@ final class RouteSelectionViewModel {
 
     /// How long `loadRoutes` waits for a first GPS fix before giving up.
     var locationWaitSeconds: TimeInterval = 15
+    /// After this long without a first route, show "still searching".
+    var slowHintSeconds: TimeInterval = 8
+    /// Give up if no route at all has arrived after this long.
+    var firstRouteTimeoutSeconds: TimeInterval = 45
+    /// Stop a search that is still streaming after this long and keep the
+    /// routes found so far.
+    var searchCapSeconds: TimeInterval = 90
 
     // TODO: v2 — Route filter tabs (Quiet, Parks, Scenic, Cafés)
     // Restore when route generation tags routes by character type
@@ -168,7 +184,11 @@ final class RouteSelectionViewModel {
     // MARK: - Loading
 
     func loadRoutes() async {
+        guard !searchInFlight else { return }
+        searchInFlight = true
+        defer { searchInFlight = false }
         isLoading = true
+        isTakingLong = false
         failure = nil
         analytics.track(.routeSearchStarted(
             minutes: walkDurationMinutes,
@@ -209,40 +229,101 @@ final class RouteSelectionViewModel {
     }
 
     private func generateRoutes(from coordinate: CLLocationCoordinate2D) async {
-        do {
-            let walkingSpeedKmH = SettingsManager.shared.walkingPace.kilometresPerHour
-            let stream = activeRouteService.generateLoopRoutesStream(
-                start: coordinate,
-                minutes: walkDurationMinutes,
-                maxRoutes: maxRoutes,
-                walkingSpeedKmH: walkingSpeedKmH
-            )
+        let startedAt = Date()
+        let progress = SearchProgress()
+
+        let walkingSpeedKmH = SettingsManager.shared.walkingPace.kilometresPerHour
+        let stream = activeRouteService.generateLoopRoutesStream(
+            start: coordinate,
+            minutes: walkDurationMinutes,
+            maxRoutes: maxRoutes,
+            walkingSpeedKmH: walkingSpeedKmH
+        )
+
+        // Consume the stream in its own task so the watchdog can stop it.
+        let work = Task { @MainActor [weak self] () throws -> [Route] in
             var collected: [Route] = []
             for try await route in stream {
+                if Task.isCancelled { break }
                 collected.append(route)
                 collected.sort { $0.durationMinutes < $1.durationMinutes }
-                routes = collected
+                if progress.firstRouteAt == nil {
+                    progress.firstRouteAt = Date()
+                    self?.isTakingLong = false
+                }
+                self?.routes = collected
             }
-            // A cancelled generator ends its stream quietly, so a torn-down
-            // view used to log "0 routes" here and skew the failure stats.
-            // Leave the state as it is; nobody is looking at it any more.
+            return collected
+        }
+
+        // Watchdog: hint after a few seconds, give up if nothing ever
+        // arrives, and cap a search that keeps streaming.
+        let watchdog = Task { @MainActor [weak self] in
+            guard let self else { return }
+            try await Task.sleep(for: .seconds(self.slowHintSeconds))
+            if progress.firstRouteAt == nil { self.isTakingLong = true }
+            try await Task.sleep(for: .seconds(max(0, self.firstRouteTimeoutSeconds - self.slowHintSeconds)))
+            if progress.firstRouteAt == nil {
+                progress.timedOut = true
+                work.cancel()
+                return
+            }
+            try await Task.sleep(for: .seconds(max(0, self.searchCapSeconds - self.firstRouteTimeoutSeconds)))
+            progress.cappedOut = true
+            work.cancel()
+        }
+        defer {
+            watchdog.cancel()
+            isTakingLong = false
+        }
+
+        do {
+            let collected = try await withTaskCancellationHandler {
+                try await work.value
+            } onCancel: {
+                work.cancel()
+            }
+            // The view went away: nobody is looking, and a torn-down search
+            // must not be logged as a result.
             if Task.isCancelled { return }
-            logger.info("Loaded \(collected.count) routes for \(walkDurationMinutes) min walk")
-            analytics.track(.routeGenerated(count: collected.count, minutes: walkDurationMinutes))
+
+            if progress.timedOut && collected.isEmpty {
+                logger.error("Route search timed out after \(Int(firstRouteTimeoutSeconds))s without a route")
+                routes = []
+                fail(.timeout)
+                return
+            }
+
+            logger.info("Loaded \(collected.count) routes for \(walkDurationMinutes) min walk\(progress.cappedOut ? " (stopped at time cap)" : "")")
+            analytics.track(.routeGenerated(
+                count: collected.count,
+                minutes: walkDurationMinutes,
+                firstRouteSeconds: progress.firstRouteAt.map { $0.timeIntervalSince(startedAt) },
+                totalSeconds: Date().timeIntervalSince(startedAt),
+                stoppedEarly: progress.cappedOut
+            ))
             if collected.isEmpty {
                 fail(.noRoutes)
                 return
             }
         } catch is CancellationError {
+            if Task.isCancelled { return }
+            if progress.timedOut {
+                routes = []
+                fail(.timeout)
+            }
             return
         } catch {
             if Task.isCancelled { return }
             logger.error("Route generation failed: \(error)")
+            if let routeError = error as? RouteError, routeError == .cancelled {
+                // Superseded request, or stopped by the watchdog.
+                if progress.timedOut { routes = []; fail(.timeout) }
+                return
+            }
             routes = []
             if let routeError = error as? RouteError, routeError == .noRoutesFound {
                 fail(.noRoutes)
-            } else if let routeError = error as? RouteError, routeError == .cancelled {
-                // Generator-level cancellation (e.g. superseded request).
             } else {
                 fail(.generation(String(describing: error)))
             }
@@ -256,4 +337,13 @@ final class RouteSelectionViewModel {
         isLoading = false
         analytics.track(.routeSearchFailed(minutes: walkDurationMinutes, reason: reason.analyticsReason))
     }
+}
+
+/// Timing state of one route search, shared between the stream consumer
+/// and the watchdog task.
+@MainActor
+private final class SearchProgress {
+    var firstRouteAt: Date?
+    var timedOut = false
+    var cappedOut = false
 }

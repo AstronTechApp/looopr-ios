@@ -112,10 +112,26 @@ struct RouteSelectionView: View {
         // route streams in, show it — the rest fill in underneath.
         if viewModel.isLoading && viewModel.routes.isEmpty {
             VStack(spacing: LoooprTheme.Spacing.xl) {
+                if viewModel.isTakingLong {
+                    // Visible waiting state: a slow search must not look
+                    // like a frozen screen (users re-tapped and stacked
+                    // duplicate searches).
+                    HStack(spacing: LoooprTheme.Spacing.sm) {
+                        ProgressView()
+                        Text(L10n.RouteSelection.stillSearching)
+                            .font(.system(size: 14, weight: .medium, design: .rounded))
+                            .foregroundStyle(LoooprTheme.Colors.textSecondary)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .transition(.opacity)
+                    .accessibilityElement(children: .combine)
+                }
                 ForEach(0..<3, id: \.self) { _ in
                     SkeletonRouteCard()
                 }
             }
+            .animation(LoooprTheme.Animation.gentle, value: viewModel.isTakingLong)
             .padding(.horizontal, LoooprTheme.Spacing.screenHorizontal)
         } else if viewModel.routes.isEmpty {
             emptyState
@@ -164,14 +180,13 @@ struct RouteSelectionView: View {
     /// never the upgrade card — a failed search is not a sales moment.
     private var emptyState: some View {
         VStack(spacing: LoooprTheme.Spacing.md) {
-            Image(systemName: viewModel.failure == .locationUnavailable ? "location.slash" : "map")
+            Image(systemName: viewModel.failure == .locationUnavailable ? "location.slash"
+                  : viewModel.failure == .timeout ? "hourglass" : "map")
                 .font(.system(size: 48, weight: .light))
                 .foregroundStyle(LoooprTheme.Colors.textTertiary)
 
             VStack(spacing: LoooprTheme.Spacing.xs) {
-                Text(viewModel.failure == .locationUnavailable
-                     ? L10n.RouteSelection.locationUnavailableTitle
-                     : L10n.RouteSelection.noRoutesFound)
+                Text(emptyStateTitle)
                     .font(.system(size: 16, weight: .semibold, design: .rounded))
                     .foregroundStyle(LoooprTheme.Colors.textPrimary)
 
@@ -184,7 +199,10 @@ struct RouteSelectionView: View {
             .padding(.horizontal, LoooprTheme.Spacing.lg)
 
             VStack(spacing: LoooprTheme.Spacing.sm) {
+                // A longer walk only helps when no loop fits; it would make
+                // a slow (timed-out) search slower still.
                 if viewModel.failure != .locationUnavailable,
+                   viewModel.failure != .timeout,
                    let longer = viewModel.suggestedLongerMinutes {
                     Button {
                         router.replaceTop(with: .routeSelection(
@@ -222,8 +240,18 @@ struct RouteSelectionView: View {
         .padding(.top, LoooprTheme.Spacing.huge)
     }
 
+    private var emptyStateTitle: String {
+        switch viewModel.failure {
+        case .locationUnavailable: return L10n.RouteSelection.locationUnavailableTitle
+        case .timeout: return L10n.RouteSelection.searchTimedOutTitle
+        default: return L10n.RouteSelection.noRoutesFound
+        }
+    }
+
     private var emptyStateBody: String {
         switch viewModel.failure {
+        case .timeout:
+            return L10n.RouteSelection.searchTimedOutBody
         case .locationUnavailable:
             return L10n.RouteSelection.locationUnavailableBody
         case .generation:

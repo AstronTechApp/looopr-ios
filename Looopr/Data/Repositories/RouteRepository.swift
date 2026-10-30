@@ -7,6 +7,7 @@ final class RouteRepository: @unchecked Sendable {
     private let recentRoutesKey = "looopr.recentRoutes"
     private let completedRoutesKey = "looopr.completedRoutes"
     private let savedRoutesKey = "looopr.savedRoutes"
+    private let logger = AppLogger(category: "RouteRepository")
 
     init(store: PersistenceStoring, supabase: SupabaseClientProvider? = nil) {
         self.store = store
@@ -44,13 +45,51 @@ final class RouteRepository: @unchecked Sendable {
         saved.removeAll { $0.id == route.id }
         saved.insert(route, at: 0)
         try store.save(saved, forKey: savedRoutesKey)
+        // Mirror to the cloud for signed-in users (fire-and-forget). Until
+        // 1.3 nothing ever uploaded saved routes, so saved_routes stayed
+        // empty no matter how many routes people bookmarked.
+        Task.detached(priority: .utility) { [weak self] in
+            await self?.pushSavedRouteToCloudIfSignedIn(route)
+        }
     }
 
     func removeSavedRoute(_ routeID: UUID) throws {
         var saved = (try? loadSavedRoutes()) ?? []
         saved.removeAll { $0.id == routeID }
         try store.save(saved, forKey: savedRoutesKey)
+        Task.detached(priority: .utility) { [weak self] in
+            await self?.deleteSavedRouteFromCloudIfSignedIn(routeID)
+        }
     }
+
+    /// Signed-in user, or nil for guests / no Supabase.
+    private func signedInUserID() async -> UUID? {
+        guard let supabase else { return nil }
+        return try? await supabase.client.auth.session.user.id
+    }
+
+    func pushSavedRouteToCloudIfSignedIn(_ route: Route) async {
+        guard let userID = await signedInUserID() else { return }
+        do { try await pushSavedRouteToCloud(route, userID: userID) }
+        catch { logger.error("Saved route push failed: \(error)") }
+    }
+
+    func deleteSavedRouteFromCloudIfSignedIn(_ routeID: UUID) async {
+        guard await signedInUserID() != nil else { return }
+        do { try await deleteSavedRouteFromCloud(routeID) }
+        catch { logger.error("Saved route delete failed: \(error)") }
+    }
+
+    /// Uploads every locally saved route for a signed-in user. Catches up
+    /// routes bookmarked before 1.3 (or as a guest before signing in).
+    /// Throttled to once per launch.
+    func syncSavedRoutesToCloudIfSignedIn() async {
+        guard !didSyncSavedRoutesThisLaunch, let userID = await signedInUserID() else { return }
+        didSyncSavedRoutesThisLaunch = true
+        do { try await syncSavedRoutesToCloud(userID: userID) }
+        catch { logger.error("Saved routes sync failed: \(error)") }
+    }
+    private var didSyncSavedRoutesThisLaunch = false
 
     func loadSavedRoutes() throws -> [Route] {
         try store.load([Route].self, forKey: savedRoutesKey) ?? []

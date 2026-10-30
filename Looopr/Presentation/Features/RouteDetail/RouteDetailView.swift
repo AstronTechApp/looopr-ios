@@ -56,6 +56,7 @@ struct RouteDetailView: View {
             VStack {
                 Spacer()
                 Button {
+                    viewModel.markWalkStarted()
                     router.navigate(to: .walkNavigation(viewModel.routeWithAddedStops))
                 } label: {
                     Label(L10n.RouteDetail.startThisLooopr, systemImage: "figure.walk")
@@ -81,6 +82,20 @@ struct RouteDetailView: View {
         .ignoresSafeArea(edges: .top)
         .navigationBarBackButtonHidden()
         .toolbar(.hidden, for: .navigationBar)
+        .onDisappear {
+            // onDisappear also fires for a tab switch; only count it when
+            // this screen is really gone from the navigation stack. Wait a
+            // moment so a swipe-back has updated the router first.
+            let routeID = viewModel.route.id
+            Task { @MainActor in
+                try? await Task.sleep(for: .milliseconds(400))
+                let stillOnStack = router.routeStack.contains { entry in
+                    if case .routeDetail(let r) = entry { return r.id == routeID }
+                    return false
+                }
+                if !stillOnStack { viewModel.trackDismissalIfNeeded() }
+            }
+        }
         .onAppear {
             viewModel.refreshTier()
             viewModel.loadPOIsIfNeeded()

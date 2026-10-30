@@ -27,6 +27,12 @@ final class RouteDetailViewModel {
     private(set) var isSharing = false
     private(set) var shareURL: URL?
     private(set) var plannedDepartureDate: Date?
+    /// Set when the user starts a walk from this screen, so leaving it for
+    /// the walk isn't counted as dismissing the route.
+    private(set) var didStartWalk = false
+    private let openedAt = Date()
+    private var didTrackDismissal = false
+    private let analytics: AnalyticsTracking
 
     private let poiAggregator: POIAggregatorService
     private let foodService: GooglePlacesNewFoodService?
@@ -56,6 +62,7 @@ final class RouteDetailViewModel {
         self.routeRepository = routeRepository ?? ServiceContainer.shared.resolve(RouteRepository.self)
         self.routeShareService = routeShareService ?? ServiceContainer.shared.resolveOptional(RouteShareService.self)
         self.configuration = configuration
+        self.analytics = ServiceContainer.shared.resolve(AnalyticsTracking.self)
         self.isSaved = self.routeRepository.isRouteSaved(route.id)
         self.isFoodLocked = !self.subscriptionService.isPaidSubscriber
     }
@@ -133,9 +140,11 @@ final class RouteDetailViewModel {
         do {
             if isSaved {
                 try routeRepository.removeSavedRoute(route.id)
+                analytics.track(.routeUnsaved(routeId: route.id, source: "route_detail"))
                 logger.info("Removed saved route: \(route.name)")
             } else {
                 try routeRepository.saveRoute(route)
+                analytics.track(.routeSaved(routeId: route.id, source: "route_detail"))
                 // Verify save persisted by reading back
                 let verified = routeRepository.isRouteSaved(route.id)
                 logger.info("Saved route: \(route.name) (verified: \(verified))")
@@ -144,6 +153,24 @@ final class RouteDetailViewModel {
         } catch {
             logger.error("Failed to toggle save: \(error.localizedDescription)")
         }
+    }
+
+    /// Call right before pushing the walk screen.
+    func markWalkStarted() {
+        didStartWalk = true
+    }
+
+    /// Logs `route_dismissed` once, when the user left this route without
+    /// walking it (back button or swipe). Answers "picked but didn't walk":
+    /// how long they looked, and whether they saved it for later.
+    func trackDismissalIfNeeded() {
+        guard !didStartWalk, !didTrackDismissal else { return }
+        didTrackDismissal = true
+        analytics.track(.routeDismissed(
+            routeId: route.id,
+            secondsOnScreen: Date().timeIntervalSince(openedAt),
+            saved: isSaved
+        ))
     }
 
     func shareRoute() async -> URL? {

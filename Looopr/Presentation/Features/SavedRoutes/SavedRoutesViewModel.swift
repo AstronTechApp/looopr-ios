@@ -55,6 +55,8 @@ final class SavedRoutesViewModel {
     func remove(_ route: Route) {
         do {
             try routeRepository.removeSavedRoute(route.id)
+            ServiceContainer.shared.resolve(AnalyticsTracking.self)
+                .track(.routeUnsaved(routeId: route.id, source: "saved_routes"))
             savedRoutes.removeAll { $0.id == route.id }
             logger.info("Removed saved route: \(route.id)")
         } catch {

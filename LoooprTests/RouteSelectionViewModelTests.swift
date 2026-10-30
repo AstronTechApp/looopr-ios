@@ -237,4 +237,110 @@ final class RouteSelectionViewModelTests: XCTestCase {
             XCTAssertEqual(reason, "location_unavailable")
         }
     }
+
+    // MARK: - Slow searches (1.3)
+
+    func testNoRouteBeforeTheTimeLimitIsATimeout() async {
+        // The generator never yields: the user gets the retry screen and a
+        // route_search_failed with reason "timeout", instead of skeletons
+        // forever and no event at all.
+        let service = ScriptedRouteService()
+        service.hang = true
+        let analytics = RecordingAnalytics()
+        let vm = makeViewModel(service: service, analytics: analytics, location: amsterdam)
+        vm.slowHintSeconds = 0.1
+        vm.firstRouteTimeoutSeconds = 0.4
+        vm.searchCapSeconds = 5
+
+        let search = Task { await vm.loadRoutes() }
+        try? await Task.sleep(for: .milliseconds(250))
+        XCTAssertTrue(vm.isTakingLong, "the waiting hint shows before the time limit")
+        await search.value
+
+        XCTAssertEqual(vm.failure, .timeout)
+        XCTAssertFalse(vm.isLoading)
+        XCTAssertFalse(vm.isTakingLong)
+        XCTAssertEqual(analytics.names, ["route_search_started", "route_search_failed"])
+        if case .routeSearchFailed(_, let reason) = analytics.events.last! {
+            XCTAssertEqual(reason, "timeout")
+        } else {
+            XCTFail("expected route_search_failed")
+        }
+    }
+
+    func testSlowSearchIsCappedAndKeepsWhatItFound() async {
+        let service = ScriptedRouteService()
+        service.routes = [makeRoute(29)]
+        service.hang = true
+        let analytics = RecordingAnalytics()
+        let vm = makeViewModel(service: service, analytics: analytics, location: amsterdam)
+        vm.slowHintSeconds = 0.1
+        vm.firstRouteTimeoutSeconds = 0.2
+        vm.searchCapSeconds = 0.5
+
+        await vm.loadRoutes()
+
+        XCTAssertEqual(vm.routes.count, 1)
+        XCTAssertNil(vm.failure)
+        XCTAssertFalse(vm.isLoading)
+        XCTAssertFalse(vm.isTakingLong, "a route arrived, so no waiting hint")
+        XCTAssertEqual(analytics.names, ["route_search_started", "route_generated"])
+        if case .routeGenerated(let count, _, let first, let total, let stoppedEarly) = analytics.events.last! {
+            XCTAssertEqual(count, 1)
+            XCTAssertNotNil(first)
+            XCTAssertGreaterThanOrEqual(total, 0.4)
+            XCTAssertTrue(stoppedEarly)
+        } else {
+            XCTFail("expected route_generated")
+        }
+    }
+
+    func testOverlappingSearchesRunOnce() async {
+        // A quick double tap must not start a second (paid) search.
+        let service = ScriptedRouteService()
+        service.routes = [makeRoute(30)]
+        let analytics = RecordingAnalytics()
+        let vm = makeViewModel(service: service, analytics: analytics, location: amsterdam)
+
+        async let first: Void = vm.loadRoutes()
+        async let second: Void = vm.loadRoutes()
+        _ = await (first, second)
+
+        XCTAssertEqual(service.streamCalls, 1)
+        XCTAssertEqual(analytics.names.filter { $0 == "route_search_started" }.count, 1)
+    }
+}
+
+/// Navigation guards added in 1.3: a double tap must not stack the same
+/// screen twice, and a swipe-back must keep the router's own list in step.
+@MainActor
+final class AppRouterNavigationTests: XCTestCase {
+
+    func testSameScreenTwiceIsPushedOnce() {
+        let router = AppRouter()
+        router.navigate(to: .routeSelection(walkMinutes: 30))
+        router.navigate(to: .routeSelection(walkMinutes: 30))
+        XCTAssertEqual(router.routeStack.count, 1)
+        XCTAssertEqual(router.path.count, 1)
+    }
+
+    func testSwipeBackTrimsTheStackSoTheSameSearchCanOpenAgain() {
+        let router = AppRouter()
+        router.navigate(to: .routeSelection(walkMinutes: 30))
+        // What NavigationStack does on a swipe-back: it shortens `path`.
+        router.path.removeLast()
+        XCTAssertTrue(router.routeStack.isEmpty)
+
+        router.navigate(to: .routeSelection(walkMinutes: 30))
+        XCTAssertEqual(router.routeStack.count, 1, "the same search can be opened again")
+    }
+
+    func testPopRemovesExactlyOneScreen() {
+        let router = AppRouter()
+        router.navigate(to: .routeSelection(walkMinutes: 30))
+        router.navigate(to: .settings)
+        router.pop()
+        XCTAssertEqual(router.routeStack.count, 1)
+        XCTAssertEqual(router.path.count, 1)
+    }
 }

@@ -38,12 +38,20 @@ enum AnalyticsValue: Codable, Sendable {
 enum AnalyticsEvent: Sendable {
     case appOpened
     case routeSearchStarted(minutes: Int, usingCustomLocation: Bool)
-    case routeGenerated(count: Int, minutes: Int)
+    /// A search finished. `firstRouteSeconds` is the wait until the first
+    /// route appeared (nil if none), `totalSeconds` the whole search, and
+    /// `stoppedEarly` is true when the time cap ended a slow search.
+    case routeGenerated(count: Int, minutes: Int, firstRouteSeconds: Double?, totalSeconds: Double, stoppedEarly: Bool)
     /// A search ended without routes to show: `reason` is one of
     /// `no_routes`, `location_unavailable`, `generation_error`. Cancelled
     /// searches (the user left the screen) are not reported at all.
     case routeSearchFailed(minutes: Int, reason: String)
     case routeSelected(routeId: UUID, durationMinutes: Int, distanceKm: Double)
+    /// The route detail screen was left without starting a walk.
+    case routeDismissed(routeId: UUID, secondsOnScreen: Double, saved: Bool)
+    /// A route was bookmarked / un-bookmarked. `source`: route_detail, finish_walk, saved_routes.
+    case routeSaved(routeId: UUID, source: String)
+    case routeUnsaved(routeId: UUID, source: String)
     case walkStarted(routeId: UUID, plannedMinutes: Int, plannedDistanceKm: Double)
     case walkCompleted(
         routeId: UUID,
@@ -95,6 +103,9 @@ enum AnalyticsEvent: Sendable {
         case .appOpened:           return "app_opened"
         case .routeSearchStarted:  return "route_search_started"
         case .routeGenerated:      return "route_generated"
+        case .routeDismissed:      return "route_dismissed"
+        case .routeSaved:          return "route_saved"
+        case .routeUnsaved:        return "route_unsaved"
         case .routeSearchFailed:   return "route_search_failed"
         case .routeSelected:       return "route_selected"
         case .walkStarted:         return "walk_started"
@@ -121,8 +132,23 @@ enum AnalyticsEvent: Sendable {
             return [:]
         case .routeSearchStarted(let minutes, let custom):
             return ["minutes": .int(minutes), "custom_location": .bool(custom)]
-        case .routeGenerated(let count, let minutes):
-            return ["count": .int(count), "minutes": .int(minutes)]
+        case .routeGenerated(let count, let minutes, let firstRouteSeconds, let totalSeconds, let stoppedEarly):
+            var props: [String: AnalyticsValue] = [
+                "count": .int(count),
+                "minutes": .int(minutes),
+                "total_seconds": .double((totalSeconds * 10).rounded() / 10),
+                "stopped_early": .bool(stoppedEarly)
+            ]
+            if let firstRouteSeconds { props["first_route_seconds"] = .double((firstRouteSeconds * 10).rounded() / 10) }
+            return props
+        case .routeDismissed(let routeId, let secondsOnScreen, let saved):
+            return [
+                "route_id": .string(routeId.uuidString),
+                "seconds_on_screen": .double((secondsOnScreen * 10).rounded() / 10),
+                "saved": .bool(saved)
+            ]
+        case .routeSaved(let routeId, let source), .routeUnsaved(let routeId, let source):
+            return ["route_id": .string(routeId.uuidString), "source": .string(source)]
         case .routeSearchFailed(let minutes, let reason):
             return ["minutes": .int(minutes), "reason": .string(reason)]
         case .routeSelected(let routeId, let duration, let distanceKm):

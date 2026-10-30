@@ -58,6 +58,11 @@ final class ProfileViewModel {
                 self?.reloadFromLocalStore()
             }
         }
+        // Catch up saved routes that never reached the cloud (pre-1.3).
+        let routes = ServiceContainer.shared.resolve(RouteRepository.self)
+        Task.detached(priority: .utility) {
+            await routes.syncSavedRoutesToCloudIfSignedIn()
+        }
     }
 
     private func reloadFromLocalStore() {
