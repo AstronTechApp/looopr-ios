@@ -5,6 +5,7 @@ struct RouteSelectionView: View {
     @Environment(AppRouter.self) private var router
     @State private var viewModel: RouteSelectionViewModel
     @State private var hasAppeared = false
+    @State private var showLocationSearch = false
 
     init(walkDurationMinutes: Int = 30, customLocation: CustomRouteLocation? = nil) {
         _viewModel = State(
@@ -199,6 +200,41 @@ struct RouteSelectionView: View {
             .padding(.horizontal, LoooprTheme.Spacing.lg)
 
             VStack(spacing: LoooprTheme.Spacing.sm) {
+                // No location: "Try again" can't fix that. Let them plan
+                // from a place they pick (the same search as on Home), and
+                // send them to Settings when access is switched off.
+                if viewModel.failure == .locationUnavailable {
+                    Button {
+                        showLocationSearch = true
+                    } label: {
+                        Label(L10n.RouteSelection.chooseStartingPoint, systemImage: "mappin.and.ellipse")
+                            .font(LoooprTheme.Typography.button)
+                            .foregroundStyle(.white)
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 14)
+                            .background(LoooprTheme.Colors.primary)
+                            .clipShape(Capsule())
+                    }
+                    .buttonStyle(.plain)
+
+                    if viewModel.isLocationPermissionDenied {
+                        Button {
+                            if let url = URL(string: UIApplication.openSettingsURLString) {
+                                UIApplication.shared.open(url)
+                            }
+                        } label: {
+                            Text(L10n.RouteSelection.openSettings)
+                                .font(LoooprTheme.Typography.button)
+                                .foregroundStyle(LoooprTheme.Colors.primary)
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 14)
+                                .background(LoooprTheme.Colors.primaryLight)
+                                .clipShape(Capsule())
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+
                 // A longer walk only helps when no loop fits; it would make
                 // a slow (timed-out) search slower still.
                 if viewModel.failure != .locationUnavailable,
@@ -221,6 +257,7 @@ struct RouteSelectionView: View {
                     .buttonStyle(.plain)
                 }
 
+                if !(viewModel.failure == .locationUnavailable && viewModel.isLocationPermissionDenied) {
                 Button {
                     Task { await viewModel.loadRoutes() }
                 } label: {
@@ -233,11 +270,25 @@ struct RouteSelectionView: View {
                         .clipShape(Capsule())
                 }
                 .buttonStyle(.plain)
+                }
             }
             .padding(.horizontal, LoooprTheme.Spacing.xl)
         }
         .frame(maxWidth: .infinity)
         .padding(.top, LoooprTheme.Spacing.huge)
+        .sheet(isPresented: $showLocationSearch) {
+            LocationSearchView(
+                onSelectLocation: { selected in
+                    router.replaceTop(with: .routeSelection(
+                        walkMinutes: viewModel.walkDurationMinutes,
+                        customLocation: CustomRouteLocation(from: selected)
+                    ))
+                },
+                onSelectCurrentLocation: {
+                    Task { await viewModel.loadRoutes() }
+                }
+            )
+        }
     }
 
     private var emptyStateTitle: String {
@@ -253,7 +304,9 @@ struct RouteSelectionView: View {
         case .timeout:
             return L10n.RouteSelection.searchTimedOutBody
         case .locationUnavailable:
-            return L10n.RouteSelection.locationUnavailableBody
+            return viewModel.isLocationPermissionDenied
+                ? L10n.RouteSelection.locationDeniedBody
+                : L10n.RouteSelection.locationUnavailableBody
         case .generation:
             return L10n.RouteSelection.searchFailedBody
         case .noRoutes, .none:

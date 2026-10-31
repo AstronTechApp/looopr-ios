@@ -55,6 +55,13 @@ final class RouteSelectionViewModel {
     static let longerWalkStepMinutes = 15
     static let maxWalkMinutes = 180
 
+    /// True when Location access is switched off for Looopr, so "Try again"
+    /// can't help: the failure screen offers Settings and a starting point.
+    var isLocationPermissionDenied: Bool {
+        let status = locationService.authorizationStatus
+        return status == .denied || status == .restricted
+    }
+
     /// The location the search ran from, so a retry with another duration
     /// can keep it.
     var searchLocation: CustomRouteLocation? { customLocation }
@@ -335,7 +342,12 @@ final class RouteSelectionViewModel {
     private func fail(_ reason: SearchFailure) {
         failure = reason
         isLoading = false
-        analytics.track(.routeSearchFailed(minutes: walkDurationMinutes, reason: reason.analyticsReason))
+        // Split "no GPS fix" from "Location switched off": they need
+        // different fixes, and the first failed search (23 Oct) was the
+        // latter.
+        let analyticsReason = (reason == .locationUnavailable && isLocationPermissionDenied)
+            ? "location_denied" : reason.analyticsReason
+        analytics.track(.routeSearchFailed(minutes: walkDurationMinutes, reason: analyticsReason))
     }
 }
 

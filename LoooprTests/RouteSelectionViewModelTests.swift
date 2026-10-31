@@ -63,7 +63,8 @@ final class RouteSelectionViewModelTests: XCTestCase {
         var currentCoordinate: CLLocationCoordinate2D? { nil }
         var currentLocation: CLLocation? { nil }
         var currentHeading: CLLocationDirection? { nil }
-        var authorizationStatus: CLAuthorizationStatus { .denied }
+        var status: CLAuthorizationStatus = .denied
+        var authorizationStatus: CLAuthorizationStatus { status }
         var isAuthorized: Bool { false }
         var coordinatePublisher: AnyPublisher<CLLocationCoordinate2D, Never> { Empty().eraseToAnyPublisher() }
         var locationPublisher: AnyPublisher<CLLocation, Never> { Empty().eraseToAnyPublisher() }
@@ -82,14 +83,15 @@ final class RouteSelectionViewModelTests: XCTestCase {
     private func makeViewModel(minutes: Int = 30,
                                service: ScriptedRouteService,
                                analytics: RecordingAnalytics,
-                               location: CustomRouteLocation? = nil) -> RouteSelectionViewModel {
+                               location: CustomRouteLocation? = nil,
+                               locationService: NoLocation = NoLocation()) -> RouteSelectionViewModel {
         RouteSelectionViewModel(
             walkDurationMinutes: minutes,
             customLocation: location,
             routeGeneration: service,
             mapboxGeneration: nil,
             subscriptionService: FreeTier(),
-            locationService: NoLocation(),
+            locationService: locationService,
             analytics: analytics
         )
     }
@@ -234,7 +236,27 @@ final class RouteSelectionViewModelTests: XCTestCase {
         XCTAssertEqual(service.streamCalls, 0, "no generator call without a start point")
         XCTAssertEqual(analytics.names, ["route_search_started", "route_search_failed"])
         if case .routeSearchFailed(_, let reason) = analytics.events.last! {
+            XCTAssertEqual(reason, "location_denied", "Location switched off is reported apart from no GPS fix")
+        }
+        XCTAssertTrue(vm.isLocationPermissionDenied, "the failure screen offers Settings + a starting point")
+    }
+
+    func testNoGPSFixWithPermissionIsLocationUnavailable() async {
+        let service = ScriptedRouteService()
+        let analytics = RecordingAnalytics()
+        let location = NoLocation()
+        location.status = .authorizedWhenInUse
+        let vm = makeViewModel(service: service, analytics: analytics, location: nil, locationService: location)
+        vm.locationWaitSeconds = 0.5
+
+        await vm.loadRoutes()
+
+        XCTAssertEqual(vm.failure, .locationUnavailable)
+        XCTAssertFalse(vm.isLocationPermissionDenied)
+        if case .routeSearchFailed(_, let reason) = analytics.events.last! {
             XCTAssertEqual(reason, "location_unavailable")
+        } else {
+            XCTFail("expected route_search_failed")
         }
     }
 
