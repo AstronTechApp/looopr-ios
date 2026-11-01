@@ -18,6 +18,8 @@ final class RouteSelectionViewModel {
     /// successful search, and when the search was merely cancelled (the
     /// view went away) — a cancelled search is not a failed one.
     private(set) var failure: SearchFailure?
+    /// Start point of the current search, for the analytics on its outcome.
+    private var searchCoordinate: CLLocationCoordinate2D?
 
     enum SearchFailure: Equatable {
         /// The generator finished (or threw `RouteError.noRoutesFound`)
@@ -197,9 +199,14 @@ final class RouteSelectionViewModel {
         isLoading = true
         isTakingLong = false
         failure = nil
+        // GPS may not have a fix yet; then the start event has no
+        // coordinates and only the outcome carries them.
+        searchCoordinate = customLocation?.coordinate ?? locationService.currentCoordinate
         analytics.track(.routeSearchStarted(
             minutes: walkDurationMinutes,
-            usingCustomLocation: customLocation != nil
+            usingCustomLocation: customLocation != nil,
+            latitude: searchCoordinate?.latitude,
+            longitude: searchCoordinate?.longitude
         ))
 
         // Use custom location if provided, otherwise wait for GPS
@@ -236,6 +243,7 @@ final class RouteSelectionViewModel {
     }
 
     private func generateRoutes(from coordinate: CLLocationCoordinate2D) async {
+        searchCoordinate = coordinate
         let startedAt = Date()
         let progress = SearchProgress()
 
@@ -329,17 +337,22 @@ final class RouteSelectionViewModel {
                 return
             }
             routes = []
-            if let routeError = error as? RouteError, routeError == .noRoutesFound {
+            switch error as? RouteError {
+            case .noRoutesFound:
                 fail(.noRoutes)
-            } else {
-                fail(.generation(String(describing: error)))
+            case .noUsableRoutes(let detail):
+                fail(.noRoutes, detail: detail)
+            case .generationFailed(let message):
+                fail(.generation(message), detail: message)
+            default:
+                fail(.generation(String(describing: error)), detail: String(describing: type(of: error)))
             }
             return
         }
         isLoading = false
     }
 
-    private func fail(_ reason: SearchFailure) {
+    private func fail(_ reason: SearchFailure, detail: String? = nil) {
         failure = reason
         isLoading = false
         // Split "no GPS fix" from "Location switched off": they need
@@ -347,7 +360,13 @@ final class RouteSelectionViewModel {
         // latter.
         let analyticsReason = (reason == .locationUnavailable && isLocationPermissionDenied)
             ? "location_denied" : reason.analyticsReason
-        analytics.track(.routeSearchFailed(minutes: walkDurationMinutes, reason: analyticsReason))
+        analytics.track(.routeSearchFailed(
+            minutes: walkDurationMinutes,
+            reason: analyticsReason,
+            detail: detail,
+            latitude: searchCoordinate?.latitude,
+            longitude: searchCoordinate?.longitude
+        ))
     }
 }
 

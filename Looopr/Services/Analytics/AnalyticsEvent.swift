@@ -37,7 +37,10 @@ enum AnalyticsValue: Codable, Sendable {
 
 enum AnalyticsEvent: Sendable {
     case appOpened
-    case routeSearchStarted(minutes: Int, usingCustomLocation: Bool)
+    /// `latitude`/`longitude` are the search start rounded to 2 decimals
+    /// (~1 km, Apple's "coarse location"): enough to see which areas fail,
+    /// not where someone lives. Nil while GPS has no fix yet.
+    case routeSearchStarted(minutes: Int, usingCustomLocation: Bool, latitude: Double?, longitude: Double?)
     /// A search finished. `firstRouteSeconds` is the wait until the first
     /// route appeared (nil if none), `totalSeconds` the whole search, and
     /// `stoppedEarly` is true when the time cap ended a slow search.
@@ -45,7 +48,10 @@ enum AnalyticsEvent: Sendable {
     /// A search ended without routes to show: `reason` is one of
     /// `no_routes`, `location_unavailable`, `generation_error`. Cancelled
     /// searches (the user left the screen) are not reported at all.
-    case routeSearchFailed(minutes: Int, reason: String)
+    /// `detail` says what the generator hit (e.g. `http_422_NoSegment:8`,
+    /// `not_converged:6,water:2`); nil when not applicable. Coordinates as
+    /// in `routeSearchStarted`.
+    case routeSearchFailed(minutes: Int, reason: String, detail: String?, latitude: Double?, longitude: Double?)
     case routeSelected(routeId: UUID, durationMinutes: Int, distanceKm: Double)
     /// The route detail screen was left without starting a walk.
     case routeDismissed(routeId: UUID, secondsOnScreen: Double, saved: Bool)
@@ -130,8 +136,10 @@ enum AnalyticsEvent: Sendable {
         switch self {
         case .appOpened:
             return [:]
-        case .routeSearchStarted(let minutes, let custom):
-            return ["minutes": .int(minutes), "custom_location": .bool(custom)]
+        case .routeSearchStarted(let minutes, let custom, let latitude, let longitude):
+            var props: [String: AnalyticsValue] = ["minutes": .int(minutes), "custom_location": .bool(custom)]
+            Self.addCoarseLocation(latitude, longitude, to: &props)
+            return props
         case .routeGenerated(let count, let minutes, let firstRouteSeconds, let totalSeconds, let stoppedEarly):
             var props: [String: AnalyticsValue] = [
                 "count": .int(count),
@@ -149,8 +157,11 @@ enum AnalyticsEvent: Sendable {
             ]
         case .routeSaved(let routeId, let source), .routeUnsaved(let routeId, let source):
             return ["route_id": .string(routeId.uuidString), "source": .string(source)]
-        case .routeSearchFailed(let minutes, let reason):
-            return ["minutes": .int(minutes), "reason": .string(reason)]
+        case .routeSearchFailed(let minutes, let reason, let detail, let latitude, let longitude):
+            var props: [String: AnalyticsValue] = ["minutes": .int(minutes), "reason": .string(reason)]
+            if let detail { props["detail"] = .string(String(detail.prefix(120))) }
+            Self.addCoarseLocation(latitude, longitude, to: &props)
+            return props
         case .routeSelected(let routeId, let duration, let distanceKm):
             return [
                 "route_id": .string(routeId.uuidString),
@@ -210,5 +221,14 @@ enum AnalyticsEvent: Sendable {
         case .offRouteDetected(let routeId), .rerouteTriggered(let routeId):
             return ["route_id": .string(routeId.uuidString)]
         }
+    }
+
+    /// Rounds to 2 decimals (~1.1 km) before anything leaves the device.
+    static func coarse(_ value: Double) -> Double { (value * 100).rounded() / 100 }
+
+    private static func addCoarseLocation(_ latitude: Double?, _ longitude: Double?, to props: inout [String: AnalyticsValue]) {
+        guard let latitude, let longitude, latitude.isFinite, longitude.isFinite else { return }
+        props["lat"] = .double(coarse(latitude))
+        props["lon"] = .double(coarse(longitude))
     }
 }

@@ -115,7 +115,8 @@ final class MapboxRouteGenerationService: RouteGenerating, @unchecked Sendable {
 
         // Generate all candidates in parallel
         var candidateRoutes: [(index: Int, route: Route)] = []
-        try await withThrowingTaskGroup(of: (Int, Route?).self) { group in
+        var failureTally: [String: Int] = [:]
+        try await withThrowingTaskGroup(of: (Int, Route?, String?).self) { group in
             for (index, bearing) in bearings.enumerated() {
                 group.addTask { [self] in
                     do {
@@ -126,21 +127,38 @@ final class MapboxRouteGenerationService: RouteGenerating, @unchecked Sendable {
                             targetMinutes: minutes,
                             routeIndex: index
                         )
-                        return (index, route)
+                        return (index, route, nil)
                     } catch is CancellationError {
                         throw CancellationError()
                     } catch {
-                        self.logger.warning("Mapbox candidate \(index + 1) failed: \(error.localizedDescription)")
-                        return (index, nil)
+                        let kind = Self.failureKind(of: error)
+                        self.logger.warning("Mapbox candidate \(index + 1) failed: \(kind)")
+                        return (index, nil, kind)
                     }
                 }
             }
 
-            for try await (index, route) in group {
+            for try await (index, route, failureKind) in group {
                 if let route {
                     candidateRoutes.append((index, route))
+                } else if let failureKind {
+                    failureTally[failureKind, default: 0] += 1
                 }
             }
+        }
+
+        if candidateRoutes.isEmpty {
+            let detail = failureTally
+                .sorted { $0.value != $1.value ? $0.value > $1.value : $0.key < $1.key }
+                .map { "\($0.key):\($0.value)" }
+                .joined(separator: ",")
+            logger.error("Mapbox: no usable candidate (\(detail))")
+            // Every request failed before reaching Mapbox: that's the
+            // network, not this place, so don't tell the user "no routes here".
+            if !failureTally.isEmpty, failureTally.keys.allSatisfy({ $0.hasPrefix("network") }) {
+                throw RouteError.generationFailed("network (\(detail))")
+            }
+            throw RouteError.noUsableRoutes(detail: detail.isEmpty ? "none" : detail)
         }
 
         // Sort closest-to-target duration first for best user experience
@@ -187,7 +205,7 @@ final class MapboxRouteGenerationService: RouteGenerating, @unchecked Sendable {
         radius: Double,
         targetMinutes: Int,
         routeIndex: Int
-    ) async throws -> Route? {
+    ) async throws -> Route {
         let config = configuration.generation
         var currentRadius = max(radius, 150)
         let targetSeconds = Double(targetMinutes) * 60
@@ -208,10 +226,19 @@ final class MapboxRouteGenerationService: RouteGenerating, @unchecked Sendable {
 
             let totalTime     = response.duration
             let totalDistance = response.distance
+            // A zero-length answer (every waypoint snapped onto the same
+            // point, e.g. no walkable network nearby) made the radius
+            // infinite and crashed on Int(currentRadius) in 1.2 (LOOOPR-IOS-5).
+            guard totalTime.isFinite, totalTime > 0, totalDistance > 0,
+                  response.geometry.coordinates.count >= 2 else {
+                throw CandidateFailure("empty_route")
+            }
             let ratio         = totalTime / targetSeconds
 
             if ratio < config.shortRatioThreshold || ratio > config.longRatioThreshold {
-                currentRadius = max(currentRadius * (1.0 / ratio), 100)
+                // Clamp the step so one odd answer can't fling the waypoints away.
+                let scale = min(max(1.0 / ratio, 0.33), 3.0)
+                currentRadius = min(max(currentRadius * scale, 100), 20_000)
                 logger.debug("Attempt \(attempt + 1): ratio \(String(format: "%.2f", ratio)), scaling to \(Int(currentRadius))m")
                 continue
             }
@@ -281,7 +308,7 @@ final class MapboxRouteGenerationService: RouteGenerating, @unchecked Sendable {
             // is fundamentally placing waypoints across water.
             if RouteGeometry.containsStraightLineSegment(polyline: fullPolyline) {
                 logger.warning("Candidate \(routeIndex + 1): straight-line segment detected (likely impossible water crossing), skipping bearing")
-                return nil
+                throw CandidateFailure("water")
             }
 
             let steps: [NavigationStep] = response.legs.flatMap { leg in
@@ -321,7 +348,7 @@ final class MapboxRouteGenerationService: RouteGenerating, @unchecked Sendable {
         }
 
         logger.debug("Pentagon failed to converge after 3 attempts for bearing \(Int(primaryBearing))°")
-        return nil
+        throw CandidateFailure("not_converged")
     }
 
     // MARK: - Mapbox REST API
@@ -347,26 +374,45 @@ final class MapboxRouteGenerationService: RouteGenerating, @unchecked Sendable {
         ]
 
         guard let url = components.url else {
-            throw RouteError.generationFailed("Invalid Mapbox URL")
+            throw CandidateFailure("bad_url")
         }
 
-        let (data, response) = try await URLSession.shared.data(from: url)
+        let data: Data
+        let response: URLResponse
+        do {
+            (data, response) = try await URLSession.shared.data(from: url)
+        } catch let error as URLError where error.code != .cancelled {
+            throw CandidateFailure("network_\(error.code.rawValue)")
+        }
 
         guard let http = response as? HTTPURLResponse else {
-            throw RouteError.generationFailed("Invalid Mapbox response")
+            throw CandidateFailure("bad_response")
         }
         if http.statusCode == 429 {
             throw RouteError.throttled(waitSeconds: 60)
         }
+        // Mapbox puts a short reason in "code" (NoSegment, NoRoute,
+        // InvalidInput, ...) — that's what tells a bad start point from a
+        // bad request.
+        let code = (try? JSONDecoder().decode(MapboxStatus.self, from: data))?.code
         guard http.statusCode == 200 else {
-            throw RouteError.generationFailed("Mapbox HTTP \(http.statusCode)")
+            throw CandidateFailure("http_\(http.statusCode)" + (code.map { "_\($0)" } ?? ""))
         }
-
-        let decoded = try JSONDecoder().decode(MapboxDirectionsResponse.self, from: data)
-        guard let route = decoded.routes.first else {
-            throw RouteError.directionsUnavailable
+        guard let decoded = try? JSONDecoder().decode(MapboxDirectionsResponse.self, from: data) else {
+            throw CandidateFailure("decode" + (code.map { "_\($0)" } ?? ""))
+        }
+        guard let route = decoded.routes?.first else {
+            throw CandidateFailure("no_route" + (code.map { "_\($0)" } ?? ""))
         }
         return route
+    }
+
+    /// One short, low-cardinality label per failed candidate for analytics.
+    private static func failureKind(of error: Error) -> String {
+        if let failure = error as? CandidateFailure { return failure.kind }
+        if case RouteError.throttled = error { return "http_429" }
+        if let urlError = error as? URLError { return "network_\(urlError.code.rawValue)" }
+        return "other"
     }
 
     // MARK: - Helpers
@@ -409,7 +455,17 @@ final class MapboxRouteGenerationService: RouteGenerating, @unchecked Sendable {
 // MARK: - Mapbox Response Models
 
 private struct MapboxDirectionsResponse: Codable {
-    let routes: [MapboxRoute]
+    let routes: [MapboxRoute]?
+}
+
+private struct MapboxStatus: Codable {
+    let code: String?
+}
+
+/// Why one candidate loop was dropped; `kind` goes into analytics.
+private struct CandidateFailure: Error {
+    let kind: String
+    init(_ kind: String) { self.kind = kind }
 }
 
 private struct MapboxRoute: Codable {

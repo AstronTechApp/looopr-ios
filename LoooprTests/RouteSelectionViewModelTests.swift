@@ -127,7 +127,7 @@ final class RouteSelectionViewModelTests: XCTestCase {
         XCTAssertEqual(vm.failure, .noRoutes)
         XCTAssertFalse(vm.didFindRoutes, "no upgrade card after an empty search")
         XCTAssertEqual(analytics.names, ["route_search_started", "route_generated", "route_search_failed"])
-        if case .routeSearchFailed(let minutes, let reason) = analytics.events.last! {
+        if case .routeSearchFailed(let minutes, let reason, _, _, _) = analytics.events.last! {
             XCTAssertEqual(minutes, 30)
             XCTAssertEqual(reason, "no_routes")
         } else {
@@ -146,6 +146,48 @@ final class RouteSelectionViewModelTests: XCTestCase {
         XCTAssertEqual(vm.failure, .noRoutes)
         XCTAssertFalse(vm.didFindRoutes)
         XCTAssertEqual(analytics.names, ["route_search_started", "route_search_failed"])
+    }
+
+    private static func number(_ value: AnalyticsValue?) -> Double? {
+        if case .double(let d)? = value { return d }
+        return nil
+    }
+
+    private static func text(_ value: AnalyticsValue?) -> String? {
+        if case .string(let t)? = value { return t }
+        return nil
+    }
+
+    func testNoUsableRoutesReportsDetailAndCoarseLocation() async {
+        let service = ScriptedRouteService()
+        service.error = RouteError.noUsableRoutes(detail: "http_422_NoSegment:8")
+        let analytics = RecordingAnalytics()
+        let precise = CustomRouteLocation(latitude: 52.374_031, longitude: 4.889_694, displayName: "Dam")
+        let vm = makeViewModel(service: service, analytics: analytics, location: precise)
+
+        await vm.loadRoutes()
+
+        XCTAssertEqual(vm.failure, .noRoutes)
+        XCTAssertEqual(analytics.names, ["route_search_started", "route_search_failed"])
+        let started = analytics.events.first!.properties
+        XCTAssertEqual(Self.number(started["lat"]), 52.37)
+        XCTAssertEqual(Self.number(started["lon"]), 4.89)
+        let failed = analytics.events.last!.properties
+        XCTAssertEqual(Self.text(failed["reason"]), "no_routes")
+        XCTAssertEqual(Self.text(failed["detail"]), "http_422_NoSegment:8")
+        XCTAssertEqual(Self.number(failed["lat"]), 52.37, "never more precise than ~1 km")
+        XCTAssertEqual(Self.number(failed["lon"]), 4.89)
+    }
+
+    func testLocationFailureHasNoCoordinates() async {
+        let analytics = RecordingAnalytics()
+        let vm = makeViewModel(service: ScriptedRouteService(), analytics: analytics)
+        vm.locationWaitSeconds = 0.5
+
+        await vm.loadRoutes()
+
+        XCTAssertNil(analytics.events.last!.properties["lat"])
+        XCTAssertNil(analytics.events.last!.properties["detail"])
     }
 
     func testGenerationErrorIsReportedAsGenerationFailure() async {
@@ -235,7 +277,7 @@ final class RouteSelectionViewModelTests: XCTestCase {
         XCTAssertFalse(vm.isLoading)
         XCTAssertEqual(service.streamCalls, 0, "no generator call without a start point")
         XCTAssertEqual(analytics.names, ["route_search_started", "route_search_failed"])
-        if case .routeSearchFailed(_, let reason) = analytics.events.last! {
+        if case .routeSearchFailed(_, let reason, _, _, _) = analytics.events.last! {
             XCTAssertEqual(reason, "location_denied", "Location switched off is reported apart from no GPS fix")
         }
         XCTAssertTrue(vm.isLocationPermissionDenied, "the failure screen offers Settings + a starting point")
@@ -253,7 +295,7 @@ final class RouteSelectionViewModelTests: XCTestCase {
 
         XCTAssertEqual(vm.failure, .locationUnavailable)
         XCTAssertFalse(vm.isLocationPermissionDenied)
-        if case .routeSearchFailed(_, let reason) = analytics.events.last! {
+        if case .routeSearchFailed(_, let reason, _, _, _) = analytics.events.last! {
             XCTAssertEqual(reason, "location_unavailable")
         } else {
             XCTFail("expected route_search_failed")
@@ -283,7 +325,7 @@ final class RouteSelectionViewModelTests: XCTestCase {
         XCTAssertFalse(vm.isLoading)
         XCTAssertFalse(vm.isTakingLong)
         XCTAssertEqual(analytics.names, ["route_search_started", "route_search_failed"])
-        if case .routeSearchFailed(_, let reason) = analytics.events.last! {
+        if case .routeSearchFailed(_, let reason, _, _, _) = analytics.events.last! {
             XCTAssertEqual(reason, "timeout")
         } else {
             XCTFail("expected route_search_failed")
@@ -364,5 +406,60 @@ final class AppRouterNavigationTests: XCTestCase {
         router.pop()
         XCTAssertEqual(router.routeStack.count, 1)
         XCTAssertEqual(router.path.count, 1)
+    }
+}
+
+// MARK: - Mapbox generator with canned responses
+
+/// Answers every Mapbox request with one canned response.
+private final class CannedMapbox: URLProtocol {
+    nonisolated(unsafe) static var status = 200
+    nonisolated(unsafe) static var body = Data()
+
+    override class func canInit(with request: URLRequest) -> Bool { request.url?.host == "api.mapbox.com" }
+    override class func canonicalRequest(for request: URLRequest) -> URLRequest { request }
+    override func startLoading() {
+        let response = HTTPURLResponse(url: request.url!, statusCode: Self.status, httpVersion: nil, headerFields: nil)!
+        client?.urlProtocol(self, didReceive: response, cacheStoragePolicy: .notAllowed)
+        client?.urlProtocol(self, didLoad: Self.body)
+        client?.urlProtocolDidFinishLoading(self)
+    }
+    override func stopLoading() {}
+}
+
+final class MapboxGenerationFailureTests: XCTestCase {
+    override func setUp() { URLProtocol.registerClass(CannedMapbox.self) }
+    override func tearDown() { URLProtocol.unregisterClass(CannedMapbox.self) }
+
+    private func run(lat: Double) async -> Error? {
+        let service = MapboxRouteGenerationService(accessToken: "test")
+        do {
+            _ = try await service.generateLoopRoutes(
+                start: CLLocationCoordinate2D(latitude: lat, longitude: 4.89), minutes: 30, walkingSpeedKmH: 5)
+            return nil
+        } catch { return error }
+    }
+
+    /// LOOOPR-IOS-5: a zero-length route made the radius infinite and
+    /// trapped in Int(currentRadius). Now it's just an unusable candidate.
+    func testZeroLengthAnswerDoesNotCrash() async {
+        CannedMapbox.status = 200
+        CannedMapbox.body = Data(#"{"code":"Ok","routes":[{"distance":0,"duration":0,"geometry":{"coordinates":[[4.89,52.37]]},"legs":[]}]}"#.utf8)
+        let error = await run(lat: 52.371)
+        XCTAssertEqual(error as? RouteError, .noUsableRoutes(detail: "empty_route:8"))
+    }
+
+    func testNoSegmentIsNamedInTheDetail() async {
+        CannedMapbox.status = 422
+        CannedMapbox.body = Data(#"{"code":"NoSegment","message":"Could not find a matching segment"}"#.utf8)
+        let error = await run(lat: 52.372)
+        XCTAssertEqual(error as? RouteError, .noUsableRoutes(detail: "http_422_NoSegment:8"))
+    }
+
+    func testOkWithoutRoutesIsNoRoute() async {
+        CannedMapbox.status = 200
+        CannedMapbox.body = Data(#"{"code":"NoRoute","routes":[]}"#.utf8)
+        let error = await run(lat: 52.373)
+        XCTAssertEqual(error as? RouteError, .noUsableRoutes(detail: "no_route_NoRoute:8"))
     }
 }

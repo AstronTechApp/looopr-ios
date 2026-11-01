@@ -5,6 +5,9 @@ enum RouteError: Error, Equatable {
     case throttled(waitSeconds: Double)
     case generationFailed(String)
     case noRoutesFound
+    /// No candidate produced a usable loop; `detail` tallies why
+    /// (e.g. `http_422_NoSegment:8`), for analytics.
+    case noUsableRoutes(detail: String)
     case cancelled
 
     var userFacingMessage: String {
@@ -15,7 +18,7 @@ enum RouteError: Error, Equatable {
             return "Too many requests. Retrying in \(Int(wait)) seconds..."
         case .generationFailed:
             return "Could not generate routes. Please try again."
-        case .noRoutesFound:
+        case .noRoutesFound, .noUsableRoutes:
             return "No walking routes found for this duration. Try a different time."
         case .cancelled:
             return ""

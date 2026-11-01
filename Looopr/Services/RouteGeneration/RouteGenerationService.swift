@@ -243,11 +243,15 @@ actor LiveRouteGenerationService: RouteGenerating {
             let totalTime     = leg1.expectedTravelTime + leg2.expectedTravelTime +
                                 leg3.expectedTravelTime + leg4.expectedTravelTime
             let totalDistance = leg1.distance + leg2.distance + leg3.distance + leg4.distance
+            // Zero-length answer: nothing to scale from (and 1/0 would make the
+            // radius infinite, which traps in Int(currentRadius) below).
+            guard totalTime.isFinite, totalTime > 0, totalDistance > 0 else { return nil }
             let ratio         = totalTime / targetSeconds
 
             // Proportional radius scaling when outside acceptable range
             if ratio < config.shortRatioThreshold || ratio > config.longRatioThreshold {
-                currentRadius = max(currentRadius * (1.0 / ratio), 100)
+                let scale = min(max(1.0 / ratio, 0.33), 3.0)
+                currentRadius = min(max(currentRadius * scale, 100), 20_000)
                 logger.debug("Attempt \(attempt + 1): ratio \(String(format: "%.2f", ratio)) (\(Int(totalTime))s vs \(Int(targetSeconds))s), scaling radius to \(Int(currentRadius))m")
                 continue
             }
