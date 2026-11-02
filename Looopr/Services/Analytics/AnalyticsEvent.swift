@@ -44,7 +44,9 @@ enum AnalyticsEvent: Sendable {
     /// A search finished. `firstRouteSeconds` is the wait until the first
     /// route appeared (nil if none), `totalSeconds` the whole search, and
     /// `stoppedEarly` is true when the time cap ended a slow search.
-    case routeGenerated(count: Int, minutes: Int, firstRouteSeconds: Double?, totalSeconds: Double, stoppedEarly: Bool)
+    /// `closestOnly` is true when no loop of the asked length existed and
+    /// the list shows the closest matches instead.
+    case routeGenerated(count: Int, minutes: Int, firstRouteSeconds: Double?, totalSeconds: Double, stoppedEarly: Bool, closestOnly: Bool)
     /// A search ended without routes to show: `reason` is one of
     /// `no_routes`, `location_unavailable`, `generation_error`. Cancelled
     /// searches (the user left the screen) are not reported at all.
@@ -140,12 +142,13 @@ enum AnalyticsEvent: Sendable {
             var props: [String: AnalyticsValue] = ["minutes": .int(minutes), "custom_location": .bool(custom)]
             Self.addCoarseLocation(latitude, longitude, to: &props)
             return props
-        case .routeGenerated(let count, let minutes, let firstRouteSeconds, let totalSeconds, let stoppedEarly):
+        case .routeGenerated(let count, let minutes, let firstRouteSeconds, let totalSeconds, let stoppedEarly, let closestOnly):
             var props: [String: AnalyticsValue] = [
                 "count": .int(count),
                 "minutes": .int(minutes),
                 "total_seconds": .double((totalSeconds * 10).rounded() / 10),
-                "stopped_early": .bool(stoppedEarly)
+                "stopped_early": .bool(stoppedEarly),
+                "closest_only": .bool(closestOnly)
             ]
             if let firstRouteSeconds { props["first_route_seconds"] = .double((firstRouteSeconds * 10).rounded() / 10) }
             return props

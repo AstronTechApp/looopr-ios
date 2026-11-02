@@ -126,6 +126,9 @@ enum L10n {
         static var stillSearching: String { String(localized: "routeSelection.stillSearching", defaultValue: "Still finding the best loops around you…", bundle: LocalizationManager.shared.localizedBundle) }
         static var searchTimedOutTitle: String { String(localized: "routeSelection.searchTimedOutTitle", defaultValue: "This is taking too long", bundle: LocalizationManager.shared.localizedBundle) }
         static var searchTimedOutBody: String { String(localized: "routeSelection.searchTimedOutBody", defaultValue: "Finding routes is slower than usual right now. Check your connection and try again.", bundle: LocalizationManager.shared.localizedBundle) }
+        static func closestMatches(_ duration: String) -> String {
+            String(format: NSLocalizedString("routeSelection.closestMatches", tableName: nil, bundle: LocalizationManager.shared.localizedBundle, value: "There's no %@ loop from here. These are the closest we found.", comment: ""), duration)
+        }
         static func tryLongerWalk(_ duration: String) -> String {
             String(format: NSLocalizedString("routeSelection.tryLongerWalk", tableName: nil, bundle: LocalizationManager.shared.localizedBundle, value: "Try a %@ walk", comment: ""), duration)
         }

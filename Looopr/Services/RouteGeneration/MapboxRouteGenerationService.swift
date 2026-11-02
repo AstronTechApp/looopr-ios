@@ -114,20 +114,20 @@ final class MapboxRouteGenerationService: RouteGenerating, @unchecked Sendable {
         let bearings = RouteGeometry.distributedBearings(count: config.maxCandidates)
 
         // Generate all candidates in parallel
-        var candidateRoutes: [(index: Int, route: Route)] = []
+        var candidateRoutes: [(index: Int, result: PentagonResult)] = []
         var failureTally: [String: Int] = [:]
-        try await withThrowingTaskGroup(of: (Int, Route?, String?).self) { group in
+        try await withThrowingTaskGroup(of: (Int, PentagonResult?, String?).self) { group in
             for (index, bearing) in bearings.enumerated() {
                 group.addTask { [self] in
                     do {
-                        let route = try await self.generatePentagonLoop(
+                        let result = try await self.generatePentagonLoop(
                             start: start,
                             primaryBearing: bearing,
                             radius: initialRadius,
                             targetMinutes: minutes,
                             routeIndex: index
                         )
-                        return (index, route, nil)
+                        return (index, result, nil)
                     } catch is CancellationError {
                         throw CancellationError()
                     } catch {
@@ -138,9 +138,9 @@ final class MapboxRouteGenerationService: RouteGenerating, @unchecked Sendable {
                 }
             }
 
-            for try await (index, route, failureKind) in group {
-                if let route {
-                    candidateRoutes.append((index, route))
+            for try await (index, result, failureKind) in group {
+                if let result {
+                    candidateRoutes.append((index, result))
                 } else if let failureKind {
                     failureTally[failureKind, default: 0] += 1
                 }
@@ -161,10 +161,21 @@ final class MapboxRouteGenerationService: RouteGenerating, @unchecked Sendable {
             throw RouteError.noUsableRoutes(detail: detail.isEmpty ? "none" : detail)
         }
 
-        // Sort closest-to-target duration first for best user experience
-        let sorted = candidateRoutes
-            .sorted { $0.route.durationMinutes < $1.route.durationMinutes }
-            .map(\.route)
+        // Loops of the asked length win. Only when there are none (sparse or
+        // hilly areas where no short loop exists) do the closest matches
+        // show, nearest length first, so the user gets a walk, not nothing.
+        let fitting = candidateRoutes.filter { $0.result.fitsLength }
+        let sorted: [Route]
+        if !fitting.isEmpty {
+            sorted = fitting
+                .sorted { $0.result.route.durationMinutes < $1.result.route.durationMinutes }
+                .map(\.result.route)
+        } else {
+            logger.info("Mapbox: no \(minutes)-min loop, showing \(candidateRoutes.count) closest matches")
+            sorted = candidateRoutes
+                .sorted { abs(log($0.result.ratio)) < abs(log($1.result.ratio)) }
+                .map(\.result.route)
+        }
 
         // Deduplicate: keep routes that aren't too similar to already-accepted ones
         var accepted: [Route] = []
@@ -205,11 +216,14 @@ final class MapboxRouteGenerationService: RouteGenerating, @unchecked Sendable {
         radius: Double,
         targetMinutes: Int,
         routeIndex: Int
-    ) async throws -> Route {
+    ) async throws -> PentagonResult {
         let config = configuration.generation
         var currentRadius = max(radius, 150)
         let targetSeconds = Double(targetMinutes) * 60
         var spread = 60.0
+        // Why the last attempt was rejected, reported if none succeeds.
+        var lastRejection = "not_converged"
+        var closestMatch: (route: Route, ratio: Double)?
 
         for attempt in 0..<3 {
             try Task.checkCancellation()
@@ -234,14 +248,7 @@ final class MapboxRouteGenerationService: RouteGenerating, @unchecked Sendable {
                 throw CandidateFailure("empty_route")
             }
             let ratio         = totalTime / targetSeconds
-
-            if ratio < config.shortRatioThreshold || ratio > config.longRatioThreshold {
-                // Clamp the step so one odd answer can't fling the waypoints away.
-                let scale = min(max(1.0 / ratio, 0.33), 3.0)
-                currentRadius = min(max(currentRadius * scale, 100), 20_000)
-                logger.debug("Attempt \(attempt + 1): ratio \(String(format: "%.2f", ratio)), scaling to \(Int(currentRadius))m")
-                continue
-            }
+            let lengthFits    = ratio >= config.shortRatioThreshold && ratio <= config.longRatioThreshold
 
             let fullPolyline: [CLLocationCoordinate2D] = response.geometry.coordinates.map {
                 CLLocationCoordinate2D(latitude: $0[1], longitude: $0[0])
@@ -287,68 +294,114 @@ final class MapboxRouteGenerationService: RouteGenerating, @unchecked Sendable {
                 }
             }
 
-            if maxLegOverlap > config.backtrackOverlapThreshold {
-                spread = min(spread + 12, 90)
-                logger.debug("Attempt \(attempt + 1): leg overlap \(Int(maxLegOverlap * 100))%, widening spread to \(Int(spread))°")
-                continue
-            }
-
-            // Check full-route self-overlap (catches dead-end out-and-back spurs)
+            // Shape checks run on every attempt (not only when the length
+            // fits), so a clean loop of the wrong length can still serve as
+            // the closest match.
             let selfOverlap = RouteGeometry.selfOverlapRatio(polyline: fullPolyline, bufferMeters: 25)
             let backtrackRatio = RouteGeometry.backtrackSegmentRatio(polyline: fullPolyline)
-            if selfOverlap > 0.40 || backtrackRatio > 0.20 {
-                spread = min(spread + 12, 90)
-                logger.debug("Attempt \(attempt + 1): self-overlap \(Int(selfOverlap * 100))%, backtrack \(Int(backtrackRatio * 100))%, widening spread")
+            let shapeProblem: String?
+            if maxLegOverlap > config.backtrackOverlapThreshold {
+                shapeProblem = "leg_overlap"
+            } else if selfOverlap > 0.40 {
+                shapeProblem = "self_overlap"
+            } else if backtrackRatio > 0.20 {
+                shapeProblem = "backtrack"
+            } else if RouteGeometry.containsStraightLineSegment(polyline: fullPolyline) {
+                // A crow-flies segment = the routing engine "crossed" water.
+                shapeProblem = "water"
+            } else {
+                shapeProblem = nil
+            }
+
+            if !lengthFits {
+                if shapeProblem == nil,
+                   ratio >= Self.closestMatchRatioRange.lowerBound,
+                   ratio <= Self.closestMatchRatioRange.upperBound,
+                   closestMatch.map({ abs(log(ratio)) < abs(log($0.ratio)) }) ?? true {
+                    closestMatch = (makeRoute(response, polyline: fullPolyline, start: start,
+                                              bearing: primaryBearing, routeIndex: routeIndex), ratio)
+                }
+                // Clamp the step so one odd answer can't fling the waypoints away.
+                let scale = min(max(1.0 / ratio, 0.33), 3.0)
+                currentRadius = min(max(currentRadius * scale, 100), 20_000)
+                lastRejection = ratio < config.shortRatioThreshold ? "too_short" : "too_long"
+                logger.debug("Attempt \(attempt + 1): ratio \(String(format: "%.2f", ratio)), scaling to \(Int(currentRadius))m")
                 continue
             }
 
-            // Reject routes with impossible straight-line segments (water crossings
-            // where the routing engine returned a crow-flies line instead of a real path).
-            // This is a hard skip — widening the spread won't help since the geometry
-            // is fundamentally placing waypoints across water.
-            if RouteGeometry.containsStraightLineSegment(polyline: fullPolyline) {
-                logger.warning("Candidate \(routeIndex + 1): straight-line segment detected (likely impossible water crossing), skipping bearing")
-                throw CandidateFailure("water")
+            if let shapeProblem {
+                // Widening the spread won't move waypoints off water.
+                if shapeProblem == "water" { throw CandidateFailure("water") }
+                lastRejection = shapeProblem
+                spread = min(spread + 12, 90)
+                logger.debug("Attempt \(attempt + 1): \(shapeProblem) (leg \(Int(maxLegOverlap * 100))%, self \(Int(selfOverlap * 100))%, backtrack \(Int(backtrackRatio * 100))%), widening spread to \(Int(spread))°")
+                continue
             }
 
-            let steps: [NavigationStep] = response.legs.flatMap { leg in
-                leg.steps.compactMap { step -> NavigationStep? in
-                    guard !step.maneuver.instruction.isEmpty else { return nil }
-                    let coord = CLLocationCoordinate2D(
-                        latitude:  step.maneuver.location[1],
-                        longitude: step.maneuver.location[0]
-                    )
-                    return NavigationStep(
-                        instruction: step.maneuver.instruction,
-                        distanceMeters: step.distance,
-                        coordinate: coord,
-                        maneuverType: step.maneuver.type,
-                        maneuverModifier: step.maneuver.modifier,
-                        streetName: step.name
-                    )
-                }
-            }
-
-            let hasFerry = routeContainsFerry(response)
-            let name = RouteGeometry.routeName(bearing: primaryBearing, distanceKm: totalDistance / 1000)
-            logger.info("Pentagon loop: \(Int(totalTime/60))min, \(String(format: "%.1f", totalDistance/1000))km, ratio \(String(format: "%.2f", ratio)), legOverlap \(Int(maxLegOverlap * 100))%, selfOverlap \(Int(selfOverlap * 100))%, ferry: \(hasFerry)")
-
-            return Route(
-                name: name,
-                description: "\(Int(totalTime / 60)) min loop",
-                durationMinutes: Int(totalTime / 60),
-                distanceKilometers: totalDistance / 1000,
-                difficulty: difficulty(for: totalDistance, time: totalTime),
-                coordinates: fullPolyline.map { Location($0) },
-                navigationSteps: steps,
-                startLocation: Location(start),
-                colorIndex: routeIndex,
-                containsFerry: hasFerry
+            logger.info("Pentagon loop: \(Int(totalTime/60))min, \(String(format: "%.1f", totalDistance/1000))km, ratio \(String(format: "%.2f", ratio)), legOverlap \(Int(maxLegOverlap * 100))%, selfOverlap \(Int(selfOverlap * 100))%")
+            return PentagonResult(
+                route: makeRoute(response, polyline: fullPolyline, start: start, bearing: primaryBearing, routeIndex: routeIndex),
+                ratio: ratio,
+                fitsLength: true
             )
         }
 
+        if let closestMatch {
+            logger.info("Pentagon: no loop of the asked length for bearing \(Int(primaryBearing))°, keeping closest (ratio \(String(format: "%.2f", closestMatch.ratio)))")
+            return PentagonResult(route: closestMatch.route, ratio: closestMatch.ratio, fitsLength: false)
+        }
         logger.debug("Pentagon failed to converge after 3 attempts for bearing \(Int(primaryBearing))°")
-        throw CandidateFailure("not_converged")
+        throw CandidateFailure(lastRejection)
+    }
+
+    /// A finished candidate; `fitsLength` is false for a closest match
+    /// kept because no attempt came within the length band.
+    private struct PentagonResult {
+        let route: Route
+        let ratio: Double
+        let fitsLength: Bool
+    }
+
+    /// How far off the asked length a closest match may be (0.4× to 3×):
+    /// a 55-min loop for a 30-min ask beats nothing, a 3-hour one doesn't.
+    static let closestMatchRatioRange: ClosedRange<Double> = 0.4...3.0
+
+    private func makeRoute(
+        _ response: MapboxRoute,
+        polyline: [CLLocationCoordinate2D],
+        start: CLLocationCoordinate2D,
+        bearing: Double,
+        routeIndex: Int
+    ) -> Route {
+        let steps: [NavigationStep] = response.legs.flatMap { leg in
+            leg.steps.compactMap { step -> NavigationStep? in
+                guard !step.maneuver.instruction.isEmpty else { return nil }
+                let coord = CLLocationCoordinate2D(
+                    latitude:  step.maneuver.location[1],
+                    longitude: step.maneuver.location[0]
+                )
+                return NavigationStep(
+                    instruction: step.maneuver.instruction,
+                    distanceMeters: step.distance,
+                    coordinate: coord,
+                    maneuverType: step.maneuver.type,
+                    maneuverModifier: step.maneuver.modifier,
+                    streetName: step.name
+                )
+            }
+        }
+        return Route(
+            name: RouteGeometry.routeName(bearing: bearing, distanceKm: response.distance / 1000),
+            description: "\(Int(response.duration / 60)) min loop",
+            durationMinutes: Int(response.duration / 60),
+            distanceKilometers: response.distance / 1000,
+            difficulty: difficulty(for: response.distance, time: response.duration),
+            coordinates: polyline.map { Location($0) },
+            navigationSteps: steps,
+            startLocation: Location(start),
+            colorIndex: routeIndex,
+            containsFerry: routeContainsFerry(response)
+        )
     }
 
     // MARK: - Mapbox REST API

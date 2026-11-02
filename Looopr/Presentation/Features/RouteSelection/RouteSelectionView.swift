@@ -138,6 +138,22 @@ struct RouteSelectionView: View {
             emptyState
         } else {
             LazyVStack(spacing: LoooprTheme.Spacing.xl) {
+                if viewModel.isShowingClosestMatches {
+                    // No loop of the asked length exists from here (sparse
+                    // or hilly area): say so instead of silently showing
+                    // a 55-min walk for a 30-min ask.
+                    HStack(alignment: .top, spacing: LoooprTheme.Spacing.sm) {
+                        Image(systemName: "info.circle")
+                            .foregroundStyle(LoooprTheme.Colors.textSecondary)
+                        Text(L10n.RouteSelection.closestMatches(
+                            RouteSelectionViewModel.formattedMinutes(viewModel.walkDurationMinutes)))
+                            .font(.system(size: 14, weight: .medium, design: .rounded))
+                            .foregroundStyle(LoooprTheme.Colors.textSecondary)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .accessibilityElement(children: .combine)
+                }
                 ForEach(Array(viewModel.routes.enumerated()), id: \.element.id) { index, route in
                     RouteSelectionCard(
                         route: route,

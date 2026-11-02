@@ -190,6 +190,39 @@ final class RouteSelectionViewModelTests: XCTestCase {
         XCTAssertNil(analytics.events.last!.properties["detail"])
     }
 
+    func testLoopsOfTheAskedLengthShowNoClosestNotice() async {
+        let service = ScriptedRouteService()
+        service.routes = [makeRoute(28), makeRoute(43)]
+        let analytics = RecordingAnalytics()
+        let vm = makeViewModel(service: service, analytics: analytics, location: amsterdam)
+
+        await vm.loadRoutes()
+
+        XCTAssertFalse(vm.isShowingClosestMatches)
+        if case .routeGenerated(_, _, _, _, _, let closestOnly) = analytics.events.last! {
+            XCTAssertFalse(closestOnly)
+        } else { XCTFail("expected route_generated") }
+    }
+
+    /// Sparse/hilly areas (App Review, 1 Nov): only a 55-min loop exists
+    /// for a 30-min ask. Show it, say so, and keep it a success.
+    func testOnlyFarOffLoopsAreFlaggedAsClosestMatches() async {
+        let service = ScriptedRouteService()
+        service.routes = [makeRoute(55), makeRoute(70)]
+        let analytics = RecordingAnalytics()
+        let vm = makeViewModel(service: service, analytics: analytics, location: amsterdam)
+
+        await vm.loadRoutes()
+
+        XCTAssertTrue(vm.isShowingClosestMatches)
+        XCTAssertNil(vm.failure)
+        XCTAssertTrue(vm.didFindRoutes)
+        if case .routeGenerated(let count, _, _, _, _, let closestOnly) = analytics.events.last! {
+            XCTAssertEqual(count, 2)
+            XCTAssertTrue(closestOnly)
+        } else { XCTFail("expected route_generated") }
+    }
+
     func testGenerationErrorIsReportedAsGenerationFailure() async {
         let service = ScriptedRouteService()
         service.error = RouteError.generationFailed("mapbox 500")
@@ -349,7 +382,7 @@ final class RouteSelectionViewModelTests: XCTestCase {
         XCTAssertFalse(vm.isLoading)
         XCTAssertFalse(vm.isTakingLong, "a route arrived, so no waiting hint")
         XCTAssertEqual(analytics.names, ["route_search_started", "route_generated"])
-        if case .routeGenerated(let count, _, let first, let total, let stoppedEarly) = analytics.events.last! {
+        if case .routeGenerated(let count, _, let first, let total, let stoppedEarly, _) = analytics.events.last! {
             XCTAssertEqual(count, 1)
             XCTAssertNotNil(first)
             XCTAssertGreaterThanOrEqual(total, 0.4)
@@ -454,6 +487,39 @@ final class MapboxGenerationFailureTests: XCTestCase {
         CannedMapbox.body = Data(#"{"code":"NoSegment","message":"Could not find a matching segment"}"#.utf8)
         let error = await run(lat: 52.372)
         XCTAssertEqual(error as? RouteError, .noUsableRoutes(detail: "http_422_NoSegment:8"))
+    }
+
+    /// A clean loop (a circle, 4 km) that is too long for the ask on every
+    /// attempt used to end in "no routes"; now it comes back as the
+    /// closest match.
+    private func circleRoute(durationSeconds: Double) -> Data {
+        let center = CLLocationCoordinate2D(latitude: 52.37, longitude: 4.89)
+        let points = (0...400).map { i -> [Double] in
+            let c = center.coordinate(at: 637, bearing: Double(i) * 360 / 400)
+            return [c.longitude, c.latitude]
+        }
+        let legs = (0..<5).map { _ in ["distance": 800.0, "duration": durationSeconds / 5, "steps": [] as [Any]] as [String: Any] }
+        let body: [String: Any] = ["code": "Ok", "routes": [[
+            "distance": 4000.0, "duration": durationSeconds,
+            "geometry": ["coordinates": points], "legs": legs
+        ]]]
+        return try! JSONSerialization.data(withJSONObject: body)
+    }
+
+    func testTooLongEverywhereReturnsTheClosestLoop() async throws {
+        CannedMapbox.status = 200
+        CannedMapbox.body = circleRoute(durationSeconds: 55 * 60)
+        let service = MapboxRouteGenerationService(accessToken: "test")
+        let routes = try await service.generateLoopRoutes(
+            start: CLLocationCoordinate2D(latitude: 52.374, longitude: 4.89), minutes: 30, walkingSpeedKmH: 5)
+        XCTAssertEqual(routes.map(\.durationMinutes), [55])
+    }
+
+    func testFarTooLongIsStillNoRoutes() async {
+        CannedMapbox.status = 200
+        CannedMapbox.body = circleRoute(durationSeconds: 120 * 60) // 4x a 30-min ask
+        let error = await run(lat: 52.375)
+        XCTAssertEqual(error as? RouteError, .noUsableRoutes(detail: "too_long:8"))
     }
 
     func testOkWithoutRoutesIsNoRoute() async {

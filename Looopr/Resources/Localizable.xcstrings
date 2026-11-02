@@ -26246,6 +26246,66 @@
           }
         }
       }
+    },
+    "routeSelection.closestMatches" : {
+      "comment" : "Above the route list when no loop of the asked length exists and the closest ones are shown. %@ = walk duration like '30 min'.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "There's no %@ loop from here. These are the closest we found."
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vanaf hier is er geen rondje van %@. Dit zijn de dichtstbijzijnde die we vonden."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Von hier gibt es keine Runde mit %@. Das sind die nächstpassenden, die wir gefunden haben."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Il n'y a pas de boucle de %@ depuis ici. Voici les plus proches que nous avons trouvées."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No hay ninguna ruta circular de %@ desde aquí. Estas son las más parecidas que hemos encontrado."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No hay ninguna ruta circular de %@ desde aquí. Estas son las más parecidas que encontramos."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Da qui non c'è un giro di %@. Questi sono i più vicini che abbiamo trovato."
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Não há nenhum percurso circular de %@ a partir daqui. Estes são os mais próximos que encontrámos."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Não há nenhum percurso circular de %@ a partir daqui. Estes são os mais próximos que encontramos."
+          }
+        }
+      }
     }
   },
   "version" : "1.1"

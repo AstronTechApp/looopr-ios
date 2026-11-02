@@ -48,6 +48,21 @@ final class RouteSelectionViewModel {
     /// empty search must not end in a paywall.
     var didFindRoutes: Bool { !isLoading && failure == nil && !routes.isEmpty }
 
+    /// True when none of the routes is close to the asked length: the
+    /// generator found no loop that size from here (sparse or hilly area)
+    /// and is showing the closest it could make. The screen says so.
+    var isShowingClosestMatches: Bool {
+        !routes.isEmpty && !routes.contains { Self.fitsAskedLength($0.durationMinutes, asked: walkDurationMinutes) }
+    }
+
+    /// A bit looser than the generator's 0.65–1.45 band, because route
+    /// durations are rounded down to whole minutes.
+    nonisolated static func fitsAskedLength(_ minutes: Int, asked: Int) -> Bool {
+        guard asked > 0 else { return true }
+        let ratio = Double(minutes) / Double(asked)
+        return ratio >= 0.6 && ratio <= 1.5
+    }
+
     /// A longer duration to offer when the short end comes up empty, or nil
     /// at the top of the slider.
     var suggestedLongerMinutes: Int? {
@@ -315,7 +330,8 @@ final class RouteSelectionViewModel {
                 minutes: walkDurationMinutes,
                 firstRouteSeconds: progress.firstRouteAt.map { $0.timeIntervalSince(startedAt) },
                 totalSeconds: Date().timeIntervalSince(startedAt),
-                stoppedEarly: progress.cappedOut
+                stoppedEarly: progress.cappedOut,
+                closestOnly: isShowingClosestMatches
             ))
             if collected.isEmpty {
                 fail(.noRoutes)
