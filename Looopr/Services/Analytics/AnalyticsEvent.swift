@@ -102,8 +102,21 @@ enum AnalyticsEvent: Sendable {
     /// Restore Purchases re-activated `looopr_pro` on this account. Not new
     /// revenue — tracked separately so it is never counted as a sale.
     case subscriptionRestored(productId: String, plan: String, isSandbox: Bool)
-    case offRouteDetected(routeId: UUID)
-    case rerouteTriggered(routeId: UUID)
+    /// The off-route detector confirmed the user is `distanceMeters` from
+    /// the active route (after the hold time).
+    case offRouteDetected(routeId: UUID, distanceMeters: Double)
+    /// A reroute was applied. `number` counts reroutes in this walk,
+    /// `secondsSinceLast` is nil for the first, `afterFlip` is true when a
+    /// wrong-way flip happened since the previous reroute, `reentry` is
+    /// smart (forward-facing intersection) or fallback (80 m ahead), and
+    /// `trigger` is auto (off-route) or manual ("Guide me back").
+    case rerouteTriggered(routeId: UUID, number: Int, distanceMeters: Double?, secondsSinceLast: Double?, afterFlip: Bool, reentry: String, trigger: String)
+    /// Automatic rerouting was paused after `reroutes` reroutes in a short
+    /// time: the user is going their own way and gets a banner instead.
+    case reroutePaused(routeId: UUID, reroutes: Int, secondsSinceWalkStart: Double)
+    /// The user ended the walk without finishing it (progress not saved to
+    /// history). Not emitted when the app is just closed.
+    case walkEndedEarly(routeId: UUID, durationSeconds: TimeInterval, distanceMeters: Double, rerouteCount: Int, flipCount: Int, reroutesPaused: Bool)
 
     /// Stable event name stored in the `event` column.
     var name: String {
@@ -130,6 +143,8 @@ enum AnalyticsEvent: Sendable {
         case .subscriptionRestored: return "subscription_restored"
         case .offRouteDetected:    return "off_route_detected"
         case .rerouteTriggered:    return "reroute_triggered"
+        case .reroutePaused:       return "reroute_paused"
+        case .walkEndedEarly:      return "walk_ended_early"
         }
     }
 
@@ -221,8 +236,34 @@ enum AnalyticsEvent: Sendable {
                 "plan": .string(plan),
                 "is_sandbox": .bool(isSandbox)
             ]
-        case .offRouteDetected(let routeId), .rerouteTriggered(let routeId):
-            return ["route_id": .string(routeId.uuidString)]
+        case .offRouteDetected(let routeId, let distanceMeters):
+            return ["route_id": .string(routeId.uuidString), "distance_meters": .double(distanceMeters.rounded())]
+        case .rerouteTriggered(let routeId, let number, let distanceMeters, let secondsSinceLast, let afterFlip, let reentry, let trigger):
+            var props: [String: AnalyticsValue] = [
+                "route_id": .string(routeId.uuidString),
+                "number": .int(number),
+                "after_flip": .bool(afterFlip),
+                "reentry": .string(reentry),
+                "trigger": .string(trigger)
+            ]
+            if let distanceMeters { props["distance_meters"] = .double(distanceMeters.rounded()) }
+            if let secondsSinceLast { props["seconds_since_last"] = .double(secondsSinceLast.rounded()) }
+            return props
+        case .reroutePaused(let routeId, let reroutes, let secondsSinceWalkStart):
+            return [
+                "route_id": .string(routeId.uuidString),
+                "reroutes": .int(reroutes),
+                "seconds_since_walk_start": .double(secondsSinceWalkStart.rounded())
+            ]
+        case .walkEndedEarly(let routeId, let durationSeconds, let distanceMeters, let rerouteCount, let flipCount, let reroutesPaused):
+            return [
+                "route_id": .string(routeId.uuidString),
+                "duration_seconds": .double(durationSeconds.rounded()),
+                "distance_meters": .double(distanceMeters.rounded()),
+                "reroute_count": .int(rerouteCount),
+                "flip_count": .int(flipCount),
+                "reroutes_paused": .bool(reroutesPaused)
+            ]
         }
     }
 

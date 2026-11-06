@@ -470,3 +470,172 @@ private extension CLLocationCoordinate2D {
     /// Central Amsterdam — convenient origin for tests
     static let amsterdam = CLLocationCoordinate2D(latitude: 52.3676, longitude: 4.9041)
 }
+
+// MARK: - Reroute storm (6 Nov 2026)
+
+/// A real walk on 6 Nov 2026 (build 14): 20 reroutes in 20 minutes, one
+/// every ~41 s (8 s off-route hold + 30 s cooldown), each with a buzz and
+/// a toast, and the walk was never finished. Automatic rerouting must
+/// give up after a few reroutes in quick succession and hand control to
+/// the user, and the events must say what happened.
+@MainActor
+final class RerouteStormTests: XCTestCase {
+
+    private final class RecordingAnalytics: AnalyticsTracking, @unchecked Sendable {
+        var events: [AnalyticsEvent] = []
+        func track(_ event: AnalyticsEvent) { events.append(event) }
+        var names: [String] { events.map(\.name) }
+    }
+
+    /// Answers every reroute with the original route line, so a user
+    /// standing beside it stays off-route after each reroute.
+    private final class FixedDirections: NavigationDirecting, @unchecked Sendable {
+        let line: [CLLocationCoordinate2D]
+        init(line: [CLLocationCoordinate2D]) { self.line = line }
+        func computeSteps(for route: Route) async throws -> [NavigationStep] { [] }
+        func computeDetour(from current: CLLocationCoordinate2D, to target: CLLocationCoordinate2D) async throws -> DetourResult {
+            DetourResult(steps: [], polylineCoordinates: line)
+        }
+        func computeStepsAlongPath(_ coordinates: [CLLocationCoordinate2D]) async throws -> RerouteResult {
+            RerouteResult(steps: [NavigationStep(instruction: "Continue", distanceMeters: 100, coordinate: line[0])], polyline: line)
+        }
+    }
+
+    private let origin = CLLocationCoordinate2D(latitude: 52.3677, longitude: 4.8845)
+
+    /// 1 km straight north, a point every 10 m.
+    private var line: [CLLocationCoordinate2D] {
+        (0...100).map { origin.coordinate(at: Double($0) * 10, bearing: 0) }
+    }
+
+    private func makeViewModel(analytics: RecordingAnalytics) -> WalkNavigationViewModel {
+        let route = Route(name: "Test Line", durationMinutes: 15, distanceKilometers: 1,
+                          coordinates: line.map { Location($0) },
+                          startLocation: Location(origin))
+        let vm = WalkNavigationViewModel(route: route,
+                                         directionsService: FixedDirections(line: line),
+                                         analytics: analytics,
+                                         walkHistoryRepository: nil)
+        vm.rerouteCooldownSeconds = 0
+        return vm
+    }
+
+    /// 100 m east of the line, 200 m along it: clearly off-route, not in
+    /// the last 10%.
+    private func offRouteFix() -> CLLocation {
+        let c = origin.coordinate(at: 200, bearing: 0).coordinate(at: 100, bearing: 90)
+        return CLLocation(coordinate: c, altitude: 0, horizontalAccuracy: 5, verticalAccuracy: 5, timestamp: Date())
+    }
+
+    private func waitForRerouteToFinish(_ vm: WalkNavigationViewModel) async {
+        for _ in 0..<50 where vm.isRerouting {
+            try? await Task.sleep(for: .milliseconds(20))
+        }
+    }
+
+    func testFourthOffRouteInAStormPausesInsteadOfRerouting() async {
+        let analytics = RecordingAnalytics()
+        let vm = makeViewModel(analytics: analytics)
+        vm.handleLocationUpdate(offRouteFix())
+
+        for _ in 0..<3 {
+            vm.offRouteConfirmed(distanceMeters: 100)
+            await waitForRerouteToFinish(vm)
+        }
+        XCTAssertEqual(analytics.names.filter { $0 == "reroute_triggered" }.count, 3)
+        XCTAssertFalse(vm.isReroutePaused)
+
+        vm.offRouteConfirmed(distanceMeters: 100)
+        await waitForRerouteToFinish(vm)
+
+        XCTAssertTrue(vm.isReroutePaused, "the 4th off-route in 3 minutes pauses rerouting")
+        XCTAssertEqual(analytics.names.filter { $0 == "reroute_triggered" }.count, 3, "no 4th reroute")
+        XCTAssertEqual(analytics.names.filter { $0 == "off_route_detected" }.count, 4)
+        XCTAssertEqual(analytics.names.last, "reroute_paused")
+        if case .reroutePaused(_, let reroutes, _) = analytics.events.last! {
+            XCTAssertEqual(reroutes, 3)
+        } else { XCTFail("expected reroute_paused") }
+
+        // Paused: more off-route confirmations do nothing but log.
+        vm.offRouteConfirmed(distanceMeters: 120)
+        await waitForRerouteToFinish(vm)
+        XCTAssertEqual(analytics.names.filter { $0 == "reroute_triggered" }.count, 3)
+        XCTAssertEqual(analytics.names.filter { $0 == "reroute_paused" }.count, 1, "paused once, not again")
+    }
+
+    func testGuideMeBackReroutesOnceAndResumesAutomaticRerouting() async {
+        let analytics = RecordingAnalytics()
+        let vm = makeViewModel(analytics: analytics)
+        vm.handleLocationUpdate(offRouteFix())
+        for _ in 0..<4 {
+            vm.offRouteConfirmed(distanceMeters: 100)
+            await waitForRerouteToFinish(vm)
+        }
+        XCTAssertTrue(vm.isReroutePaused)
+
+        vm.resumeGuidance()
+        await waitForRerouteToFinish(vm)
+
+        XCTAssertFalse(vm.isReroutePaused)
+        XCTAssertEqual(analytics.names.filter { $0 == "reroute_triggered" }.count, 4)
+        if case .rerouteTriggered(_, let number, _, _, _, _, let trigger) = analytics.events.last! {
+            XCTAssertEqual(number, 4)
+            XCTAssertEqual(trigger, "manual")
+        } else { XCTFail("expected reroute_triggered") }
+
+        // The storm counter restarted: the next off-route reroutes again.
+        vm.offRouteConfirmed(distanceMeters: 100)
+        await waitForRerouteToFinish(vm)
+        XCTAssertEqual(analytics.names.filter { $0 == "reroute_triggered" }.count, 5)
+        XCTAssertFalse(vm.isReroutePaused)
+    }
+
+    func testBackOnRouteClearsThePauseQuietly() async {
+        let analytics = RecordingAnalytics()
+        let vm = makeViewModel(analytics: analytics)
+        vm.handleLocationUpdate(offRouteFix())
+        for _ in 0..<4 {
+            vm.offRouteConfirmed(distanceMeters: 100)
+            await waitForRerouteToFinish(vm)
+        }
+        XCTAssertTrue(vm.isReroutePaused)
+
+        // 10 m from the line: back on route.
+        let near = origin.coordinate(at: 300, bearing: 0).coordinate(at: 10, bearing: 90)
+        vm.handleLocationUpdate(CLLocation(coordinate: near, altitude: 0, horizontalAccuracy: 5, verticalAccuracy: 5, timestamp: Date()))
+
+        XCTAssertFalse(vm.isReroutePaused)
+        XCTAssertEqual(analytics.names.last, "reroute_paused", "no extra event when the pause clears")
+    }
+
+    func testRerouteEventCarriesTheDetails() async {
+        let analytics = RecordingAnalytics()
+        let vm = makeViewModel(analytics: analytics)
+        vm.handleLocationUpdate(offRouteFix())
+
+        vm.offRouteConfirmed(distanceMeters: 87.4)
+        await waitForRerouteToFinish(vm)
+
+        guard case .rerouteTriggered(_, let number, let distance, let sinceLast, let afterFlip, let reentry, let trigger) = analytics.events.last! else {
+            return XCTFail("expected reroute_triggered")
+        }
+        XCTAssertEqual(number, 1)
+        XCTAssertEqual(distance, 87.4)
+        XCTAssertNil(sinceLast, "first reroute of the walk")
+        XCTAssertFalse(afterFlip)
+        XCTAssertEqual(trigger, "auto")
+        XCTAssertTrue(["smart", "fallback"].contains(reentry))
+        let props = analytics.events.last!.properties
+        if case .double(let d)? = props["distance_meters"] { XCTAssertEqual(d, 87) } else { XCTFail("distance_meters") }
+        XCTAssertNil(props["seconds_since_last"])
+    }
+
+    func testOffRouteWhileAlreadyReroutingIsIgnored() async {
+        let analytics = RecordingAnalytics()
+        let vm = makeViewModel(analytics: analytics)
+        // No location yet: nothing can reroute, but the detection is still logged.
+        vm.offRouteConfirmed(distanceMeters: 60)
+        await waitForRerouteToFinish(vm)
+        XCTAssertEqual(analytics.names, ["off_route_detected"])
+    }
+}

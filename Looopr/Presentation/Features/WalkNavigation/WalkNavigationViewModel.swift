@@ -128,6 +128,28 @@ final class WalkNavigationViewModel {
     private(set) var isRerouting = false
     private(set) var showRouteUpdatedToast = false
 
+    /// True while automatic rerouting is paused because the user keeps
+    /// leaving every new route (`rerouteStormCount` reroutes within
+    /// `rerouteStormWindowSeconds`): one real user got 20 reroutes in 20
+    /// minutes, a buzz and a toast every 41 s, and never finished. The
+    /// screen shows a calm banner with "Guide me back" / "End walk"
+    /// instead. Clears when they are back on the route or tap the button.
+    private(set) var isReroutePaused = false
+    /// When the automatic reroutes of this walk happened, newest last.
+    private var automaticRerouteTimes: [Date] = []
+    /// Tunables; see `isReroutePaused`. The cooldown mirrors
+    /// `config.navigation.rerouteCooldownSeconds` so tests can shorten it.
+    var rerouteStormCount = 3
+    var rerouteStormWindowSeconds: TimeInterval = 180
+    var rerouteCooldownSeconds: TimeInterval
+    /// True once rerouting was paused at least once in this walk (reported
+    /// on walk_completed / walk_ended_early).
+    private var didPauseReroutes = false
+    /// A wrong-way flip happened since the last reroute (reported on the
+    /// next reroute: a flip that is immediately followed by reroutes
+    /// means the flipped route pointed somewhere the user didn't want).
+    private var flipSinceLastReroute = false
+
     // Food check-in state
     private(set) var nearbyFoodSpot: POI?
     private(set) var showFoodCheckIn = false
@@ -212,6 +234,7 @@ final class WalkNavigationViewModel {
     private let pedometerService: PedometerProviding
     private let elevationService: ElevationProviding
     private let analytics: AnalyticsTracking
+    private let walkHistoryRepository: WalkHistoryRepository?
 
     // Per-walk analytics counters, reported on walk_completed.
     private var flipCount = 0
@@ -257,6 +280,7 @@ final class WalkNavigationViewModel {
         pedometerService: PedometerProviding = ServiceContainer.shared.resolve(PedometerProviding.self),
         elevationService: ElevationProviding = ServiceContainer.shared.resolve(ElevationProviding.self),
         analytics: AnalyticsTracking = ServiceContainer.shared.resolve(AnalyticsTracking.self),
+        walkHistoryRepository: WalkHistoryRepository? = ServiceContainer.shared.resolve(WalkHistoryRepository.self),
         configuration: AppConfiguration = .current
     ) {
         self.route = route
@@ -265,7 +289,9 @@ final class WalkNavigationViewModel {
         self.pedometerService = pedometerService
         self.elevationService = elevationService
         self.analytics = analytics
+        self.walkHistoryRepository = walkHistoryRepository
         self.config = configuration
+        self.rerouteCooldownSeconds = configuration.navigation.rerouteCooldownSeconds
         self.stepTracker = StepTracker(configuration: configuration)
         self.wrongWayDetector = WrongWayDetector(configuration: configuration)
         // Capture the route forecast on the session so planned-vs-actual is
@@ -388,6 +414,29 @@ final class WalkNavigationViewModel {
         isFinished = true
     }
 
+    /// "End walk": the user leaves without finishing. Nothing goes into
+    /// their history, but a signed-in user's walk (with its GPS track) is
+    /// uploaded as an unfinished session so a walk that went wrong can be
+    /// replayed — before this, abandoned walks left no trace at all.
+    func endEarly() async {
+        await stop()
+        analytics.track(.walkEndedEarly(
+            routeId: route.id,
+            durationSeconds: session.durationSeconds,
+            distanceMeters: session.distanceWalkedMeters,
+            rerouteCount: rerouteCount,
+            flipCount: flipCount,
+            reroutesPaused: didPauseReroutes
+        ))
+        // `stop()` stamps finishedAt; an ended walk is not a finished one.
+        session.finishedAt = nil
+        guard let walkHistoryRepository else { return }
+        let snapshot = session
+        Task.detached(priority: .utility) {
+            await walkHistoryRepository.pushEndedWalkIfSignedIn(snapshot)
+        }
+    }
+
     // MARK: - Food Check-in
 
     func checkInFoodSpot() {
@@ -409,16 +458,75 @@ final class WalkNavigationViewModel {
 
     // MARK: - Re-routing
 
+    /// The off-route detector confirmed the user is `distanceMeters` off
+    /// the active route. Reroutes automatically, unless that has just
+    /// happened `rerouteStormCount` times in a row — then rerouting pauses
+    /// and the banner takes over.
+    func offRouteConfirmed(distanceMeters: Double) {
+        guard !isRerouting, !isFlippingRoute, !showWrongWayPrompt else { return }
+        analytics.track(.offRouteDetected(routeId: route.id, distanceMeters: distanceMeters))
+        guard !isReroutePaused else { return }
+
+        let windowStart = Date().addingTimeInterval(-rerouteStormWindowSeconds)
+        automaticRerouteTimes.removeAll { $0 < windowStart }
+        if automaticRerouteTimes.count >= rerouteStormCount {
+            pauseRerouting()
+            return
+        }
+        rerouteFromCurrentPosition(trigger: .automatic, distanceMeters: distanceMeters)
+    }
+
+    /// "Guide me back" on the paused banner: one reroute now, and
+    /// automatic rerouting is on again.
+    func resumeGuidance() {
+        isReroutePaused = false
+        automaticRerouteTimes.removeAll()
+        rerouteFromCurrentPosition(bypassCooldown: true, trigger: .manual, distanceMeters: nil)
+    }
+
+    private func pauseRerouting() {
+        isReroutePaused = true
+        didPauseReroutes = true
+        triggerHaptic()
+        logger.info("Rerouting paused after \(rerouteCount) reroutes — user is going their own way")
+        analytics.track(.reroutePaused(
+            routeId: route.id,
+            reroutes: rerouteCount,
+            secondsSinceWalkStart: Date().timeIntervalSince(startTime)
+        ))
+    }
+
+    /// Back within the off-route threshold of the active route while
+    /// paused: guidance resumes quietly.
+    private func clearReroutePauseIfBackOnRoute(_ coordinate: CLLocationCoordinate2D) {
+        guard isReroutePaused, activePolyline.count >= 2 else { return }
+        let distance = RouteGeometry.minimumDistance(from: coordinate, toPolyline: activePolyline)
+        if distance <= config.navigation.offRouteThresholdMeters {
+            isReroutePaused = false
+            automaticRerouteTimes.removeAll()
+            logger.info("Back on route — automatic rerouting resumed")
+        }
+    }
+
+    enum RerouteTrigger: String {
+        case automatic = "auto"
+        case manual
+    }
+
     /// Trigger a reroute from the user's current position.
-    /// bypassCooldown=true is used for explicit "Recalculate" taps.
-    func rerouteFromCurrentPosition(bypassCooldown: Bool = false) {
+    /// bypassCooldown=true is used for explicit taps ("Guide me back").
+    func rerouteFromCurrentPosition(
+        bypassCooldown: Bool = false,
+        trigger: RerouteTrigger = .automatic,
+        distanceMeters: Double? = nil
+    ) {
         guard let location = userLocation,
               !isRerouting,
               !isFlippingRoute,
               !showWrongWayPrompt
         else { return }
         if !bypassCooldown, let last = lastRerouteTime,
-           Date().timeIntervalSince(last) < config.navigation.rerouteCooldownSeconds {
+           Date().timeIntervalSince(last) < rerouteCooldownSeconds {
             logger.info("Reroute skipped — cooldown active")
             return
         }
@@ -426,7 +534,7 @@ final class WalkNavigationViewModel {
         syncWrongWayDebug()
         isRerouting = true
         Task {
-            await performReroute(from: location)
+            await performReroute(from: location, trigger: trigger, distanceMeters: distanceMeters)
             isRerouting = false
         }
     }
@@ -509,7 +617,9 @@ final class WalkNavigationViewModel {
         tracker.ingestHeading(normalized)
     }
 
-    private func handleLocationUpdate(_ clLocation: CLLocation) {
+    /// One GPS fix from the location service. Internal so tests can drive
+    /// a walk without CoreLocation.
+    func handleLocationUpdate(_ clLocation: CLLocation) {
         let coordinate = clLocation.coordinate
         let accuracy = clLocation.horizontalAccuracy
 
@@ -529,6 +639,7 @@ final class WalkNavigationViewModel {
         // Refresh progress index, remaining distance, and route bearing now
         // that the user has moved.
         updateRouteProgress()
+        clearReroutePauseIfBackOnRoute(coordinate)
         checkWrongWayIfNeeded(clLocation)
 
         // Food spot proximity
@@ -762,7 +873,11 @@ final class WalkNavigationViewModel {
         }
     }
 
-    private func performReroute(from location: CLLocationCoordinate2D) async {
+    private func performReroute(
+        from location: CLLocationCoordinate2D,
+        trigger: RerouteTrigger,
+        distanceMeters: Double?
+    ) async {
         let closestIdx = closestPolylineIndex(to: location, in: activePolyline)
 
         // Don't reroute in the last 10% of the route
@@ -784,6 +899,7 @@ final class WalkNavigationViewModel {
         )
 
         let pathAfterRejoin: [CLLocationCoordinate2D]
+        let reentry: String
 
         if let candidate {
             // Use the candidate's polylineIndex offset from the remaining slice,
@@ -793,6 +909,7 @@ final class WalkNavigationViewModel {
             let reentryIdx = closestIdx + 1 + candidate.polylineIndex
             pathAfterRejoin = Array(activePolyline[reentryIdx...])
             debugReentryCoordinate = candidate.coordinate
+            reentry = "smart"
             logger.info("Smart re-entry \(Int(candidate.distanceFromUser))m ahead")
         } else {
             // Fallback: skip 80m ahead on polyline
@@ -805,25 +922,45 @@ final class WalkNavigationViewModel {
             guard skipIdx < activePolyline.count else { return }
             pathAfterRejoin = Array(activePolyline[skipIdx...])
             debugReentryCoordinate = nil
+            reentry = "fallback"
             logger.info("Fallback: skip-80m reroute")
         }
 
         do {
             let result = try await directionsService.computeStepsAlongPath([location] + pathAfterRejoin)
             applyRecomputedNavigation(result)
-            lastRerouteTime = Date()
+            let now = Date()
+            let secondsSinceLast = lastRerouteTime.map { now.timeIntervalSince($0) }
+            lastRerouteTime = now
             debugLastRerouteDate = lastRerouteTime
+            if trigger == .automatic { automaticRerouteTimes.append(now) }
             triggerHaptic()
             logger.info("Rerouted: \(steps.count) steps")
             rerouteCount += 1
-            analytics.track(.rerouteTriggered(routeId: route.id))
+            analytics.track(.rerouteTriggered(
+                routeId: route.id,
+                number: rerouteCount,
+                distanceMeters: distanceMeters,
+                secondsSinceLast: secondsSinceLast,
+                afterFlip: flipSinceLastReroute,
+                reentry: reentry,
+                trigger: trigger.rawValue
+            ))
+            flipSinceLastReroute = false
 
-            // Show green "Route updated" toast
+            // Show green "Route updated" toast. Dismissed from its own task
+            // so `isRerouting` (and the "Recalculating…" banner) ends with
+            // the reroute, not 3 s later.
             routeToastMessage = L10n.WalkNavigation.routeUpdated
             routeToastStyle = .success
             showRouteUpdatedToast = true
-            try? await Task.sleep(for: .seconds(config.navigation.rerouteToastDismissSeconds))
-            showRouteUpdatedToast = false
+            let dismissDelay = config.navigation.rerouteToastDismissSeconds
+            Task { @MainActor [weak self] in
+                try? await Task.sleep(for: .seconds(dismissDelay))
+                if self?.routeToastStyle == .success {
+                    self?.showRouteUpdatedToast = false
+                }
+            }
         } catch {
             logger.error("Reroute failed: \(error)")
         }
@@ -867,6 +1004,7 @@ final class WalkNavigationViewModel {
             triggerHaptic()
             logger.info("Route flipped with \(steps.count) recomputed steps from \(path.count) reversed path points")
             flipCount += 1
+            flipSinceLastReroute = true
             analytics.track(.routeFlipped(routeId: route.id))
 
             try? await Task.sleep(for: .seconds(config.navigation.rerouteToastDismissSeconds))

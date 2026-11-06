@@ -701,6 +701,9 @@ enum L10n {
         static var offRoute: String { String(localized: "offRoute.offRoute", defaultValue: "You're off the route", bundle: LocalizationManager.shared.localizedBundle) }
         static var returnToRoute: String { String(localized: "offRoute.returnToRoute", defaultValue: "Return to the marked path", bundle: LocalizationManager.shared.localizedBundle) }
         static var recalculating: String { String(localized: "offRoute.recalculating", defaultValue: "Recalculating...", bundle: LocalizationManager.shared.localizedBundle) }
+        static var ownWayTitle: String { String(localized: "offRoute.ownWayTitle", defaultValue: "Going your own way?", bundle: LocalizationManager.shared.localizedBundle) }
+        static var ownWayBody: String { String(localized: "offRoute.ownWayBody", defaultValue: "We've stopped recalculating. Directions resume when you're back on the route.", bundle: LocalizationManager.shared.localizedBundle) }
+        static var guideMeBack: String { String(localized: "offRoute.guideMeBack", defaultValue: "Guide me back", bundle: LocalizationManager.shared.localizedBundle) }
         static var checkingRoute: String { String(localized: "offRoute.checkingRoute", defaultValue: "Checking route...", bundle: LocalizationManager.shared.localizedBundle) }
         static var findingPath: String { String(localized: "offRoute.findingPath", defaultValue: "Finding your path forward", bundle: LocalizationManager.shared.localizedBundle) }
     }

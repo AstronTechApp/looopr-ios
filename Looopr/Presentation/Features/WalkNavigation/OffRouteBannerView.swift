@@ -46,3 +46,58 @@ struct OffRouteBannerView: View {
         return "\(distanceMeters.formattedDistance()) \(L10n.POI.fromRoute)"
     }
 }
+
+/// Shown instead of the off-route banner once automatic rerouting has
+/// been paused: the user keeps leaving every new route, so stop buzzing
+/// and let them choose.
+struct OwnWayBannerView: View {
+    let onGuideMeBack: () -> Void
+    let onEndWalk: () -> Void
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: AppTheme.spacingSmall) {
+            HStack(spacing: AppTheme.spacingSmall) {
+                Image(systemName: "figure.walk.motion")
+                    .font(.body)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(L10n.OffRoute.ownWayTitle)
+                        .font(.subheadline.weight(.semibold))
+                    Text(L10n.OffRoute.ownWayBody)
+                        .font(.caption)
+                        .opacity(0.85)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                Spacer(minLength: 0)
+            }
+            HStack(spacing: AppTheme.spacingSmall) {
+                Button(action: onGuideMeBack) {
+                    Text(L10n.OffRoute.guideMeBack)
+                        .font(.subheadline.weight(.semibold))
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 10)
+                        .background(.white)
+                        .foregroundStyle(Color(hex: "#1B5E20"))
+                        .clipShape(RoundedRectangle(cornerRadius: AppTheme.cornerRadiusSmall))
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                Button(action: onEndWalk) {
+                    Text(L10n.WalkNavigation.endWalkButton)
+                        .font(.subheadline.weight(.medium))
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 10)
+                        .background(.white.opacity(0.18))
+                        .clipShape(RoundedRectangle(cornerRadius: AppTheme.cornerRadiusSmall))
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+            }
+        }
+        .foregroundStyle(.white)
+        .padding(AppTheme.spacingSmall)
+        .background(Color(hex: "#1B5E20").opacity(0.92))
+        .clipShape(RoundedRectangle(cornerRadius: AppTheme.cornerRadiusSmall))
+        .transition(.move(edge: .top).combined(with: .opacity))
+        .accessibilityElement(children: .contain)
+    }
+}

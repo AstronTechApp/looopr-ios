@@ -216,7 +216,7 @@ struct WalkNavigationView: View {
         .confirmationDialog(L10n.WalkNavigation.endWalk, isPresented: $showStopConfirmation) {
             Button(L10n.WalkNavigation.saveAndFinish) { Task { await viewModel.finish() } }
             Button(L10n.WalkNavigation.endWalkButton, role: .destructive) {
-                Task { await viewModel.stop() }
+                Task { await viewModel.endEarly() }
                 router.popToRoot()
             }
             Button(L10n.Misc.cancel, role: .cancel) { }
@@ -293,7 +293,8 @@ struct WalkNavigationView: View {
                !viewModel.isRerouting,
                !viewModel.isFlippingRoute,
                !viewModel.showWrongWayPrompt {
-                viewModel.rerouteFromCurrentPosition()
+                // The view model decides: reroute, or pause after a storm.
+                viewModel.offRouteConfirmed(distanceMeters: offRoute.offRouteDistanceMeters)
                 Task {
                     try? await Task.sleep(for: .seconds(1))
                     offRoute.reset()
@@ -506,14 +507,22 @@ struct WalkNavigationView: View {
 
     private var bannerStack: some View {
         VStack(spacing: LoooprTheme.Spacing.xs) {
-            OffRouteBannerView(
-                isDetecting: offRoute.isDetecting,
-                isRerouting: viewModel.isRerouting,
-                distanceMeters: offRoute.offRouteDistanceMeters
-            )
-            .animation(.easeInOut, value: offRoute.isDetecting)
-            .animation(.easeInOut, value: viewModel.isRerouting)
+            if viewModel.isReroutePaused {
+                OwnWayBannerView(
+                    onGuideMeBack: { viewModel.resumeGuidance() },
+                    onEndWalk: { showStopConfirmation = true }
+                )
+            } else {
+                OffRouteBannerView(
+                    isDetecting: offRoute.isDetecting,
+                    isRerouting: viewModel.isRerouting,
+                    distanceMeters: offRoute.offRouteDistanceMeters
+                )
+                .animation(.easeInOut, value: offRoute.isDetecting)
+                .animation(.easeInOut, value: viewModel.isRerouting)
+            }
         }
+        .animation(LoooprTheme.Animation.standard, value: viewModel.isReroutePaused)
     }
 
     // MARK: - Street Label

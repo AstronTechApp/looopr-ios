@@ -86,6 +86,21 @@ final class WalkHistoryRepository: @unchecked Sendable {
         }
     }
 
+    /// Uploads a walk the user ended before finishing, if signed in. It is
+    /// never added to history (here or on another device: `fetchFromCloud`
+    /// skips rows without `finished_at`); it exists so a walk where
+    /// navigation went wrong can be replayed from its GPS track.
+    func pushEndedWalkIfSignedIn(_ session: WalkSession) async {
+        guard !session.isComplete, let supabase else { return }
+        guard let userID = try? await supabase.client.auth.session.user.id else { return }
+        do {
+            try await pushToCloud(session, userID: userID)
+            logger.info("Ended walk \(session.id) uploaded for diagnostics")
+        } catch {
+            logger.error("Cloud upload failed for ended walk \(session.id): \(error)")
+        }
+    }
+
     /// Two-way sync: local completed walks are upserted to the cloud (local
     /// wins on conflicts — it carries the freshest feedback), and cloud walks
     /// missing locally (other device, reinstall) are saved into local
@@ -144,7 +159,8 @@ final class WalkHistoryRepository: @unchecked Sendable {
             .order("started_at", ascending: false)
             .execute()
             .value
-        return records.map(\.toSession)
+        // Walks ended early are diagnostics only, never history.
+        return records.filter { $0.finished_at != nil }.map(\.toSession)
     }
 
     func pushToCloud(_ session: WalkSession, userID: UUID) async throws {
