@@ -133,8 +133,8 @@ enum L10n {
             String(format: NSLocalizedString("routeSelection.tryLongerWalk", tableName: nil, bundle: LocalizationManager.shared.localizedBundle, value: "Try a %@ walk", comment: ""), duration)
         }
         static var upgradeTitle: String { String(localized: "routeSelection.upgradeTitle", defaultValue: "Want more options?", bundle: LocalizationManager.shared.localizedBundle) }
-        static var upgradeBody: String { String(localized: "routeSelection.upgradeBody", defaultValue: "Looopr Premium finds up to 8 loops per walk and shows the cafés along the way.", bundle: LocalizationManager.shared.localizedBundle) }
-        static var upgradeCTA: String { String(localized: "routeSelection.upgradeCTA", defaultValue: "See Premium", bundle: LocalizationManager.shared.localizedBundle) }
+        static var upgradeBody: String { String(localized: "routeSelection.upgradeBody", defaultValue: "Looopr Pro finds up to 8 loops per walk and shows the cafés along the way.", bundle: LocalizationManager.shared.localizedBundle) }
+        static var upgradeCTA: String { String(localized: "routeSelection.upgradeCTA", defaultValue: "See Pro", bundle: LocalizationManager.shared.localizedBundle) }
         static var difficulty: String { String(localized: "routeSelection.difficulty", defaultValue: "Difficulty", bundle: LocalizationManager.shared.localizedBundle) }
         static var loopLabel: String { String(localized: "routeSelection.loopLabel", defaultValue: "loop", bundle: LocalizationManager.shared.localizedBundle) }
         static var includesFerry: String { String(localized: "routeSelection.includesFerry", defaultValue: "Includes ferry crossing", bundle: LocalizationManager.shared.localizedBundle) }
@@ -206,9 +206,9 @@ enum L10n {
         static func walkTimeHoursMinutes(_ hours: Int, _ minutes: Int) -> String {
             return String(format: NSLocalizedString("poi.walkTimeHoursMinutes", tableName: nil, bundle: LocalizationManager.shared.localizedBundle, value: "~%1$@h %2$@min", comment: ""), "\(hours)", "\(minutes)")
         }
-        static var foodLockedTitle: String { String(localized: "poi.foodLockedTitle", defaultValue: "Cafés & restaurants are Premium", bundle: LocalizationManager.shared.localizedBundle) }
-        static var foodLockedBody: String { String(localized: "poi.foodLockedBody", defaultValue: "See the best coffee and food stops along this route, with ratings, opening hours and photos.", bundle: LocalizationManager.shared.localizedBundle) }
-        static var foodLockedCTA: String { String(localized: "poi.foodLockedCTA", defaultValue: "See Premium", bundle: LocalizationManager.shared.localizedBundle) }
+        static var foodLockedTitle: String { String(localized: "poi.foodLockedTitle", defaultValue: "Cafés & restaurants are Pro", bundle: LocalizationManager.shared.localizedBundle) }
+        static var foodLockedBody: String { String(localized: "poi.foodLockedBody", defaultValue: "See the best coffee and food stops along this route, with ratings, and opening hours.", bundle: LocalizationManager.shared.localizedBundle) }
+        static var foodLockedCTA: String { String(localized: "poi.foodLockedCTA", defaultValue: "See Pro", bundle: LocalizationManager.shared.localizedBundle) }
         static var fromRoute: String { String(localized: "poi.fromRoute", defaultValue: "from route", bundle: LocalizationManager.shared.localizedBundle) }
         static var walkTime: String { String(localized: "poi.walkTime", defaultValue: "walk", bundle: LocalizationManager.shared.localizedBundle) }
         static var openNow: String { String(localized: "poi.openNow", defaultValue: "Open now", bundle: LocalizationManager.shared.localizedBundle) }
@@ -371,9 +371,9 @@ enum L10n {
 
     // MARK: - Paywall
     enum Paywall {
-        static var title: String { String(localized: "paywall.title", defaultValue: "Looopr Premium", bundle: LocalizationManager.shared.localizedBundle) }
-        static var settingsRow: String { String(localized: "paywall.settingsRow", defaultValue: "Upgrade to Premium", bundle: LocalizationManager.shared.localizedBundle) }
-        static var headline: String { String(localized: "paywall.headline", defaultValue: "Walk further with Premium", bundle: LocalizationManager.shared.localizedBundle) }
+        static var title: String { String(localized: "paywall.title", defaultValue: "Looopr Pro", bundle: LocalizationManager.shared.localizedBundle) }
+        static var settingsRow: String { String(localized: "paywall.settingsRow", defaultValue: "Upgrade to Pro", bundle: LocalizationManager.shared.localizedBundle) }
+        static var headline: String { String(localized: "paywall.headline", defaultValue: "Walk further with Pro", bundle: LocalizationManager.shared.localizedBundle) }
         static var subtitle: String { String(localized: "paywall.subtitle", defaultValue: "More routes, and the best coffee stops along the way.", bundle: LocalizationManager.shared.localizedBundle) }
         static var featureRoutes: String { String(localized: "paywall.featureRoutes", defaultValue: "Up to 8 route options per walk instead of 2", bundle: LocalizationManager.shared.localizedBundle) }
         static var featureLoops: String { String(localized: "paywall.featureLoops", defaultValue: "Cafés and restaurants along every route", bundle: LocalizationManager.shared.localizedBundle) }
@@ -387,7 +387,7 @@ enum L10n {
         static var unavailable: String { String(localized: "paywall.unavailable", defaultValue: "Subscriptions aren't available right now. Please try again later.", bundle: LocalizationManager.shared.localizedBundle) }
         static var purchaseFailed: String { String(localized: "paywall.purchaseFailed", defaultValue: "Purchase Failed", bundle: LocalizationManager.shared.localizedBundle) }
         static var legalNote: String { String(localized: "paywall.legalNote", defaultValue: "Payment is charged to your Apple ID. Subscriptions renew automatically until cancelled in Settings at least 24 hours before the period ends.", bundle: LocalizationManager.shared.localizedBundle) }
-        static var statusRow: String { String(localized: "paywall.statusRow", defaultValue: "Premium", bundle: LocalizationManager.shared.localizedBundle) }
+        static var statusRow: String { String(localized: "paywall.statusRow", defaultValue: "Pro", bundle: LocalizationManager.shared.localizedBundle) }
         static var statusActive: String { String(localized: "paywall.statusActive", defaultValue: "Active", bundle: LocalizationManager.shared.localizedBundle) }
         static var manageSubscription: String { String(localized: "paywall.manageSubscription", defaultValue: "Manage Subscription", bundle: LocalizationManager.shared.localizedBundle) }
     }
