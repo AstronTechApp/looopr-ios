@@ -36,6 +36,7 @@
 		2379037CC03BAEBF8DDEB29A /* ProfileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ED140A2F266F17F751A9AFC8 /* ProfileView.swift */; };
 		248CE48364E476AB06D867FB /* OnboardingState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5D057961F5DBD094B9D8A461 /* OnboardingState.swift */; };
 		251940282ED2D8B0CF448B8A /* RouteDetailViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4D3AC9157092DFAAF58340E6 /* RouteDetailViewModel.swift */; };
+		25BEC970F0401F2E733E39F4 /* WalkNavigationTypes.swift in Sources */ = {isa = PBXBuildFile; fileRef = CED4FF023012750C5A101A3E /* WalkNavigationTypes.swift */; };
 		282F204B8252254E4DB3ABF7 /* AuthProviding.swift in Sources */ = {isa = PBXBuildFile; fileRef = CAF4EF06A76F5C3F0F7E57A1 /* AuthProviding.swift */; };
 		28CCEDFD2E59F2A69F54B2DB /* POIDiscovering.swift in Sources */ = {isa = PBXBuildFile; fileRef = ECB56CDA108D4747C7627FE6 /* POIDiscovering.swift */; };
 		2AF59294269C5B7D79E3B657 /* Sentry in Frameworks */ = {isa = PBXBuildFile; productRef = BB5381D3734C98FB1D057C3E /* Sentry */; };
@@ -84,6 +85,7 @@
 		771A3A93F3A4F89F9EADD7AF /* RouteSelectionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3BF11064C425FEF63FFD920B /* RouteSelectionView.swift */; };
 		77CA697BD439D0550D02D568 /* WalkSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = 19CB0581550284AC1649744A /* WalkSession.swift */; };
 		781F7442E1C17485C04CCA44 /* WalkFeedback.swift in Sources */ = {isa = PBXBuildFile; fileRef = 41BB8120A2AD38095766B464 /* WalkFeedback.swift */; };
+		793E833B59A7BBD624944DA2 /* WalkNavigationViewModel+RouteMath.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9CAE8ADD6FBF658B42A63CEA /* WalkNavigationViewModel+RouteMath.swift */; };
 		7FDCD6A49F8E7B43E24DB4E1 /* RouteSelectionViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5DE7DDA68055DAA3BFF0E1B0 /* RouteSelectionViewModel.swift */; };
 		877953D43B2F93CBF476BFF2 /* LocationProviding.swift in Sources */ = {isa = PBXBuildFile; fileRef = 526DB4727286105D8FBA8DCD /* LocationProviding.swift */; };
 		89C9358A2C304AB3316061E5 /* LoooprLiveActivity.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 5209841053BC3D479FD8746D /* LoooprLiveActivity.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
@@ -302,6 +304,7 @@
 		9ACB91C81159765DB0DE6311 /* AppRoute.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppRoute.swift; sourceTree = "<group>"; };
 		9BB27B3B9F6F8C843175DE5E /* NavigationDirecting.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NavigationDirecting.swift; sourceTree = "<group>"; };
 		9C1240B6B84099FF0CA0835F /* NavigationError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NavigationError.swift; sourceTree = "<group>"; };
+		9CAE8ADD6FBF658B42A63CEA /* WalkNavigationViewModel+RouteMath.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "WalkNavigationViewModel+RouteMath.swift"; sourceTree = "<group>"; };
 		9F08DB0DE49A7BD2F671C414 /* FirstRunFlowUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FirstRunFlowUITests.swift; sourceTree = "<group>"; };
 		A230CB2E4794906BE8744750 /* NavigationSemantics.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NavigationSemantics.swift; sourceTree = "<group>"; };
 		A238FEB19374E830F9A98619 /* GooglePlacesEnrichmentService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GooglePlacesEnrichmentService.swift; sourceTree = "<group>"; };
@@ -333,6 +336,7 @@
 		CCB07677541769D45F8CABCE /* LocalizationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalizationManager.swift; sourceTree = "<group>"; };
 		CD23010B3241C3AAA8DB92C3 /* SharedRouteView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SharedRouteView.swift; sourceTree = "<group>"; };
 		CD89BE66552B67FDA22C6D22 /* UnitPreference.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UnitPreference.swift; sourceTree = "<group>"; };
+		CED4FF023012750C5A101A3E /* WalkNavigationTypes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WalkNavigationTypes.swift; sourceTree = "<group>"; };
 		CF07ECEDB173CA6F7B8DD181 /* LiveSubscriptionService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiveSubscriptionService.swift; sourceTree = "<group>"; };
 		CFAC382EA741C87FF9461D1F /* NetworkError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NetworkError.swift; sourceTree = "<group>"; };
 		D28A1226B95C2BA753B5E877 /* FeedbackSectionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FeedbackSectionView.swift; sourceTree = "<group>"; };
@@ -596,8 +600,10 @@
 				686006BF99B13AD282082054 /* OffRouteBannerView.swift */,
 				55D7165A93F184F56625EED4 /* OffRouteViewModel.swift */,
 				BD5448B80A5DB3AA126DDBBA /* RouteArrowHelper.swift */,
+				CED4FF023012750C5A101A3E /* WalkNavigationTypes.swift */,
 				A260DD71FA5379D191758352 /* WalkNavigationView.swift */,
 				5356F80333058777DBFD7ABD /* WalkNavigationViewModel.swift */,
+				9CAE8ADD6FBF658B42A63CEA /* WalkNavigationViewModel+RouteMath.swift */,
 				2EB9AB6AB21AC587CD7A42D2 /* WalkStatsBar.swift */,
 				DE4F7D0A7A8EE5163DB14FFF /* WrongWaySheetView.swift */,
 			);
@@ -1067,6 +1073,7 @@
 			buildConfigurationList = A1C848AEE97FD4B999DA62C4 /* Build configuration list for PBXNativeTarget "Looopr" */;
 			buildPhases = (
 				E211404B4A1C8DE183C78DE5 /* XcodeGen — sync project.yml */,
+				014832C54E303FB154883F52 /* Check RevenueCat key (Release) */,
 				F7C6DA7D898D40EB17A6B661 /* Sources */,
 				78C3531F83B42A8AB9735D15 /* Resources */,
 				7A88B4F9DD191EA6B463ABCA /* Frameworks */,
@@ -1171,6 +1178,25 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXShellScriptBuildPhase section */
+		014832C54E303FB154883F52 /* Check RevenueCat key (Release) */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+			);
+			name = "Check RevenueCat key (Release)";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "if [ \"$CONFIGURATION\" != \"Release\" ]; then exit 0; fi\ncase \"$REVENUECAT_API_KEY\" in\n  appl_*) exit 0 ;;\n  \"\") echo \"error: REVENUECAT_API_KEY is empty for Release. Set the appl_ key in Looopr/Secrets.xcconfig.\" ; exit 1 ;;\n  test_*) echo \"error: REVENUECAT_API_KEY is the RevenueCat Test Store key in Release. Use the appl_ key.\" ; exit 1 ;;\n  *) echo \"error: REVENUECAT_API_KEY for Release should start with appl_.\" ; exit 1 ;;\nesac\n";
+		};
 		49C10C2743D6BFF63B43C02B /* Sentry — upload dSYMs */ = {
 			isa = PBXShellScriptBuildPhase;
 			alwaysOutOfDate = 1;
@@ -1382,7 +1408,9 @@
 				919524681CFA90004EAC2DF1 /* WalkDetailViewModel.swift in Sources */,
 				781F7442E1C17485C04CCA44 /* WalkFeedback.swift in Sources */,
 				4CADFE76E70CD9E777B528B6 /* WalkHistoryRepository.swift in Sources */,
+				25BEC970F0401F2E733E39F4 /* WalkNavigationTypes.swift in Sources */,
 				E4A2CD5EE0CEE45BBEBC03AD /* WalkNavigationView.swift in Sources */,
+				793E833B59A7BBD624944DA2 /* WalkNavigationViewModel+RouteMath.swift in Sources */,
 				09FACC948F9BDA8DC0A25DF8 /* WalkNavigationViewModel.swift in Sources */,
 				77CA697BD439D0550D02D568 /* WalkSession.swift in Sources */,
 				517D2C95A793EA36AB71D699 /* WalkStatsBar.swift in Sources */,

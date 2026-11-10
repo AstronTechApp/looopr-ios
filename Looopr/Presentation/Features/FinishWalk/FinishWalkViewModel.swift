@@ -290,15 +290,14 @@ final class FinishWalkViewModel {
     }
 
     func shareText() -> String {
-        var text = "Just completed a \(formattedDistance) walk"
-        text += " in \(formattedDuration) on Looopr!"
+        var parts = [L10n.FinishWalk.shareCompleted(distance: formattedDistance, duration: formattedDuration)]
         if session.stepCount > 0 {
-            text += " \(formattedSteps) steps."
+            parts.append(L10n.FinishWalk.shareSteps(formattedSteps))
         }
         if hasVisitedFoodStops {
-            text += " Stopped at \(visitedFoodStops.count) food spot\(visitedFoodStops.count == 1 ? "" : "s")."
+            parts.append(L10n.FinishWalk.shareFoodStops(visitedFoodStops.count))
         }
-        return text
+        return parts.joined(separator: " ")
     }
 }
 

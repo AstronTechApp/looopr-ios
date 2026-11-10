@@ -49,8 +49,8 @@ final class SettingsManager {
 
         var label: String {
             switch self {
-            case .kilometres: return String(localized: "settings.units.kilometres", defaultValue: "Kilometres (km)", bundle: LocalizationManager.shared.localizedBundle)
-            case .miles: return String(localized: "settings.units.miles", defaultValue: "Miles (mi)", bundle: LocalizationManager.shared.localizedBundle)
+            case .kilometres: return String(localized: "settings.units.kilometres", defaultValue: "Kilometres (km)", bundle: LocalizationManager.bundle)
+            case .miles: return String(localized: "settings.units.miles", defaultValue: "Miles (mi)", bundle: LocalizationManager.bundle)
             }
         }
     }

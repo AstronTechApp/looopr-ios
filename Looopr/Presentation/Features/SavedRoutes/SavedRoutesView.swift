@@ -153,13 +153,13 @@ private struct SavedRouteCard: View {
                         HStack(spacing: 6) {
                             chip(
                                 text: route.distanceKilometers.formattedDistanceFromKm(),
-                                foreground: Color(hex: "#005c15"),
+                                foreground: LoooprTheme.Colors.onPrimaryContainer,
                                 background: LoooprTheme.Colors.primaryLight.opacity(0.92)
                             )
 
                             chip(
                                 text: route.paceAdjustedDurationLabel,
-                                foreground: Color(hex: "#7b3100"),
+                                foreground: LoooprTheme.Colors.onSecondaryContainer,
                                 background: LoooprTheme.Colors.secondaryContainer.opacity(0.92)
                             )
                         }

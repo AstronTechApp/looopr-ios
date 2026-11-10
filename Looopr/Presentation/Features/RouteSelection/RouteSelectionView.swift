@@ -103,7 +103,7 @@ struct RouteSelectionView: View {
                 .font(.system(size: 10, weight: .heavy, design: .rounded))
                 .tracking(0.8)
                 .textCase(.uppercase)
-                .foregroundStyle(Color(hex: "#7b3100"))
+                .foregroundStyle(LoooprTheme.Colors.onSecondaryContainer)
                 .padding(.horizontal, 14)
                 .padding(.vertical, 6)
                 .background(LoooprTheme.Colors.secondaryContainer)
@@ -581,10 +581,10 @@ private struct RouteSelectionCard: View {
                             .font(.system(size: 11, weight: .bold, design: .rounded))
                             .tracking(0.3)
                     }
-                    .foregroundStyle(Color(hex: "#0D47A1"))
+                    .foregroundStyle(LoooprTheme.Colors.info)
                     .padding(.horizontal, 12)
                     .padding(.vertical, 6)
-                    .background(Color(hex: "#BBDEFB").opacity(0.5))
+                    .background(LoooprTheme.Colors.infoContainer.opacity(0.7))
                     .clipShape(Capsule())
                 }
 

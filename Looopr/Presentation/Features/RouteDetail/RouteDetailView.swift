@@ -552,11 +552,11 @@ struct RouteDetailView: View {
                     Text(L10n.RouteDetail.includeFerryDescription)
                         .font(.system(size: 12, weight: .semibold, design: .rounded))
                 }
-                .foregroundStyle(Color(hex: "#0D47A1"))
+                .foregroundStyle(LoooprTheme.Colors.info)
                 .padding(.horizontal, 14)
                 .padding(.vertical, 8)
                 .frame(maxWidth: .infinity, alignment: .leading)
-                .background(Color(hex: "#BBDEFB").opacity(0.4))
+                .background(LoooprTheme.Colors.infoContainer.opacity(0.7))
                 .clipShape(RoundedRectangle(cornerRadius: 12))
             }
         }
@@ -803,7 +803,7 @@ private struct POIMapPin: View {
                     .padding(.vertical, 2)
                     .background(
                         Capsule()
-                            .fill(.white.opacity(0.92))
+                            .fill(LoooprTheme.Colors.surface.opacity(0.92))
                     )
                     .overlay(
                         Capsule()

@@ -7,6 +7,7 @@ struct AuthView: View {
     @State private var errorMessage: String?
     @State private var appleSignInDelegate: AppleSignInDelegate?
     @State private var appeared = false
+    @Environment(\.colorScheme) private var colorScheme
 
     /// Shown under the sign-in buttons on the root sign-in screen so the app
     /// can be used without an account (guideline 5.1.1(v)). Nil hides it.
@@ -82,7 +83,7 @@ struct AuthView: View {
                         } onCompletion: { result in
                             handleAppleSignIn(result)
                         }
-                        .signInWithAppleButtonStyle(.black)
+                        .signInWithAppleButtonStyle(colorScheme == .dark ? .white : .black)
                         .frame(height: 56)
                         .clipShape(RoundedRectangle(cornerRadius: LoooprTheme.Radius.button))
                         .loooprShadow(LoooprTheme.Shadows.sm)

@@ -7,9 +7,9 @@ enum UnitPreference: String, CaseIterable {
 
     var label: String {
         switch self {
-        case .system: return String(localized: "settings.unitPreference.system", defaultValue: "System Default", bundle: LocalizationManager.shared.localizedBundle)
-        case .metric: return String(localized: "settings.unitPreference.metric", defaultValue: "Metric (km, m)", bundle: LocalizationManager.shared.localizedBundle)
-        case .imperial: return String(localized: "settings.unitPreference.imperial", defaultValue: "Imperial (mi, ft)", bundle: LocalizationManager.shared.localizedBundle)
+        case .system: return String(localized: "settings.unitPreference.system", defaultValue: "System Default", bundle: LocalizationManager.bundle)
+        case .metric: return String(localized: "settings.unitPreference.metric", defaultValue: "Metric (km, m)", bundle: LocalizationManager.bundle)
+        case .imperial: return String(localized: "settings.unitPreference.imperial", defaultValue: "Imperial (mi, ft)", bundle: LocalizationManager.bundle)
         }
     }
 
@@ -53,15 +53,15 @@ enum ResolvedUnitSystem {
 
     var speedUnit: String {
         switch self {
-        case .metric: return String(localized: "units.speed.kmh", defaultValue: "km/h", bundle: LocalizationManager.shared.localizedBundle)
-        case .imperial: return String(localized: "units.speed.mph", defaultValue: "mph", bundle: LocalizationManager.shared.localizedBundle)
+        case .metric: return String(localized: "units.speed.kmh", defaultValue: "km/h", bundle: LocalizationManager.bundle)
+        case .imperial: return String(localized: "units.speed.mph", defaultValue: "mph", bundle: LocalizationManager.bundle)
         }
     }
 
     var paceUnit: String {
         switch self {
-        case .metric: return String(localized: "units.pace.minKm", defaultValue: "min/km", bundle: LocalizationManager.shared.localizedBundle)
-        case .imperial: return String(localized: "units.pace.minMi", defaultValue: "min/mi", bundle: LocalizationManager.shared.localizedBundle)
+        case .metric: return String(localized: "units.pace.minKm", defaultValue: "min/km", bundle: LocalizationManager.bundle)
+        case .imperial: return String(localized: "units.pace.minMi", defaultValue: "min/mi", bundle: LocalizationManager.bundle)
         }
     }
 }

@@ -116,6 +116,19 @@ targets:
             echo "warning: xcodegen not found — run: brew install xcodegen"
           fi
         basedOnDependencyAnalysis: false
+      # A Release build (archive) without the real RevenueCat key would sell
+      # nothing: Secrets.swift treats a missing or test_ key as "no key" and
+      # the app then gives everyone Pro. Stop the archive instead.
+      - name: "Check RevenueCat key (Release)"
+        script: |
+          if [ "$CONFIGURATION" != "Release" ]; then exit 0; fi
+          case "$REVENUECAT_API_KEY" in
+            appl_*) exit 0 ;;
+            "") echo "error: REVENUECAT_API_KEY is empty for Release. Set the appl_ key in Looopr/Secrets.xcconfig." ; exit 1 ;;
+            test_*) echo "error: REVENUECAT_API_KEY is the RevenueCat Test Store key in Release. Use the appl_ key." ; exit 1 ;;
+            *) echo "error: REVENUECAT_API_KEY for Release should start with appl_." ; exit 1 ;;
+          esac
+        basedOnDependencyAnalysis: false
     postBuildScripts:
       # Uploads dSYMs to Sentry so crashes are symbolicated. Only runs for
       # Release (archives) and only when sentry-cli + .sentryclirc exist,
@@ -205,6 +218,31 @@ targets:
         TEST_TARGET_NAME: Looopr
 
 schemes:
+  Looopr:
+    build:
+      targets:
+        Looopr: all
+    run:
+      config: Debug
+    test:
+      config: Debug
+      targets:
+        - LoooprTests
+    profile:
+      config: Release
+    analyze:
+      config: Debug
+    archive:
+      config: Release
+  LoooprTests:
+    build:
+      targets:
+        Looopr: all
+        LoooprTests: [test]
+    test:
+      config: Debug
+      targets:
+        - LoooprTests
   LoooprUITests:
     build:
       targets:

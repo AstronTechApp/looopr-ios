@@ -33,7 +33,7 @@ final class LocalizationManager {
 
         var displayName: String {
             switch self {
-            case .system: return String(localized: "settings.language.system", defaultValue: "System Default", bundle: LocalizationManager.shared.localizedBundle)
+            case .system: return String(localized: "settings.language.system", defaultValue: "System Default", bundle: LocalizationManager.bundle)
             case .en: return "English"
             case .nl: return "Nederlands"
             case .de: return "Deutsch"
@@ -72,7 +72,12 @@ final class LocalizationManager {
 
     /// The bundle for the currently selected language.
     /// Marked nonisolated so non-MainActor code (enums, formatters) can access it.
-    nonisolated var localizedBundle: Bundle {
+    nonisolated var localizedBundle: Bundle { Self.bundle }
+
+    /// Same as `localizedBundle`, reachable without `shared` (which is
+    /// main-actor isolated). All `L10n` strings use this, so they can be read
+    /// from any thread without Swift 6 isolation warnings.
+    nonisolated static var bundle: Bundle {
         let saved = UserDefaults.standard.string(forKey: "settings.appLanguage") ?? "system"
         let lang = SupportedLanguage(rawValue: saved) ?? .system
 

@@ -1,6 +1,9 @@
 import Foundation
 
 extension ServiceContainer {
+    /// Called once from `LoooprApp.init` on the main actor (it creates
+    /// main-actor services such as `LiveActivityManager`).
+    @MainActor
     func registerProductionServices() {
         let config = AppConfiguration.current
 

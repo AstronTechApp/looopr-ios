@@ -162,7 +162,6 @@ struct LocationSearchView: View {
                 Text(L10n.LocationSearch.resolveFailedMessage)
             }
         }
-        .preferredColorScheme(.light)
     }
 
     private func resolveCompletion(_ completion: MKLocalSearchCompletion) {

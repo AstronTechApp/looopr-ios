@@ -25,60 +25,60 @@ extension LoooprTheme {
 
         // ── Brand (Forest & Stone) ────────────────────────────
         /// Forest green — primary CTAs, active states, icons
-        static let primary        = Color(hex: "#176a21")
+        static let primary        = Color(light: "#176a21", dark: "#3a9a46")
         /// Leaf green — selected card backgrounds, chips
-        static let primaryLight   = Color(hex: "#9df197")
+        static let primaryLight   = Color(light: "#9df197", dark: "#1f3a22")
         /// Forest pressed/dark state
-        static let primaryDark    = Color(hex: "#025d16")
+        static let primaryDark    = Color(light: "#025d16", dark: "#2e8b3a")
 
         // ── Secondary (Action Orange) ────────────────────────
         /// Warm orange — urgency, highlights, food markers
-        static let secondary      = Color(hex: "#9b3f00")
+        static let secondary      = Color(light: "#9b3f00", dark: "#ffb48f")
         /// Orange tint — secondary containers
-        static let secondaryContainer = Color(hex: "#ffc5aa")
+        static let secondaryContainer = Color(light: "#ffc5aa", dark: "#4a2410")
 
         // ── Tertiary (Sky Blue) ──────────────────────────────
         /// Blue — GPS interactive, toggle states
-        static let tertiary       = Color(hex: "#006096")
+        static let tertiary       = Color(light: "#006096", dark: "#8ccdff")
         /// Blue tint — info containers
-        static let tertiaryContainer = Color(hex: "#5fb7ff")
+        static let tertiaryContainer = Color(light: "#5fb7ff", dark: "#0b4a72")
 
         // ── Backgrounds (Surface Hierarchy) ──────────────────
         /// Base — cool off-white
-        static let background     = Color(hex: "#f5f7f3")
+        static let background     = Color(light: "#f5f7f3", dark: "#111512")
         /// Topmost card layer — crisp white lift
-        static let surface        = Color(hex: "#FFFFFF")
+        static let surface        = Color(light: "#FFFFFF", dark: "#1b201c")
         /// Deepest recess — secondary background
-        static let surfaceSecondary = Color(hex: "#eff1ed")
+        static let surfaceSecondary = Color(light: "#eff1ed", dark: "#222823")
         /// Main interactive zones
-        static let surfaceContainer = Color(hex: "#e6e9e5")
+        static let surfaceContainer = Color(light: "#e6e9e5", dark: "#2a302b")
         /// High-contrast surface
-        static let surfaceContainerHigh = Color(hex: "#e0e3df")
+        static let surfaceContainerHigh = Color(light: "#e0e3df", dark: "#333a34")
 
         // ── Text ───────────────────────────────────────────────
         /// Headings, primary labels
-        static let textPrimary    = Color(hex: "#2c2f2d")
+        static let textPrimary    = Color(light: "#2c2f2d", dark: "#e4e8e3")
         /// Subtitles, metadata
-        static let textSecondary  = Color(hex: "#595c59")
+        static let textSecondary  = Color(light: "#595c59", dark: "#b4bab3")
         /// Placeholders, inactive tabs
-        static let textTertiary   = Color(hex: "#abaeaa")
+        static let textTertiary   = Color(light: "#abaeaa", dark: "#8a9089")
         /// Text on green buttons
-        static let textOnPrimary  = Color(hex: "#d1ffc8")
+        static let textOnPrimary  = Color(light: "#d1ffc8", dark: "#f0fff0")
 
         // ── Borders & Dividers ─────────────────────────────────
         /// Ghost border — outline-variant at 15% (per design spec)
-        static let border         = Color(hex: "#abaeaa").opacity(0.15)
+        static let border         = Color(light: "#abaeaa", dark: "#ffffff", lightOpacity: 0.15, darkOpacity: 0.10)
         /// Stronger outline
-        static let borderStrong   = Color(hex: "#747875")
+        static let borderStrong   = Color(light: "#747875", dark: "#8c918b")
 
         // ── Navigation ─────────────────────────────────────────
-        static let navBackground  = Color(hex: "#FFFFFF")
-        static let navActive      = Color(hex: "#176a21")
-        static let navInactive    = Color(hex: "#abaeaa")
+        static let navBackground  = Color(light: "#FFFFFF", dark: "#1b201c")
+        static let navActive      = Color(light: "#176a21", dark: "#3a9a46")
+        static let navInactive    = Color(light: "#abaeaa", dark: "#8a9089")
 
         // ── Status ─────────────────────────────────────────────
-        static let success        = Color(hex: "#176a21")
-        static let error          = Color(hex: "#b02500")
+        static let success        = Color(light: "#176a21", dark: "#3a9a46")
+        static let error          = Color(light: "#b02500", dark: "#ff8f73")
         static let warning        = Color(hex: "#F0A500")
 
         // ── Map / Walk ─────────────────────────────────────────
@@ -87,9 +87,18 @@ extension LoooprTheme {
         /// Endpoint dot / POI marker — warm accent
         static let routeDot       = Color(hex: "#c45a2d")
 
+        // ── Text on tinted containers (badges, chips) ─────────
+        /// Text on `primaryLight` chips (e.g. "Saved", "Easy" badges).
+        static let onPrimaryContainer   = Color(light: "#005c15", dark: "#b6f2b0")
+        /// Text on `secondaryContainer` chips (e.g. the walk length chip).
+        static let onSecondaryContainer = Color(light: "#7b3100", dark: "#ffd2bd")
+        /// Informational notices (ferry crossings).
+        static let info                 = Color(light: "#0D47A1", dark: "#a8cfff")
+        static let infoContainer        = Color(light: "#BBDEFB", dark: "#15324d")
+
         // ── Overlays ───────────────────────────────────────────
         static let overlay        = Color.black.opacity(0.4)
-        static let overlayLight   = Color.white.opacity(0.85)
+        static let overlayLight   = Color(light: "#ffffff", dark: "#1b201c", lightOpacity: 0.85, darkOpacity: 0.85)
         static let mapOverlay     = Color.black.opacity(0.3)
     }
 }
@@ -356,5 +365,19 @@ extension Color {
             blue:    Double(b) / 255,
             opacity: Double(a) / 255
         )
+    }
+}
+
+// MARK: - Light / dark colours
+
+extension Color {
+    /// A colour that follows the system appearance: `light` in light mode,
+    /// `dark` in dark mode. Every theme colour is built this way since 1.5.
+    init(light: String, dark: String, lightOpacity: Double = 1, darkOpacity: Double = 1) {
+        self.init(uiColor: UIColor { traits in
+            traits.userInterfaceStyle == .dark
+                ? UIColor(Color(hex: dark).opacity(darkOpacity))
+                : UIColor(Color(hex: light).opacity(lightOpacity))
+        })
     }
 }

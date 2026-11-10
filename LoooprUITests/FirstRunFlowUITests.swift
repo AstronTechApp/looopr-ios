@@ -10,10 +10,20 @@ import CoreLocation
 final class FirstRunFlowUITests: XCTestCase {
 
     private var app: XCUIApplication!
-    private var shotIndex = 0
+    private var shotPrefix = ""
 
     override func setUpWithError() throws {
         continueAfterFailure = false
+    }
+
+    override func tearDown() {
+        XCUIDevice.shared.appearance = .light
+        super.tearDown()
+    }
+
+    private func launchFresh(appearance: XCUIDevice.Appearance) {
+        XCUIDevice.shared.appearance = appearance
+        shotPrefix = appearance == .dark ? "dark-" : ""
         // Marylebone, London: a dense street grid, the kind of place a
         // UK user starts from.
         XCUIDevice.shared.location = XCUILocation(location: CLLocation(latitude: 51.5226, longitude: -0.1571))
@@ -24,12 +34,24 @@ final class FirstRunFlowUITests: XCTestCase {
             "-auth.continuedAsGuest", "NO",
             "-paywall.firstSearchShown", "NO",
             "-accountPrompt.afterWalkOffered", "NO",
-            "-AppleLanguages", "(en)", "-AppleLocale", "en_GB"
+            "-AppleLanguages", "(en)", "-AppleLocale", "en_GB",
+            "-uiTest.appearance", appearance == .dark ? "dark" : "light"
         ]
         app.launch()
     }
 
     func testFirstRunGoesFromIntroToLoopsWithoutASignInWall() throws {
+        launchFresh(appearance: .light)
+        try runFirstRunFlow()
+    }
+
+    /// The same flow in dark mode (1.5): every screen must stay readable.
+    func testFirstRunInDarkMode() throws {
+        launchFresh(appearance: .dark)
+        try runFirstRunFlow()
+    }
+
+    private func runFirstRunFlow() throws {
         // 1 · Intro, three pages.
         XCTAssertTrue(app.buttons["Next"].waitForExistence(timeout: 10), "intro should open on first launch")
         shot("01-intro-page1")
@@ -87,6 +109,14 @@ final class FirstRunFlowUITests: XCTestCase {
             shot("09-cafes-locked")
             XCTAssertTrue(app.buttons["Try Pro free"].exists || app.staticTexts["Try Pro free"].exists)
         }
+
+        // 8 · Profile tab.
+        let profile = app.buttons["Profile"].firstMatch
+        if profile.waitForExistence(timeout: 5) {
+            profile.tap()
+            sleep(2)
+            shot("10-profile")
+        }
     }
 
     // MARK: - Helpers
@@ -132,8 +162,8 @@ final class FirstRunFlowUITests: XCTestCase {
         }
     }
 
-    private func shot(_ name: String) {
-        shotIndex += 1
+    private func shot(_ rawName: String) {
+        let name = shotPrefix + rawName
         let image = XCUIScreen.main.screenshot()
         let attachment = XCTAttachment(screenshot: image)
         attachment.name = name

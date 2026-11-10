@@ -109,10 +109,11 @@ final class WalkHistoryRepository: @unchecked Sendable {
     func syncWithCloudIfNeeded() async -> Bool {
         guard let supabase else { return false }
 
-        syncLock.lock()
-        let due = Date().timeIntervalSince(lastFullSync) >= fullSyncInterval
-        if due { lastFullSync = Date() }
-        syncLock.unlock()
+        let due = syncLock.withLock {
+            let due = Date().timeIntervalSince(lastFullSync) >= fullSyncInterval
+            if due { lastFullSync = Date() }
+            return due
+        }
         guard due else { return false }
 
         guard let userID = try? await supabase.client.auth.session.user.id else { return false }
@@ -134,7 +135,7 @@ final class WalkHistoryRepository: @unchecked Sendable {
         } catch {
             logger.error("Walk history sync failed: \(error)")
             // Allow a retry before the full interval elapses.
-            syncLock.lock(); lastFullSync = .distantPast; syncLock.unlock()
+            syncLock.withLock { lastFullSync = .distantPast }
         }
         return localChanged
     }

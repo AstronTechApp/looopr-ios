@@ -84,12 +84,8 @@ struct AppRootView: View {
         }
         .animation(.easeInOut(duration: LoooprTheme.Animation.normal), value: onboarding.hasCompleted)
         .environment(\.locale, localization.currentLocale)
-        // Force light color scheme app-wide.
-        // The LoooprTheme palette uses hardcoded hex colors that don't adapt to dark mode,
-        // which causes invisible system components (e.g. wheel DatePicker) and tab-bar flicker
-        // when iOS is in dark mode. Until the theme is refactored with dynamic colors,
-        // we lock the app to light mode for visual consistency.
-        .preferredColorScheme(.light)
+        // Light and dark mode follow the system since 1.5: every LoooprTheme
+        // colour has a light and a dark value (Color(light:dark:)).
     }
 
     private var accountPromptMessage: String {
@@ -205,42 +201,7 @@ struct AppRootView: View {
         }
         .tabBarMinimizeBehavior(.onScrollDown)
         .tint(LoooprTheme.Colors.primary)
-        .environment(router)
-        .environment(authService)
-        .onChange(of: selectedTab) { _, tab in
-            if tab == .explore {
-                if router.isOnRouteSelection { return }
-                router.popToRoot()
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
-                    router.navigate(to: .routeSelection(
-                        walkMinutes: router.lastExploreMinutes,
-                        customLocation: router.lastExploreLocation
-                    ))
-                }
-            } else {
-                router.popToRoot()
-            }
-        }
-        .onChange(of: router.routeStack) { _, stack in
-            let isOnRoutes = stack.contains { route in
-                if case .routeSelection = route { return true }
-                return false
-            }
-            if isOnRoutes && selectedTab != .explore {
-                selectedTab = .explore
-            } else if !isOnRoutes && selectedTab == .explore {
-                selectedTab = .home
-            }
-        }
-        .onReceive(NotificationCenter.default.publisher(for: Notification.Name("SwitchToProfileTab"))) { _ in
-            selectedTab = .profile
-        }
-        .onOpenURL { url in
-            handleDeepLink(url)
-        }
-        .fullScreenCover(isPresented: $router.isPaywallPresented) {
-            PaywallView(source: router.paywallSource)
-        }
+        .modifier(sharedNavigation)
     }
 
     // MARK: - iOS 17–25 · Custom Floating Pill Tab Bar
@@ -285,42 +246,15 @@ struct AppRootView: View {
             }
         }
         .animation(.easeInOut(duration: 0.25), value: shouldShowTabBar)
-        .environment(router)
-        .environment(authService)
-        .onChange(of: selectedTab) { _, tab in
-            if tab == .explore {
-                if router.isOnRouteSelection { return }
-                router.popToRoot()
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
-                    router.navigate(to: .routeSelection(
-                        walkMinutes: router.lastExploreMinutes,
-                        customLocation: router.lastExploreLocation
-                    ))
-                }
-            } else {
-                router.popToRoot()
-            }
-        }
-        .onChange(of: router.routeStack) { _, stack in
-            let isOnRoutes = stack.contains { route in
-                if case .routeSelection = route { return true }
-                return false
-            }
-            if isOnRoutes && selectedTab != .explore {
-                selectedTab = .explore
-            } else if !isOnRoutes && selectedTab == .explore {
-                selectedTab = .home
-            }
-        }
-        .onReceive(NotificationCenter.default.publisher(for: Notification.Name("SwitchToProfileTab"))) { _ in
-            selectedTab = .profile
-        }
-        .onOpenURL { url in
-            handleDeepLink(url)
-        }
-        .fullScreenCover(isPresented: $router.isPaywallPresented) {
-            PaywallView(source: router.paywallSource)
-        }
+        .modifier(sharedNavigation)
+    }
+
+    // MARK: - Shared by both tab bars
+
+    /// Tab ↔ route syncing, deep links and the paywall, identical for the
+    /// iOS 26 TabView and the iOS 17–25 pill tab bar (was written out twice).
+    private var sharedNavigation: SharedNavigation {
+        SharedNavigation(router: router, authService: authService, selectedTab: $selectedTab, onDeepLink: handleDeepLink)
     }
 
     // MARK: - Deep Linking
@@ -336,3 +270,51 @@ struct AppRootView: View {
         }
     }
 }
+
+private struct SharedNavigation: ViewModifier {
+    @Bindable var router: AppRouter
+    let authService: AuthService
+    @Binding var selectedTab: LoooprTab
+    let onDeepLink: (URL) -> Void
+
+    func body(content: Content) -> some View {
+        content
+            .environment(router)
+            .environment(authService)
+            .onChange(of: selectedTab) { _, tab in
+                if tab == .explore {
+                    if router.isOnRouteSelection { return }
+                    router.popToRoot()
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
+                        router.navigate(to: .routeSelection(
+                            walkMinutes: router.lastExploreMinutes,
+                            customLocation: router.lastExploreLocation
+                        ))
+                    }
+                } else {
+                    router.popToRoot()
+                }
+            }
+            .onChange(of: router.routeStack) { _, stack in
+                let isOnRoutes = stack.contains { route in
+                    if case .routeSelection = route { return true }
+                    return false
+                }
+                if isOnRoutes && selectedTab != .explore {
+                    selectedTab = .explore
+                } else if !isOnRoutes && selectedTab == .explore {
+                    selectedTab = .home
+                }
+            }
+            .onReceive(NotificationCenter.default.publisher(for: Notification.Name("SwitchToProfileTab"))) { _ in
+                selectedTab = .profile
+            }
+            .onOpenURL { url in
+                onDeepLink(url)
+            }
+            .fullScreenCover(isPresented: $router.isPaywallPresented) {
+                PaywallView(source: router.paywallSource)
+            }
+    }
+}
+

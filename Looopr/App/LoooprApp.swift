@@ -18,6 +18,7 @@ struct LoooprApp: App {
     var body: some Scene {
         WindowGroup {
             AppRootView()
+                .preferredColorScheme(Self.uiTestColorScheme)
         }
         .onChange(of: scenePhase) { _, newPhase in
             if newPhase == .background {
@@ -29,5 +30,20 @@ struct LoooprApp: App {
                 LiveActivityManager.shared.endOrphanedActivities()
             }
         }
+    }
+
+    /// UI tests only: `-uiTest.appearance dark` forces the scheme, because the
+    /// simulator's own appearance can't be switched reliably from a test.
+    /// Always nil in Release, so the app follows the system setting.
+    private static var uiTestColorScheme: ColorScheme? {
+        #if DEBUG
+        switch UserDefaults.standard.string(forKey: "uiTest.appearance") {
+        case "dark": return .dark
+        case "light": return .light
+        default: return nil
+        }
+        #else
+        return nil
+        #endif
     }
 }

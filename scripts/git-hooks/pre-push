@@ -1,0 +1,31 @@
+#!/bin/bash
+# Runs the unit tests before anything is pushed to main or a release/ branch.
+# A failing test stops the push. Skip once with: git push --no-verify
+# Installed by: git config core.hooksPath scripts/git-hooks
+set -u
+export PATH="$PATH:/opt/homebrew/bin:/usr/local/bin:$HOME/.homebrew/bin"
+
+needs_tests=false
+while read -r local_ref local_sha remote_ref remote_sha; do
+  case "$remote_ref" in
+    refs/heads/main|refs/heads/release/*) needs_tests=true ;;
+  esac
+done
+$needs_tests || exit 0
+
+ROOT="$(git rev-parse --show-toplevel)"
+SIM="${LOOOPR_TEST_SIM:-iPhone 17 Pro}"
+LOG="$ROOT/.claude/last-pre-push-tests.log"
+mkdir -p "$ROOT/.claude"
+echo "pre-push: running unit tests on $SIM (log: $LOG)…"
+if xcodebuild test \
+     -project "$ROOT/Looopr.xcodeproj" -scheme LoooprTests \
+     -destination "platform=iOS Simulator,name=$SIM" \
+     -derivedDataPath "$ROOT/.claude/DerivedData-prepush" \
+     -quiet > "$LOG" 2>&1; then
+  echo "pre-push: all unit tests passed."
+  exit 0
+fi
+echo "pre-push: unit tests FAILED — push stopped. Last lines:"
+grep -E "error:|failed|Failing tests|\\*\\* TEST" "$LOG" | tail -20
+exit 1

@@ -97,7 +97,6 @@ struct OnboardingView: View {
                 .animation(.easeInOut(duration: LoooprTheme.Animation.fast), value: page)
             }
         }
-        .preferredColorScheme(.light)
         .onAppear { track(.onboardingPageViewed(page: page + 1)) }
         .onChange(of: page) { _, newPage in
             track(.onboardingPageViewed(page: newPage + 1))
