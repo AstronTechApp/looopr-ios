@@ -7,9 +7,6 @@ struct POIDetailView: View {
     var departureDate: Date?
     @State private var enrichedPOI: POI?
     @State private var isEnriching = false
-    @State private var ticketResult: TicketResult?
-    @State private var isLoadingTickets = false
-    @State private var showAllOffers = false
 
     /// The POI to display — enriched version if available, otherwise the original.
     private var displayPOI: POI {
@@ -166,16 +163,6 @@ struct POIDetailView: View {
                     isEnriching = false
                 }
 
-                // Load tickets only for GetYourGuide strategy without a direct booking URL
-                let p = displayPOI
-                guard p.bookingCTAStrategy == .getYourGuide,
-                      p.bookingURL == nil else { return }
-
-                isLoadingTickets = true
-                if let aggregator = ServiceContainer.shared.resolveOptional(TicketAggregating.self) {
-                    ticketResult = await aggregator.findBestTicket(for: p)
-                }
-                isLoadingTickets = false
             }
         }
     }
@@ -195,64 +182,15 @@ struct POIDetailView: View {
         }
     }
 
-    /// GetYourGuide strategy: primary booking CTA with provider comparison.
+    /// Bookable places (museums, zoos…): a direct "Book tickets" link when
+    /// the place has one, then website and call.
     @ViewBuilder
     private func bookingCTAGetYourGuide() -> some View {
         let p = displayPOI
-        // Ticket section
-        if isLoadingTickets {
-            HStack(spacing: 8) {
-                ProgressView()
-                    .scaleEffect(0.8)
-                Text(L10n.POIDetail.findingTickets)
-                    .font(.subheadline)
-                    .foregroundStyle(LoooprTheme.Colors.textSecondary)
-            }
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, 12)
-            .background(LoooprTheme.Colors.surfaceSecondary)
-            .clipShape(RoundedRectangle(cornerRadius: LoooprTheme.Radius.sm))
-        } else if let bookingURL = p.bookingURL {
+        if let bookingURL = p.bookingURL {
             LinkButton(title: L10n.POIDetail.bookTickets, icon: "ticket.fill", url: bookingURL, color: .orange, onTap: {
                 ServiceContainer.shared.resolve(AnalyticsTracking.self)
                     .track(.bookingLinkTapped(poiId: p.id, partner: "direct"))
-            })
-        } else if let best = ticketResult?.bestOffer {
-            LinkButton(title: L10n.POIDetail.bookOn(best.providerName), icon: "ticket.fill", url: best.bookingURL, color: .orange, onTap: {
-                ServiceContainer.shared.resolve(AnalyticsTracking.self)
-                    .track(.bookingLinkTapped(poiId: p.id, partner: best.providerName))
-            })
-
-            if let offers = ticketResult?.offers, offers.count > 1 {
-                Button { showAllOffers.toggle() } label: {
-                    HStack {
-                        Text(L10n.POIDetail.compareProviders(offers.count))
-                            .font(.caption)
-                        Image(systemName: showAllOffers ? "chevron.up" : "chevron.down")
-                            .font(.caption2)
-                    }
-                    .foregroundStyle(.orange)
-                }
-
-                if showAllOffers {
-                    ForEach(offers.dropFirst(1)) { offer in
-                        LinkButton(
-                            title: "\(offer.providerName) — \(offer.price ?? L10n.POIDetail.seePrice)",
-                            icon: "ticket",
-                            url: offer.bookingURL,
-                            color: LoooprTheme.Colors.textSecondary,
-                            onTap: {
-                                ServiceContainer.shared.resolve(AnalyticsTracking.self)
-                                    .track(.bookingLinkTapped(poiId: p.id, partner: offer.providerName))
-                            }
-                        )
-                    }
-                }
-            }
-        } else if let fallback = ticketResult?.fallbackURL {
-            LinkButton(title: L10n.POIDetail.buyTickets, icon: "ticket.fill", url: fallback, color: .orange, onTap: {
-                ServiceContainer.shared.resolve(AnalyticsTracking.self)
-                    .track(.bookingLinkTapped(poiId: p.id, partner: "fallback_search"))
             })
         }
 

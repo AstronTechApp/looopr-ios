@@ -99,11 +99,6 @@ targets:
         SUPABASE_ANON_KEY: $(SUPABASE_ANON_KEY)
         REVENUECAT_API_KEY: $(REVENUECAT_API_KEY)
         SENTRY_DSN: $(SENTRY_DSN)
-        VIATOR_API_KEY: $(VIATOR_API_KEY)
-        GETYOURGUIDE_API_KEY: $(GETYOURGUIDE_API_KEY)
-        TIQETS_API_KEY: $(TIQETS_API_KEY)
-        MUSEMENT_API_KEY: $(MUSEMENT_API_KEY)
-        KLOOK_API_KEY: $(KLOOK_API_KEY)
     preBuildScripts:
       - name: "XcodeGen — sync project.yml"
         script: |
@@ -140,8 +135,8 @@ targets:
         PRODUCT_BUNDLE_IDENTIFIER: nl.astrontech.looopr
         CODE_SIGN_ENTITLEMENTS: Looopr/Looopr.entitlements
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
-        MARKETING_VERSION: "1.4"
-        CURRENT_PROJECT_VERSION: "15"
+        MARKETING_VERSION: "1.5"
+        CURRENT_PROJECT_VERSION: "16"
         TARGETED_DEVICE_FAMILY: "1"
         GOOGLE_PLACES_API_KEY: $(GOOGLE_PLACES_API_KEY)
         MAPBOX_ACCESS_TOKEN: $(MAPBOX_ACCESS_TOKEN)
@@ -174,8 +169,8 @@ targets:
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: nl.astrontech.looopr.LoooprLiveActivity
-        MARKETING_VERSION: "1.4"
-        CURRENT_PROJECT_VERSION: "15"
+        MARKETING_VERSION: "1.5"
+        CURRENT_PROJECT_VERSION: "16"
         TARGETED_DEVICE_FAMILY: "1"
         SKIP_INSTALL: YES
 

@@ -17,7 +17,6 @@ struct HomeView: View {
         .toolbar(.hidden, for: .navigationBar)
         .onAppear {
             viewModel.loadSavedRoutes()
-            viewModel.loadNearbyExperiences()
         }
         // Reload saved routes whenever we return to this root view.
         // `onAppear` alone is unreliable inside a NavigationStack;
@@ -54,7 +53,6 @@ struct HomeView: View {
                 findRouteButton
                 savedRoutesSection
                 recentWalksSection
-                experiencesSection
             }
             .padding(.bottom, LoooprTheme.Layout.navBarHeight)
         }
@@ -403,23 +401,6 @@ struct HomeView: View {
                     .padding(.horizontal, LoooprTheme.Spacing.screenHorizontal)
                 }
             }
-        }
-    }
-
-    // MARK: - Nearby Experiences
-
-    @ViewBuilder
-    private var experiencesSection: some View {
-        if viewModel.isLoadingExperiences {
-            HStack(spacing: LoooprTheme.Spacing.xs) {
-                ProgressView().scaleEffect(0.8)
-                Text(L10n.Home.findingNearbyExperiences)
-                    .font(LoooprTheme.Typography.subheadline)
-                    .foregroundStyle(LoooprTheme.Colors.textSecondary)
-            }
-            .padding(.horizontal, LoooprTheme.Spacing.screenHorizontal)
-        } else if !viewModel.nearbyExperiences.isEmpty {
-            NearbyExperiencesWidget(experiences: viewModel.nearbyExperiences)
         }
     }
 }

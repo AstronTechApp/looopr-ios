@@ -67,36 +67,4 @@ enum Secrets {
     }
 
     static var hasSentryDSN: Bool { !sentryDSN.isEmpty }
-
-    // MARK: - Ticket Providers
-
-    static var viatorAPIKey: String {
-        Bundle.main.infoDictionary?["VIATOR_API_KEY"] as? String ?? ""
-    }
-
-    static var hasViatorKey: Bool { !viatorAPIKey.isEmpty }
-
-    static var getYourGuideAPIKey: String {
-        Bundle.main.infoDictionary?["GETYOURGUIDE_API_KEY"] as? String ?? ""
-    }
-
-    static var hasGetYourGuideKey: Bool { !getYourGuideAPIKey.isEmpty }
-
-    static var tiqetsAPIKey: String {
-        Bundle.main.infoDictionary?["TIQETS_API_KEY"] as? String ?? ""
-    }
-
-    static var hasTiqetsKey: Bool { !tiqetsAPIKey.isEmpty }
-
-    static var musementAPIKey: String {
-        Bundle.main.infoDictionary?["MUSEMENT_API_KEY"] as? String ?? ""
-    }
-
-    static var hasMusementKey: Bool { !musementAPIKey.isEmpty }
-
-    static var klookAPIKey: String {
-        Bundle.main.infoDictionary?["KLOOK_API_KEY"] as? String ?? ""
-    }
-
-    static var hasKlookKey: Bool { !klookAPIKey.isEmpty }
 }

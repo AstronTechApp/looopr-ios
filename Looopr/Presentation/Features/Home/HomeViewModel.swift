@@ -9,8 +9,6 @@ final class HomeViewModel {
     var walkDuration: Double = 30
     var recentRoutes: [Route] = []
     var savedRoutes: [Route] = []
-    var nearbyExperiences: [NearbyExperience] = []
-    var isLoadingExperiences = false
 
     /// Custom location selected via location search, nil means use GPS
     var selectedLocation: SelectedLocation?
@@ -32,16 +30,13 @@ final class HomeViewModel {
     }
 
     private let routeRepository: RouteRepository
-    private let experiencesService: NearbyExperiencesService
     private let locationService: LocationProviding
 
     init(
         routeRepository: RouteRepository? = nil,
-        experiencesService: NearbyExperiencesService? = nil,
         locationService: LocationProviding? = nil
     ) {
         self.routeRepository = routeRepository ?? ServiceContainer.shared.resolve(RouteRepository.self)
-        self.experiencesService = experiencesService ?? NearbyExperiencesService()
         self.locationService = locationService ?? ServiceContainer.shared.resolve(LocationProviding.self)
         loadSavedRoutes()
     }
@@ -55,18 +50,6 @@ final class HomeViewModel {
             #if DEBUG
             print("[HomeViewModel] Failed to load saved routes: \(error)")
             #endif
-        }
-    }
-
-    func loadNearbyExperiences() {
-        guard nearbyExperiences.isEmpty, !isLoadingExperiences else { return }
-        guard let coordinate = locationService.currentCoordinate else { return }
-        isLoadingExperiences = true
-
-        Task {
-            let experiences = await experiencesService.fetchExperiences(near: coordinate)
-            nearbyExperiences = experiences
-            isLoadingExperiences = false
         }
     }
 

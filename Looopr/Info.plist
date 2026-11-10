@@ -39,22 +39,16 @@
 	</array>
 	<key>CFBundleVersion</key>
 	<string>$(CURRENT_PROJECT_VERSION)</string>
-	<key>GETYOURGUIDE_API_KEY</key>
-	<string>$(GETYOURGUIDE_API_KEY)</string>
 	<key>GOOGLE_IOS_CLIENT_ID</key>
 	<string>$(GOOGLE_IOS_CLIENT_ID)</string>
 	<key>GOOGLE_PLACES_API_KEY</key>
 	<string>$(GOOGLE_PLACES_API_KEY)</string>
 	<key>ITSAppUsesNonExemptEncryption</key>
 	<false/>
-	<key>KLOOK_API_KEY</key>
-	<string>$(KLOOK_API_KEY)</string>
 	<key>LSSupportsOpeningDocumentsInPlace</key>
 	<true/>
 	<key>MAPBOX_ACCESS_TOKEN</key>
 	<string>$(MAPBOX_ACCESS_TOKEN)</string>
-	<key>MUSEMENT_API_KEY</key>
-	<string>$(MUSEMENT_API_KEY)</string>
 	<key>NSHealthShareUsageDescription</key>
 	<string>Looopr only writes walks to Apple Health and never reads your health data.</string>
 	<key>NSHealthUpdateUsageDescription</key>
@@ -75,8 +69,6 @@
 	<string>$(SUPABASE_ANON_KEY)</string>
 	<key>SUPABASE_URL</key>
 	<string>$(SUPABASE_URL)</string>
-	<key>TIQETS_API_KEY</key>
-	<string>$(TIQETS_API_KEY)</string>
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>location</string>
@@ -94,7 +86,5 @@
 	<array>
 		<string>UIInterfaceOrientationPortrait</string>
 	</array>
-	<key>VIATOR_API_KEY</key>
-	<string>$(VIATOR_API_KEY)</string>
 </dict>
 </plist>

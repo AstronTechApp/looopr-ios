@@ -67,23 +67,9 @@ extension ServiceContainer {
 
         // POI Discovery — Apple MapKit (primary, fast, no API key needed).
         // Uses MKLocalSearch with category filters at multiple points along
-        // the route for full coverage. Replaces Overpass as primary source.
+        // the route for full coverage.
         let poiDiscovery = AppleMapKitDiscoveryService(configuration: config)
         registerSingleton(POIDiscovering.self, instance: poiDiscovery)
-
-        // Fallback: OpenStreetMap Overpass API (churches, heritage sites that
-        // MapKit doesn't cover). Uncomment and wire as a secondary source if needed.
-        // let overpassDiscovery = OverpassPOIDiscoveryService(
-        //     apiClient: apiClient,
-        //     configuration: config
-        // )
-
-        // Legacy: Google Places Nearby Search (uncomment to restore)
-        // let googleDiscovery = GooglePlacesNearbyDiscoveryService(
-        //     apiClient: apiClient,
-        //     apiKey: Secrets.googlePlacesAPIKey,
-        //     configuration: config
-        // )
 
         let poiEnrichment = GooglePlacesEnrichmentService(
             apiClient: apiClient,
@@ -102,26 +88,6 @@ extension ServiceContainer {
             )
             registerSingleton(GooglePlacesNewFoodService.self, instance: foodService)
         }
-
-        // Tickets — only register providers with configured API keys
-        var ticketProviders: [TicketProviding] = []
-        if Secrets.hasViatorKey {
-            ticketProviders.append(ViatorTicketProvider(apiClient: apiClient, apiKey: Secrets.viatorAPIKey))
-        }
-        if Secrets.hasGetYourGuideKey {
-            ticketProviders.append(GetYourGuideTicketProvider(apiClient: apiClient, apiKey: Secrets.getYourGuideAPIKey))
-        }
-        if Secrets.hasTiqetsKey {
-            ticketProviders.append(TiqetsTicketProvider(apiClient: apiClient, apiKey: Secrets.tiqetsAPIKey))
-        }
-        if Secrets.hasMusementKey {
-            ticketProviders.append(MusementTicketProvider(apiClient: apiClient, apiKey: Secrets.musementAPIKey))
-        }
-        if Secrets.hasKlookKey {
-            ticketProviders.append(KlookTicketProvider(apiClient: apiClient, apiKey: Secrets.klookAPIKey))
-        }
-        let ticketAggregator = TicketAggregatorService(providers: ticketProviders)
-        registerSingleton(TicketAggregating.self, instance: ticketAggregator)
 
         // POI discovery — one shared instance so the 5-minute POI cache
         // survives navigation instead of dying with each RouteDetail screen.

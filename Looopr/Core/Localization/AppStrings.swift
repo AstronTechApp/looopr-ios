@@ -25,7 +25,6 @@ enum L10n {
         static var noSavedRoutes: String { String(localized: "home.noSavedRoutes", defaultValue: "No saved routes yet", bundle: LocalizationManager.shared.localizedBundle) }
         static var bookmarkRoutesDescription: String { String(localized: "home.bookmarkRoutesDescription", defaultValue: "Bookmark routes you love and they'll appear here", bundle: LocalizationManager.shared.localizedBundle) }
         static var recentLoooprs: String { String(localized: "home.recentLoooprs", defaultValue: "Recent Loooprs", bundle: LocalizationManager.shared.localizedBundle) }
-        static var findingNearbyExperiences: String { String(localized: "home.findingNearbyExperiences", defaultValue: "Finding nearby experiences...", bundle: LocalizationManager.shared.localizedBundle) }
         static var goodMorning: String { String(localized: "home.greeting.morning", defaultValue: "Good morning", bundle: LocalizationManager.shared.localizedBundle) }
         static var goodAfternoon: String { String(localized: "home.greeting.afternoon", defaultValue: "Good afternoon", bundle: LocalizationManager.shared.localizedBundle) }
         static var goodEvening: String { String(localized: "home.greeting.evening", defaultValue: "Good evening", bundle: LocalizationManager.shared.localizedBundle) }
@@ -267,25 +266,14 @@ enum L10n {
     // MARK: - POI Detail
     enum POIDetail {
         static var loadingDetails: String { String(localized: "poiDetail.loadingDetails", defaultValue: "Loading details...", bundle: LocalizationManager.shared.localizedBundle) }
-        static var findingTickets: String { String(localized: "poiDetail.findingTickets", defaultValue: "Finding tickets...", bundle: LocalizationManager.shared.localizedBundle) }
         static var hours: String { String(localized: "poiDetail.hours", defaultValue: "Hours", bundle: LocalizationManager.shared.localizedBundle) }
         static var admission: String { String(localized: "poiDetail.admission", defaultValue: "Admission", bundle: LocalizationManager.shared.localizedBundle) }
         static var phone: String { String(localized: "poiDetail.phone", defaultValue: "Phone", bundle: LocalizationManager.shared.localizedBundle) }
         static var accessibility: String { String(localized: "poiDetail.accessibility", defaultValue: "Accessibility", bundle: LocalizationManager.shared.localizedBundle) }
-        static var seePrice: String { String(localized: "poiDetail.seePrice", defaultValue: "See price", bundle: LocalizationManager.shared.localizedBundle) }
-
-        static func compareProviders(_ count: Int) -> String {
-            return String(format: NSLocalizedString("poiDetail.compareProviders", tableName: nil, bundle: LocalizationManager.shared.localizedBundle, value: "Compare providers (%@)", comment: ""), "\(count)")
-        }
 
         static var viewOnGoogleMaps: String { String(localized: "poiDetail.viewOnGoogleMaps", defaultValue: "View on Google Maps", bundle: LocalizationManager.shared.localizedBundle) }
         static var bookTickets: String { String(localized: "poiDetail.bookTickets", defaultValue: "Book Tickets", bundle: LocalizationManager.shared.localizedBundle) }
 
-        static func bookOn(_ provider: String) -> String {
-            return String(format: NSLocalizedString("poiDetail.bookOn", tableName: nil, bundle: LocalizationManager.shared.localizedBundle, value: "Book on %@", comment: ""), provider)
-        }
-
-        static var buyTickets: String { String(localized: "poiDetail.buyTickets", defaultValue: "Buy Tickets", bundle: LocalizationManager.shared.localizedBundle) }
         static var visitWebsite: String { String(localized: "poiDetail.visitWebsite", defaultValue: "Visit Website", bundle: LocalizationManager.shared.localizedBundle) }
         static var call: String { String(localized: "poiDetail.call", defaultValue: "Call", bundle: LocalizationManager.shared.localizedBundle) }
     }
@@ -373,20 +361,7 @@ enum L10n {
     enum Paywall {
         static var title: String { String(localized: "paywall.title", defaultValue: "Looopr Pro", bundle: LocalizationManager.shared.localizedBundle) }
         static var settingsRow: String { String(localized: "paywall.settingsRow", defaultValue: "Upgrade to Pro", bundle: LocalizationManager.shared.localizedBundle) }
-        static var headline: String { String(localized: "paywall.headline", defaultValue: "Walk further with Pro", bundle: LocalizationManager.shared.localizedBundle) }
-        static var subtitle: String { String(localized: "paywall.subtitle", defaultValue: "More routes, and the best coffee stops along the way.", bundle: LocalizationManager.shared.localizedBundle) }
-        static var featureRoutes: String { String(localized: "paywall.featureRoutes", defaultValue: "Up to 8 route options per walk instead of 2", bundle: LocalizationManager.shared.localizedBundle) }
-        static var featureLoops: String { String(localized: "paywall.featureLoops", defaultValue: "Cafés and restaurants along every route", bundle: LocalizationManager.shared.localizedBundle) }
-        static var featureFuture: String { String(localized: "paywall.featureFuture", defaultValue: "Ratings, opening hours and photos for every stop", bundle: LocalizationManager.shared.localizedBundle) }
-        static var monthly: String { String(localized: "paywall.monthly", defaultValue: "Monthly", bundle: LocalizationManager.shared.localizedBundle) }
-        static var annual: String { String(localized: "paywall.annual", defaultValue: "Yearly", bundle: LocalizationManager.shared.localizedBundle) }
-        static var bestValue: String { String(localized: "paywall.bestValue", defaultValue: "BEST VALUE", bundle: LocalizationManager.shared.localizedBundle) }
-        static var cta: String { String(localized: "paywall.cta", defaultValue: "Continue", bundle: LocalizationManager.shared.localizedBundle) }
-        static var restore: String { String(localized: "paywall.restore", defaultValue: "Restore Purchases", bundle: LocalizationManager.shared.localizedBundle) }
-        static var nothingToRestore: String { String(localized: "paywall.nothingToRestore", defaultValue: "No previous purchase found for this Apple ID.", bundle: LocalizationManager.shared.localizedBundle) }
         static var unavailable: String { String(localized: "paywall.unavailable", defaultValue: "Subscriptions aren't available right now. Please try again later.", bundle: LocalizationManager.shared.localizedBundle) }
-        static var purchaseFailed: String { String(localized: "paywall.purchaseFailed", defaultValue: "Purchase Failed", bundle: LocalizationManager.shared.localizedBundle) }
-        static var legalNote: String { String(localized: "paywall.legalNote", defaultValue: "Payment is charged to your Apple ID. Subscriptions renew automatically until cancelled in Settings at least 24 hours before the period ends.", bundle: LocalizationManager.shared.localizedBundle) }
         static var statusRow: String { String(localized: "paywall.statusRow", defaultValue: "Pro", bundle: LocalizationManager.shared.localizedBundle) }
         static var statusActive: String { String(localized: "paywall.statusActive", defaultValue: "Active", bundle: LocalizationManager.shared.localizedBundle) }
         static var manageSubscription: String { String(localized: "paywall.manageSubscription", defaultValue: "Manage Subscription", bundle: LocalizationManager.shared.localizedBundle) }
@@ -586,12 +561,6 @@ enum L10n {
         static var resolveFailedMessage: String { String(localized: "locationSearch.resolveFailedMessage", defaultValue: "Maps didn't return a location for it. Check your connection or try a more specific search.", bundle: LocalizationManager.shared.localizedBundle) }
         static var searchLocation: String { String(localized: "locationSearch.searchLocation", defaultValue: "Search Location", bundle: LocalizationManager.shared.localizedBundle) }
         static var prompt: String { String(localized: "locationSearch.prompt", defaultValue: "Search city, address, or place", bundle: LocalizationManager.shared.localizedBundle) }
-    }
-
-    // MARK: - Nearby Experiences
-    enum NearbyExperiences {
-        static var title: String { String(localized: "nearbyExperiences.title", defaultValue: "NEARBY EXPERIENCES", bundle: LocalizationManager.shared.localizedBundle) }
-        static var poweredByGetYourGuide: String { String(localized: "nearbyExperiences.poweredByGetYourGuide", defaultValue: "Powered by GetYourGuide", bundle: LocalizationManager.shared.localizedBundle) }
     }
 
     // MARK: - Live Activity
