@@ -14,10 +14,9 @@ final class SubscriptionGateTests: XCTestCase {
         XCTAssertTrue(SubscriptionGate.isPaidSubscriber(paywallEnabled: true, hasActiveEntitlement: true))
     }
 
-    func testShippedConfigurationKeepsPaywallDark() {
-        // Guard rail: this test starts failing the day the switch is flipped,
-        // as a reminder to verify products, offering, and entitlement are
-        // live in RevenueCat before shipping that build.
-        XCTAssertFalse(AppConfiguration.production.freemium.paywallEnabled)
+    func testShippedConfigurationHasThePaywallOn() {
+        // Paid features have been on sale since launch (Oct 2026). A build
+        // with the switch off would give everyone Pro for free.
+        XCTAssertTrue(AppConfiguration.production.freemium.paywallEnabled)
     }
 }

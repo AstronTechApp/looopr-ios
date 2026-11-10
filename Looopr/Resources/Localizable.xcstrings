@@ -12015,55 +12015,55 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Sieh die besten Kaffee- und Essensstopps entlang dieser Route, mit Bewertungen und Öffnungszeiten."
+            "value" : "Sieh die besten Kaffee- und Essensstopps entlang dieser Route, mit Bewertungen und Öffnungszeiten. Die erste Woche ist gratis."
           }
         },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "See the best coffee and food stops along this route, with ratings and opening hours."
+            "value" : "See the best coffee and food stops along this route, with ratings and opening hours. The first week is free."
           }
         },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Descubre las mejores paradas de café y comida en esta ruta, con valoraciones y horarios."
+            "value" : "Descubre las mejores paradas de café y comida en esta ruta, con valoraciones y horarios. La primera semana es gratis."
           }
         },
         "es-MX" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Descubre las mejores paradas de café y comida en esta ruta, con valoraciones y horarios."
+            "value" : "Descubre las mejores paradas de café y comida en esta ruta, con valoraciones y horarios. La primera semana es gratis."
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Découvrez les meilleures pauses café et restauration sur cet itinéraire, avec avis et horaires."
+            "value" : "Découvrez les meilleures pauses café et restauration sur cet itinéraire, avec avis et horaires. La première semaine est offerte."
           }
         },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Scopri le migliori soste per caffè e cibo lungo questo percorso, con recensioni e orari."
+            "value" : "Scopri le migliori soste per caffè e cibo lungo questo percorso, con recensioni e orari. La prima settimana è gratis."
           }
         },
         "nl" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Bekijk de beste koffie- en eetstops langs deze route, met beoordelingen en openingstijden."
+            "value" : "Bekijk de beste koffie- en eetstops langs deze route, met beoordelingen en openingstijden. De eerste week is gratis."
           }
         },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Veja as melhores paradas de café e comida nesta rota, com avaliações e horários."
+            "value" : "Veja as melhores paradas de café e comida nesta rota, com avaliações e horários. A primeira semana é grátis."
           }
         },
         "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Veja as melhores paragens de café e comida nesta rota, com avaliações e horários."
+            "value" : "Veja as melhores paragens de café e comida nesta rota, com avaliações e horários. A primeira semana é grátis."
           }
         }
       }
@@ -12074,55 +12074,55 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Pro ansehen"
+            "value" : "Pro gratis testen"
           }
         },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "See Pro"
+            "value" : "Try Pro free"
           }
         },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Ver Pro"
+            "value" : "Prueba Pro gratis"
           }
         },
         "es-MX" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Ver Pro"
+            "value" : "Prueba Pro gratis"
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Voir Pro"
+            "value" : "Essayer Pro gratuitement"
           }
         },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Scopri Pro"
+            "value" : "Prova Pro gratis"
           }
         },
         "nl" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Bekijk Pro"
+            "value" : "Probeer Pro gratis"
           }
         },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Ver Pro"
+            "value" : "Testar o Pro grátis"
           }
         },
         "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Ver Pro"
+            "value" : "Experimentar o Pro grátis"
           }
         }
       }
@@ -16442,186 +16442,6 @@
         }
       }
     },
-    "routeDifficulty.challenging" : {
-      "comment" : "Difficulty badge on a route card.",
-      "extractionState" : "manual",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Anspruchsvoll"
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Challenging"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Exigente"
-          }
-        },
-        "es-MX" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Exigente"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Difficile"
-          }
-        },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Impegnativo"
-          }
-        },
-        "nl" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Uitdagend"
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Desafiador"
-          }
-        },
-        "pt-PT" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Exigente"
-          }
-        }
-      }
-    },
-    "routeDifficulty.easy" : {
-      "comment" : "Difficulty badge on a route card.",
-      "extractionState" : "manual",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Leicht"
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Easy"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Fácil"
-          }
-        },
-        "es-MX" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Fácil"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Facile"
-          }
-        },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Facile"
-          }
-        },
-        "nl" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Makkelijk"
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Fácil"
-          }
-        },
-        "pt-PT" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Fácil"
-          }
-        }
-      }
-    },
-    "routeDifficulty.moderate" : {
-      "comment" : "Difficulty badge on a route card.",
-      "extractionState" : "manual",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Mittel"
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Moderate"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Moderado"
-          }
-        },
-        "es-MX" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Moderado"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Modéré"
-          }
-        },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Moderato"
-          }
-        },
-        "nl" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Gemiddeld"
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Moderado"
-          }
-        },
-        "pt-PT" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Moderado"
-          }
-        }
-      }
-    },
     "routeName.east" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -17209,65 +17029,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Oeste"
-          }
-        }
-      }
-    },
-    "routeSelection.difficulty" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Schwierigkeit"
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Difficulty"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Dificultad"
-          }
-        },
-        "es-MX" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Dificultad"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Difficulté"
-          }
-        },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Difficoltà"
-          }
-        },
-        "nl" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Moeilijkheid"
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Dificuldade"
-          }
-        },
-        "pt-PT" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Dificuldade"
           }
         }
       }
@@ -17927,66 +17688,6 @@
         }
       }
     },
-    "routeSelection.statElevation" : {
-      "comment" : "Small stat label on a route card.",
-      "extractionState" : "manual",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Höhe"
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Elevation"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Desnivel"
-          }
-        },
-        "es-MX" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Desnivel"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Dénivelé"
-          }
-        },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Dislivello"
-          }
-        },
-        "nl" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Hoogte"
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Elevação"
-          }
-        },
-        "pt-PT" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Elevação"
-          }
-        }
-      }
-    },
     "routeSelection.statTime" : {
       "comment" : "Small stat label on a route card.",
       "extractionState" : "manual",
@@ -18353,55 +18054,55 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Looopr Pro findet bis zu 8 Runden pro Spaziergang und zeigt die Cafés unterwegs."
+            "value" : "Looopr Pro findet bis zu 8 Runden pro Spaziergang und zeigt die Cafés unterwegs. Die erste Woche ist gratis."
           }
         },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Looopr Pro finds up to 8 loops per walk and shows the cafés along the way."
+            "value" : "Looopr Pro finds up to 8 loops per walk and shows the cafés along the way. The first week is free."
           }
         },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Looopr Pro encuentra hasta 8 loops por paseo y muestra los cafés del camino."
+            "value" : "Looopr Pro encuentra hasta 8 loops por paseo y muestra los cafés del camino. La primera semana es gratis."
           }
         },
         "es-MX" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Looopr Pro encuentra hasta 8 loops por paseo y muestra los cafés del camino."
+            "value" : "Looopr Pro encuentra hasta 8 loops por paseo y muestra los cafés del camino. La primera semana es gratis."
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Looopr Pro trouve jusqu'à 8 boucles par balade et affiche les cafés en chemin."
+            "value" : "Looopr Pro trouve jusqu'à 8 boucles par balade et affiche les cafés en chemin. La première semaine est offerte."
           }
         },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Looopr Pro trova fino a 8 anelli per passeggiata e mostra i caffè lungo il percorso."
+            "value" : "Looopr Pro trova fino a 8 anelli per passeggiata e mostra i caffè lungo il percorso. La prima settimana è gratis."
           }
         },
         "nl" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Looopr Pro vindt tot 8 loops per wandeling en toont de cafés onderweg."
+            "value" : "Looopr Pro vindt tot 8 loops per wandeling en toont de cafés onderweg. De eerste week is gratis."
           }
         },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "O Looopr Pro encontra até 8 loops por caminhada e mostra os cafés do caminho."
+            "value" : "O Looopr Pro encontra até 8 loops por caminhada e mostra os cafés do caminho. A primeira semana é grátis."
           }
         },
         "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "O Looopr Pro encontra até 8 loops por caminhada e mostra os cafés do caminho."
+            "value" : "O Looopr Pro encontra até 8 loops por caminhada e mostra os cafés do caminho. A primeira semana é grátis."
           }
         }
       }
@@ -18412,55 +18113,55 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Pro ansehen"
+            "value" : "Pro gratis testen"
           }
         },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "See Pro"
+            "value" : "Try Pro free"
           }
         },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Ver Pro"
+            "value" : "Prueba Pro gratis"
           }
         },
         "es-MX" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Ver Pro"
+            "value" : "Prueba Pro gratis"
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Voir Pro"
+            "value" : "Essayer Pro gratuitement"
           }
         },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Scopri Pro"
+            "value" : "Prova Pro gratis"
           }
         },
         "nl" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Bekijk Pro"
+            "value" : "Probeer Pro gratis"
           }
         },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Ver Pro"
+            "value" : "Testar o Pro grátis"
           }
         },
         "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Ver Pro"
+            "value" : "Experimentar o Pro grátis"
           }
         }
       }
@@ -25243,6 +24944,419 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Me levar de volta"
+          }
+        }
+      }
+    },
+    "routeSelection.lockedTitle.one" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1 weitere Runde mit Pro"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1 more loop with Pro"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1 loop más con Pro"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1 loop más con Pro"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1 boucle de plus avec Pro"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1 anello in più con Pro"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nog 1 loop met Pro"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mais 1 loop com o Pro"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mais 1 loop com o Pro"
+          }
+        }
+      }
+    },
+    "routeSelection.lockedTitle.other" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ weitere Runden mit Pro"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ more loops with Pro"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ loops más con Pro"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ loops más con Pro"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ boucles de plus avec Pro"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ anelli in più con Pro"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nog %@ loops met Pro"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mais %@ loops com o Pro"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mais %@ loops com o Pro"
+          }
+        }
+      }
+    },
+    "routeSelection.lockedBody" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Looopr hat auch diese für deinen Spaziergang gefunden. Pro schaltet sie frei, dazu die Cafés unterwegs."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Looopr found these for your walk too. Pro unlocks them, plus the cafés along the way."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Looopr también encontró estos para tu paseo. Pro los desbloquea, junto con los cafés del camino."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Looopr también encontró estos para tu paseo. Pro los desbloquea, junto con los cafés del camino."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Looopr les a aussi trouvées pour votre balade. Pro les débloque, avec les cafés en chemin."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Looopr ha trovato anche questi per la tua passeggiata. Pro li sblocca, insieme ai caffè lungo il percorso."
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Looopr vond deze ook voor je wandeling. Met Pro open je ze, plus de cafés onderweg."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O Looopr também encontrou estes para sua caminhada. O Pro libera todos, junto com os cafés do caminho."
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O Looopr também encontrou estes para a sua caminhada. O Pro desbloqueia-os, junto com os cafés do caminho."
+          }
+        }
+      }
+    },
+    "routeSelection.lockedCTA" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pro eine Woche gratis testen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Try Pro free for a week"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Prueba Pro gratis una semana"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Prueba Pro gratis una semana"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Essayer Pro gratuitement une semaine"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Prova Pro gratis per una settimana"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Probeer Pro een week gratis"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Teste o Pro grátis por uma semana"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Experimente o Pro grátis durante uma semana"
+          }
+        }
+      }
+    },
+    "routeSelection.lockedRowTitle" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Weitere Runde"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Another loop"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Otro loop"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Otro loop"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Autre boucle"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Altro anello"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nog een loop"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Outro loop"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Outro loop"
+          }
+        }
+      }
+    },
+    "finishWalk.backupTitle" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sichere deine Spaziergänge"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Keep your walks safe"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Guarda tus paseos"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Guarda tus paseos"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gardez vos balades en sécurité"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tieni al sicuro le tue passeggiate"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bewaar je wandelingen veilig"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Guarde suas caminhadas"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Guarde as suas caminhadas"
+          }
+        }
+      }
+    },
+    "finishWalk.backupNotNow" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nicht jetzt"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Not now"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ahora no"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ahora no"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Plus tard"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Non ora"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Niet nu"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Agora não"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Agora não"
           }
         }
       }

@@ -186,3 +186,31 @@ targets:
         PRODUCT_BUNDLE_IDENTIFIER: nl.astrontech.looopr.tests
         GENERATE_INFOPLIST_FILE: true
         TARGETED_DEVICE_FAMILY: "1"
+
+  # Smoke test of the first-run flow (1.5): intro → Home without sign-in →
+  # search → locked loops → paywall → route detail. Saves screenshots to
+  # ~/Muter/.claude/uitest-shots when run on the simulator.
+  LoooprUITests:
+    type: bundle.ui-testing
+    platform: iOS
+    sources:
+      - LoooprUITests
+    dependencies:
+      - target: Looopr
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: nl.astrontech.looopr.uitests
+        GENERATE_INFOPLIST_FILE: true
+        TARGETED_DEVICE_FAMILY: "1"
+        TEST_TARGET_NAME: Looopr
+
+schemes:
+  LoooprUITests:
+    build:
+      targets:
+        Looopr: all
+        LoooprUITests: [test]
+    test:
+      config: Debug
+      targets:
+        - LoooprUITests

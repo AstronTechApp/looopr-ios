@@ -46,7 +46,8 @@ enum AnalyticsEvent: Sendable {
     /// `stoppedEarly` is true when the time cap ended a slow search.
     /// `closestOnly` is true when no loop of the asked length existed and
     /// the list shows the closest matches instead.
-    case routeGenerated(count: Int, minutes: Int, firstRouteSeconds: Double?, totalSeconds: Double, stoppedEarly: Bool, closestOnly: Bool)
+    /// `locked` is how many of the `count` loops were shown locked (free tier).
+    case routeGenerated(count: Int, minutes: Int, firstRouteSeconds: Double?, totalSeconds: Double, stoppedEarly: Bool, closestOnly: Bool, locked: Int)
     /// A search ended without routes to show: `reason` is one of
     /// `no_routes`, `location_unavailable`, `generation_error`. Cancelled
     /// searches (the user left the screen) are not reported at all.
@@ -84,7 +85,24 @@ enum AnalyticsEvent: Sendable {
     /// walk. iOS decides whether it actually shows, so this counts asks,
     /// not ratings. `walkCount` is the user's total finished walks.
     case appReviewRequested(walkCount: Int)
-    case paywallShown
+    /// `source` is a `PaywallSource` raw value: where the paywall was opened.
+    case paywallShown(source: String)
+    /// The paywall closed without a purchase or restore.
+    case paywallDismissed(source: String)
+    /// A free user tapped something Pro-only: `feature` is `locked_route`
+    /// or `food`.
+    case lockedFeatureTapped(feature: String)
+    /// An intro page was shown (`page` 1–3), and how the intro ended.
+    case onboardingPageViewed(page: Int)
+    case onboardingCompleted(skipped: Bool, lastPage: Int)
+    /// The sign-in sheet was offered: `reason` is what asked for it
+    /// (save_route, share, feedback, settings, after_walk).
+    case accountPromptShown(reason: String)
+    /// Sign-in finished: `method` apple or google, `reason` as above.
+    case signInCompleted(method: String, reason: String)
+    /// The location permission answer after the system prompt:
+    /// `status` granted, denied or restricted.
+    case locationPermission(status: String)
     /// A purchase completed on the paywall and `looopr_pro` became active.
     /// `price` is the store price of the product in `currency` (what the
     /// user will be charged per period once any trial ends); `periodType`
@@ -139,6 +157,13 @@ enum AnalyticsEvent: Sendable {
         case .feedbackSubmitted:   return "feedback_submitted"
         case .appReviewRequested:  return "app_review_requested"
         case .paywallShown:        return "paywall_shown"
+        case .paywallDismissed:    return "paywall_dismissed"
+        case .lockedFeatureTapped: return "locked_feature_tapped"
+        case .onboardingPageViewed: return "onboarding_page_viewed"
+        case .onboardingCompleted: return "onboarding_completed"
+        case .accountPromptShown:  return "account_prompt_shown"
+        case .signInCompleted:     return "sign_in_completed"
+        case .locationPermission:  return "location_permission"
         case .subscriptionStarted: return "subscription_started"
         case .subscriptionRestored: return "subscription_restored"
         case .offRouteDetected:    return "off_route_detected"
@@ -157,9 +182,10 @@ enum AnalyticsEvent: Sendable {
             var props: [String: AnalyticsValue] = ["minutes": .int(minutes), "custom_location": .bool(custom)]
             Self.addCoarseLocation(latitude, longitude, to: &props)
             return props
-        case .routeGenerated(let count, let minutes, let firstRouteSeconds, let totalSeconds, let stoppedEarly, let closestOnly):
+        case .routeGenerated(let count, let minutes, let firstRouteSeconds, let totalSeconds, let stoppedEarly, let closestOnly, let locked):
             var props: [String: AnalyticsValue] = [
                 "count": .int(count),
+                "locked": .int(locked),
                 "minutes": .int(minutes),
                 "total_seconds": .double((totalSeconds * 10).rounded() / 10),
                 "stopped_early": .bool(stoppedEarly),
@@ -218,8 +244,20 @@ enum AnalyticsEvent: Sendable {
             return ["rating": .int(rating), "tags": .stringArray(tags)]
         case .appReviewRequested(let walkCount):
             return ["walk_count": .int(walkCount)]
-        case .paywallShown:
-            return [:]
+        case .paywallShown(let source), .paywallDismissed(let source):
+            return ["source": .string(source)]
+        case .lockedFeatureTapped(let feature):
+            return ["feature": .string(feature)]
+        case .onboardingPageViewed(let page):
+            return ["page": .int(page)]
+        case .onboardingCompleted(let skipped, let lastPage):
+            return ["skipped": .bool(skipped), "last_page": .int(lastPage)]
+        case .accountPromptShown(let reason):
+            return ["reason": .string(reason)]
+        case .signInCompleted(let method, let reason):
+            return ["method": .string(method), "reason": .string(reason)]
+        case .locationPermission(let status):
+            return ["status": .string(status)]
         case .subscriptionStarted(let productId, let plan, let price, let currency, let periodType, let isSandbox):
             var props: [String: AnalyticsValue] = [
                 "product_id": .string(productId),

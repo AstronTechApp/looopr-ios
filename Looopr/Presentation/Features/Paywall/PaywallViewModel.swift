@@ -18,17 +18,21 @@ final class PaywallViewModel {
     private(set) var didUnlock = false
 
     private let subscriptionService: RevenueCatSubscriptionService?
+    private let source: PaywallSource
+    private var didTrackClose = false
     private let analytics: AnalyticsTracking
     private let logger = AppLogger(category: "Paywall")
     private var entitlementObservationTask: Task<Void, Never>?
 
     init(
+        source: PaywallSource,
         subscriptionService: RevenueCatSubscriptionService? = nil,
         analytics: AnalyticsTracking = ServiceContainer.shared.resolve(AnalyticsTracking.self)
     ) {
         self.subscriptionService = subscriptionService
             ?? ServiceContainer.shared.resolveOptional(RevenueCatSubscriptionService.self)
         self.analytics = analytics
+        self.source = source
     }
 
     /// Redundant, callback-independent path to `didUnlock`: watches
@@ -71,7 +75,18 @@ final class PaywallViewModel {
     var alreadyPremium: Bool { subscriptionService?.hasActiveEntitlement == true }
 
     func trackShown() {
-        analytics.track(.paywallShown)
+        didTrackClose = false
+        analytics.track(.paywallShown(source: source.rawValue))
+    }
+
+    /// Called when the paywall goes away. A close without a purchase or
+    /// restore is a dismissal; one per showing.
+    func trackClosed() {
+        guard !didTrackClose else { return }
+        didTrackClose = true
+        if !didUnlock {
+            analytics.track(.paywallDismissed(source: source.rawValue))
+        }
     }
 
     func handlePurchaseCompleted(_ customerInfo: CustomerInfo) {

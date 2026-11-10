@@ -199,7 +199,7 @@ final class RouteSelectionViewModelTests: XCTestCase {
         await vm.loadRoutes()
 
         XCTAssertFalse(vm.isShowingClosestMatches)
-        if case .routeGenerated(_, _, _, _, _, let closestOnly) = analytics.events.last! {
+        if case .routeGenerated(_, _, _, _, _, let closestOnly, _) = analytics.events.last! {
             XCTAssertFalse(closestOnly)
         } else { XCTFail("expected route_generated") }
     }
@@ -217,7 +217,7 @@ final class RouteSelectionViewModelTests: XCTestCase {
         XCTAssertTrue(vm.isShowingClosestMatches)
         XCTAssertNil(vm.failure)
         XCTAssertTrue(vm.didFindRoutes)
-        if case .routeGenerated(let count, _, _, _, _, let closestOnly) = analytics.events.last! {
+        if case .routeGenerated(let count, _, _, _, _, let closestOnly, _) = analytics.events.last! {
             XCTAssertEqual(count, 2)
             XCTAssertTrue(closestOnly)
         } else { XCTFail("expected route_generated") }
@@ -382,7 +382,7 @@ final class RouteSelectionViewModelTests: XCTestCase {
         XCTAssertFalse(vm.isLoading)
         XCTAssertFalse(vm.isTakingLong, "a route arrived, so no waiting hint")
         XCTAssertEqual(analytics.names, ["route_search_started", "route_generated"])
-        if case .routeGenerated(let count, _, let first, let total, let stoppedEarly, _) = analytics.events.last! {
+        if case .routeGenerated(let count, _, let first, let total, let stoppedEarly, _, _) = analytics.events.last! {
             XCTAssertEqual(count, 1)
             XCTAssertNotNil(first)
             XCTAssertGreaterThanOrEqual(total, 0.4)
@@ -405,6 +405,54 @@ final class RouteSelectionViewModelTests: XCTestCase {
 
         XCTAssertEqual(service.streamCalls, 1)
         XCTAssertEqual(analytics.names.filter { $0 == "route_search_started" }.count, 1)
+    }
+    // MARK: - 1.5: locked previews and the first-search paywall
+
+    /// The generator sends the closest fits first; a free user opens those
+    /// two and sees the other three as locked loops.
+    func testFreeTierOpensTwoAndLocksTheRest() async {
+        let service = ScriptedRouteService()
+        service.routes = [makeRoute(29), makeRoute(33), makeRoute(24), makeRoute(40), makeRoute(21)]
+        let analytics = RecordingAnalytics()
+        let vm = makeViewModel(service: service, analytics: analytics, location: amsterdam)
+
+        await vm.loadRoutes()
+
+        XCTAssertEqual(vm.routes.map(\.durationMinutes), [29, 33])
+        XCTAssertEqual(vm.lockedRoutes.map(\.durationMinutes), [21, 24, 40])
+        guard case .routeGenerated(let count, _, _, _, _, _, let locked) = analytics.events.last! else {
+            return XCTFail("expected route_generated")
+        }
+        XCTAssertEqual(count, 5)
+        XCTAssertEqual(locked, 3)
+    }
+
+    func testFirstSearchPaywallIsOfferedOnceAndOnlyAfterLoops() async {
+        let suite = "paywall-\(UUID().uuidString)"
+        let defaults = UserDefaults(suiteName: suite)!
+        defer { defaults.removePersistentDomain(forName: suite) }
+
+        let empty = makeViewModel(service: ScriptedRouteService(), analytics: RecordingAnalytics(), location: amsterdam)
+        await empty.loadRoutes()
+        XCTAssertFalse(empty.takeFirstSearchPaywall(defaults: defaults), "a failed search is not a sales moment")
+
+        let service = ScriptedRouteService()
+        service.routes = [makeRoute(30)]
+        let vm = makeViewModel(service: service, analytics: RecordingAnalytics(), location: amsterdam)
+        await vm.loadRoutes()
+        XCTAssertTrue(vm.takeFirstSearchPaywall(defaults: defaults))
+        XCTAssertFalse(vm.takeFirstSearchPaywall(defaults: defaults), "only once per install")
+    }
+
+    func testClosingThePaywallWithoutBuyingIsADismissal() {
+        let analytics = RecordingAnalytics()
+        let paywall = PaywallViewModel(source: .lockedRoute, analytics: analytics)
+        paywall.trackShown()
+        paywall.trackClosed()
+        paywall.trackClosed() // onDisappear can fire twice; count it once
+        XCTAssertEqual(analytics.names, ["paywall_shown", "paywall_dismissed"])
+        guard case .paywallDismissed(let source) = analytics.events.last! else { return XCTFail() }
+        XCTAssertEqual(source, "locked_route")
     }
 }
 

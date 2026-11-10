@@ -25,16 +25,15 @@ struct AppRootView: View {
                     }
                 }
             } else if !authService.isSignedIn && !guest.isActive && !onboarding.hasCompleted {
-                // First launch only: three intro pages before sign-in.
-                OnboardingView { onboarding.markCompleted() }
-                    .transition(.opacity)
-            } else if !authService.isSignedIn && !guest.isActive {
-                // Signing in is optional (guideline 5.1.1(v)): everything
-                // except cloud sync, sharing and feedback works without it.
-                AuthView(
-                    authService: authService,
-                    onContinueAsGuest: { guest.continueAsGuest() }
-                )
+                // First launch only: three intro pages, then straight to
+                // Home as a guest. Since 1.5 there is no sign-in screen in
+                // between: an account is only asked for when a feature needs
+                // one (sharing, feedback, backup) or after the first walk.
+                OnboardingView {
+                    onboarding.markCompleted()
+                    guest.continueAsGuest()
+                }
+                .transition(.opacity)
             } else {
                 mainContent
             }
@@ -47,11 +46,21 @@ struct AppRootView: View {
             AuthView(
                 authService: authService,
                 message: accountPromptMessage,
-                onClose: { accountPrompt.dismiss() }
+                onClose: { accountPrompt.dismiss() },
+                analyticsReason: accountPrompt.reason?.analyticsName ?? "settings"
             )
         }
+        .onChange(of: accountPrompt.reason) { _, reason in
+            guard let reason else { return }
+            ServiceContainer.shared.resolve(AnalyticsTracking.self)
+                .track(.accountPromptShown(reason: reason.analyticsName))
+        }
         .onChange(of: authService.isSignedIn) { _, signedIn in
-            guard signedIn else { return }
+            guard signedIn else {
+                // Signed out (or account deleted): carry on as a guest.
+                if onboarding.hasCompleted { guest.continueAsGuest() }
+                return
+            }
             guest.end()
             accountPrompt.dismiss()
         }
@@ -63,6 +72,10 @@ struct AppRootView: View {
             if authService.isSignedIn {
                 onboarding.markCompleted()
                 guest.end()
+            } else if onboarding.hasCompleted {
+                // People from 1.4 and earlier who stopped at the sign-in
+                // screen, or signed out: no more sign-in wall.
+                guest.continueAsGuest()
             }
             hasCheckedSession = true
             // Fired after session restore so the event carries the signed-in
@@ -83,7 +96,7 @@ struct AppRootView: View {
         switch accountPrompt.reason {
         case .shareRoute: L10n.Auth.signInToShare
         case .feedback: L10n.Auth.signInToSendFeedback
-        case .settings, nil: L10n.Auth.signInToSync
+        case .settings, .afterWalk, nil: L10n.Auth.signInToSync
         }
     }
 
@@ -145,7 +158,7 @@ struct AppRootView: View {
         case .settings:
             SettingsView()
         case .paywall:
-            PaywallView()
+            PaywallView(source: .settings)
         }
     }
 
@@ -226,7 +239,7 @@ struct AppRootView: View {
             handleDeepLink(url)
         }
         .fullScreenCover(isPresented: $router.isPaywallPresented) {
-            PaywallView()
+            PaywallView(source: router.paywallSource)
         }
     }
 
@@ -306,7 +319,7 @@ struct AppRootView: View {
             handleDeepLink(url)
         }
         .fullScreenCover(isPresented: $router.isPaywallPresented) {
-            PaywallView()
+            PaywallView(source: router.paywallSource)
         }
     }
 

@@ -16,13 +16,17 @@ struct AuthView: View {
     private let message: String?
     /// Non-nil when presented as a sheet; shows a close button.
     private let onClose: (() -> Void)?
+    /// What asked for the sign-in, for the `sign_in_completed` event.
+    private let analyticsReason: String
 
     init(
         authService: AuthService,
         message: String? = nil,
         onContinueAsGuest: (() -> Void)? = nil,
-        onClose: (() -> Void)? = nil
+        onClose: (() -> Void)? = nil,
+        analyticsReason: String = "settings"
     ) {
+        self.analyticsReason = analyticsReason
         _authService = State(initialValue: authService)
         self.message = message
         self.onContinueAsGuest = onContinueAsGuest
@@ -208,6 +212,7 @@ struct AuthView: View {
                 }
                 do {
                     try await authService.signInWithApple(idToken: idToken, nonce: delegate.nonce)
+                    trackSignIn(method: "apple")
                 } catch {
                     errorMessage = error.localizedDescription
                 }
@@ -227,11 +232,21 @@ struct AuthView: View {
 
         do {
             try await authService.signInWithGoogle()
+            // The web fallback returns before a session exists; only a
+            // finished sign-in counts.
+            if authService.isSignedIn { trackSignIn(method: "google") }
         } catch is CancellationError {
             // User closed Google's sheet — not an error.
         } catch {
             errorMessage = error.localizedDescription
         }
+    }
+}
+
+extension AuthView {
+    fileprivate func trackSignIn(method: String) {
+        ServiceContainer.shared.resolve(AnalyticsTracking.self)
+            .track(.signInCompleted(method: method, reason: analyticsReason))
     }
 }
 

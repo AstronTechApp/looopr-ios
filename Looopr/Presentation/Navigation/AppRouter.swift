@@ -21,8 +21,12 @@ final class AppRouter {
     /// button; pushing it left a back chevron, a safe-area gap above the
     /// hero and the tab bar overlapping the footer links.
     var isPaywallPresented = false
+    /// What opened the paywall, for the `paywall_shown` / `paywall_dismissed`
+    /// events, so the funnel shows which entry point sells.
+    private(set) var paywallSource: PaywallSource = .settings
 
-    func presentPaywall() {
+    func presentPaywall(source: PaywallSource) {
+        paywallSource = source
         isPaywallPresented = true
     }
 

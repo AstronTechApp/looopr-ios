@@ -12,6 +12,9 @@ struct FinishWalkView: View {
     @State private var showGPXError = false
     @State private var appear = false
     @State private var statsAppeared = false
+    /// Decided once when the screen opens, so the card doesn't vanish
+    /// while the person is reading it.
+    @State private var showBackupCard = BackupOffer.shouldOffer()
 
     init(session: WalkSession, route: Route) {
         _viewModel = State(initialValue: FinishWalkViewModel(session: session, route: route))
@@ -81,6 +84,13 @@ struct FinishWalkView: View {
                         feedbackSection
                             .opacity(appear ? 1 : 0)
                             .offset(y: appear ? 0 : 30)
+
+                        // Guests, first walk only: offer to back up their walks.
+                        if showBackupCard {
+                            backupCard
+                                .padding(.horizontal, LoooprTheme.Spacing.screenHorizontal)
+                                .transition(.opacity)
+                        }
 
                         // Action buttons
                         actionButtons
@@ -476,3 +486,74 @@ private struct ConfettiParticle: Identifiable {
     var position: CGPoint
     var opacity: Double
 }
+
+// MARK: - Back up your walks (guests, after the first walk)
+
+extension FinishWalkView {
+    fileprivate var backupCard: some View {
+        VStack(alignment: .leading, spacing: LoooprTheme.Spacing.sm) {
+            HStack(spacing: LoooprTheme.Spacing.sm) {
+                Image(systemName: "icloud.and.arrow.up")
+                    .font(.system(size: 18, weight: .semibold))
+                    .foregroundStyle(LoooprTheme.Colors.primary)
+                Text(L10n.FinishWalk.backupTitle)
+                    .font(LoooprTheme.Typography.headline)
+                    .foregroundStyle(LoooprTheme.Colors.textPrimary)
+            }
+            Text(L10n.Auth.signInToSync)
+                .font(LoooprTheme.Typography.subheadline)
+                .foregroundStyle(LoooprTheme.Colors.textSecondary)
+                .fixedSize(horizontal: false, vertical: true)
+            HStack(spacing: LoooprTheme.Spacing.sm) {
+                Button {
+                    AccountPrompt.shared.request(.afterWalk)
+                    withAnimation { showBackupCard = false }
+                } label: {
+                    Text(L10n.Settings.signIn)
+                        .font(LoooprTheme.Typography.button)
+                        .foregroundStyle(.white)
+                        .padding(.horizontal, LoooprTheme.Spacing.lg)
+                        .padding(.vertical, 10)
+                        .background(LoooprTheme.Colors.primary)
+                        .clipShape(Capsule())
+                }
+                .buttonStyle(.plain)
+                Button {
+                    withAnimation { showBackupCard = false }
+                } label: {
+                    Text(L10n.FinishWalk.backupNotNow)
+                        .font(LoooprTheme.Typography.button)
+                        .foregroundStyle(LoooprTheme.Colors.textSecondary)
+                        .padding(.vertical, 10)
+                }
+                .buttonStyle(.plain)
+            }
+            .padding(.top, LoooprTheme.Spacing.xxs)
+        }
+        .padding(LoooprTheme.Spacing.md)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(LoooprTheme.Colors.surface)
+        .clipShape(RoundedRectangle(cornerRadius: LoooprTheme.Radius.lg))
+        .overlay(
+            RoundedRectangle(cornerRadius: LoooprTheme.Radius.lg)
+                .strokeBorder(LoooprTheme.Colors.primaryLight, lineWidth: 1.5)
+        )
+    }
+}
+
+/// The "back up your walks" card is offered once, to guests, on the finish
+/// screen of their first walk. Asking for an account here (instead of at
+/// launch) is the point of 1.5: people decide after they've used the app.
+@MainActor
+enum BackupOffer {
+    private static let key = "accountPrompt.afterWalkOffered"
+
+    static func shouldOffer(defaults: UserDefaults = .standard) -> Bool {
+        guard GuestSession.shared.isActive,
+              ServiceContainer.shared.resolveOptional(AuthService.self) != nil,
+              !defaults.bool(forKey: key) else { return false }
+        defaults.set(true, forKey: key)
+        return true
+    }
+}
+

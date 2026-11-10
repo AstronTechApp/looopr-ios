@@ -18,16 +18,9 @@ struct Route: Identifiable, Codable, Sendable, Hashable {
     let containsFerry: Bool
 
     enum Difficulty: String, Codable, CaseIterable, Sendable {
+        // Stored and synced only. Not shown since 1.5: it was derived from
+        // distance alone, not from real climbs.
         case easy, moderate, challenging
-
-        /// User-facing label in the app's current language.
-        var localizedLabel: String {
-            switch self {
-            case .easy: return L10n.RouteDifficulty.easy
-            case .moderate: return L10n.RouteDifficulty.moderate
-            case .challenging: return L10n.RouteDifficulty.challenging
-            }
-        }
     }
 
     private enum CodingKeys: String, CodingKey {

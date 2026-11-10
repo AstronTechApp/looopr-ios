@@ -88,8 +88,9 @@ enum GPXExporter {
         let base = (session.routeName.map(L10n.RouteName.localized) ?? "Looopr walk")
             .components(separatedBy: CharacterSet.alphanumerics.union(.whitespaces).inverted)
             .joined()
-            .trimmingCharacters(in: .whitespaces)
-            .replacingOccurrences(of: " ", with: "-")
+            // "Jordaan & Canals" must give "Jordaan-Canals", not a double dash.
+            .split(whereSeparator: \.isWhitespace)
+            .joined(separator: "-")
         return "Looopr_\(base.isEmpty ? "walk" : base)_\(date)"
     }
 

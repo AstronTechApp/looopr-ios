@@ -12,7 +12,11 @@ import RevenueCatUI
 /// don't need a release.
 struct PaywallView: View {
     @Environment(\.dismiss) private var dismiss
-    @State private var viewModel = PaywallViewModel()
+    @State private var viewModel: PaywallViewModel
+
+    init(source: PaywallSource) {
+        _viewModel = State(initialValue: PaywallViewModel(source: source))
+    }
 
     var body: some View {
         Group {
@@ -35,7 +39,10 @@ struct PaywallView: View {
             viewModel.trackShown()
             viewModel.observeEntitlement()
         }
-        .onDisappear { viewModel.stopObservingEntitlement() }
+        .onDisappear {
+            viewModel.stopObservingEntitlement()
+            viewModel.trackClosed()
+        }
         .onChange(of: viewModel.didUnlock) { _, unlocked in
             if unlocked { dismiss() }
         }

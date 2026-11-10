@@ -163,19 +163,18 @@ final class MapboxRouteGenerationService: RouteGenerating, @unchecked Sendable {
 
         // Loops of the asked length win. Only when there are none (sparse or
         // hilly areas where no short loop exists) do the closest matches
-        // show, nearest length first, so the user gets a walk, not nothing.
+        // show, so the user gets a walk, not nothing. Either way the loops
+        // come out closest to the asked time first: the free tier shows the
+        // first two that arrive, and those must be the best fits, not the
+        // shortest (before 1.5 a 30-min ask could get the 20- and 22-min
+        // loops while a 30-min one existed).
         let fitting = candidateRoutes.filter { $0.result.fitsLength }
-        let sorted: [Route]
-        if !fitting.isEmpty {
-            sorted = fitting
-                .sorted { $0.result.route.durationMinutes < $1.result.route.durationMinutes }
-                .map(\.result.route)
-        } else {
+        if fitting.isEmpty {
             logger.info("Mapbox: no \(minutes)-min loop, showing \(candidateRoutes.count) closest matches")
-            sorted = candidateRoutes
-                .sorted { abs(log($0.result.ratio)) < abs(log($1.result.ratio)) }
-                .map(\.result.route)
         }
+        let sorted = Self.closestFirst(
+            fitting.isEmpty ? candidateRoutes.map(\.result) : fitting.map(\.result)
+        )
 
         // Deduplicate: keep routes that aren't too similar to already-accepted ones
         var accepted: [Route] = []
@@ -204,6 +203,18 @@ final class MapboxRouteGenerationService: RouteGenerating, @unchecked Sendable {
         }
 
         return accepted
+    }
+
+    /// Orders candidates by how many minutes their walking time is off the
+    /// asked time (ratio 1.0 = exact): for a 30-minute ask, 27 and 34 come
+    /// before 22, which comes before 40. Ties keep the shorter loop first.
+    static func closestFirst(_ candidates: [PentagonResult]) -> [Route] {
+        candidates
+            .sorted {
+                let a = abs($0.ratio - 1), b = abs($1.ratio - 1)
+                return a != b ? a < b : $0.route.durationMinutes < $1.route.durationMinutes
+            }
+            .map(\.route)
     }
 
     // MARK: - Pentagon Loop
@@ -356,7 +367,7 @@ final class MapboxRouteGenerationService: RouteGenerating, @unchecked Sendable {
 
     /// A finished candidate; `fitsLength` is false for a closest match
     /// kept because no attempt came within the length band.
-    private struct PentagonResult {
+    struct PentagonResult {
         let route: Route
         let ratio: Double
         let fitsLength: Bool

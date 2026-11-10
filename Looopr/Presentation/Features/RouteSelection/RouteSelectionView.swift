@@ -39,6 +39,15 @@ struct RouteSelectionView: View {
             withAnimation(LoooprTheme.Animation.gentle) {
                 hasAppeared = true
             }
+            // First search with loops (free tier, once per install): let
+            // the loops land, then offer Pro. Cancelled if the person has
+            // already left this screen.
+            if viewModel.takeFirstSearchPaywall() {
+                try? await Task.sleep(for: .seconds(2))
+                guard !Task.isCancelled, !router.isPaywallPresented,
+                      case .routeSelection = router.routeStack.last else { return }
+                router.presentPaywall(source: .firstSearch)
+            }
         }
         // Routes stream in one at a time. Reveal the list on the first
         // arrival instead of waiting for generation to finish — on the
@@ -180,9 +189,17 @@ struct RouteSelectionView: View {
                 if viewModel.isLoading {
                     findingMoreRow
                 } else if viewModel.didFindRoutes && viewModel.isFreeTier {
-                    UpgradeCard {
-                        // PaywallView tracks `.paywallShown` itself on appear.
-                        router.presentPaywall()
+                    if viewModel.lockedRoutes.isEmpty {
+                        UpgradeCard {
+                            router.presentPaywall(source: .upgradeCard)
+                        }
+                    } else {
+                        // The loops beyond the free two, shown but locked:
+                        // free users see what Pro would give them here.
+                        LockedRoutesSection(routes: viewModel.lockedRoutes) {
+                            viewModel.trackLockedRouteTapped()
+                            router.presentPaywall(source: .lockedRoute)
+                        }
                     }
                 }
             }
@@ -350,6 +367,108 @@ struct RouteSelectionView: View {
 /// Shown under the free-tier routes once generation finishes. Deliberately
 /// a card in the same family as the route cards rather than a banner: it
 /// reads as "here's what the next slot would be", not as an ad.
+/// Free tier: the loops found beyond the free limit, as compact locked
+/// rows (blurred map, distance and time, lock). Any tap opens the paywall.
+private struct LockedRoutesSection: View {
+    let routes: [Route]
+    let onUnlock: () -> Void
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: LoooprTheme.Spacing.md) {
+            VStack(alignment: .leading, spacing: LoooprTheme.Spacing.xxs) {
+                Text(L10n.RouteSelection.lockedTitle(count: routes.count))
+                    .font(.system(size: 20, weight: .heavy, design: .rounded))
+                    .tracking(-0.4)
+                    .foregroundStyle(LoooprTheme.Colors.textPrimary)
+                Text(L10n.RouteSelection.lockedBody)
+                    .font(LoooprTheme.Typography.subheadline)
+                    .foregroundStyle(LoooprTheme.Colors.textSecondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+
+            VStack(spacing: 0) {
+                ForEach(Array(routes.enumerated()), id: \.element.id) { index, route in
+                    Button(action: onUnlock) {
+                        LockedRouteRow(route: route)
+                    }
+                    .buttonStyle(.plain)
+                    if index < routes.count - 1 {
+                        Divider().padding(.leading, 84)
+                    }
+                }
+            }
+            .background(LoooprTheme.Colors.surface)
+            .clipShape(RoundedRectangle(cornerRadius: LoooprTheme.Radius.lg))
+            .loooprShadow(LoooprTheme.Shadows.sm)
+
+            Button(action: onUnlock) {
+                HStack(spacing: 8) {
+                    Image(systemName: "lock.open.fill")
+                        .font(.system(size: 14, weight: .bold))
+                    Text(L10n.RouteSelection.lockedCTA)
+                        .font(LoooprTheme.Typography.button)
+                }
+                .foregroundStyle(.white)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 14)
+                .background(LoooprTheme.Colors.primary)
+                .clipShape(Capsule())
+            }
+            .buttonStyle(.plain)
+            .accessibilityIdentifier("lockedRoutesCTA")
+        }
+        .padding(.top, LoooprTheme.Spacing.xs)
+    }
+}
+
+private struct LockedRouteRow: View {
+    let route: Route
+
+    var body: some View {
+        HStack(spacing: LoooprTheme.Spacing.md) {
+            ZStack {
+                RouteMapPreview(route: route, color: AppTheme.routeColor(for: route.colorIndex))
+                    .frame(width: 60, height: 60)
+                    .blur(radius: 4)
+                    .allowsHitTesting(false)
+                Image(systemName: "lock.fill")
+                    .font(.system(size: 15, weight: .bold))
+                    .foregroundStyle(LoooprTheme.Colors.primary)
+                    .frame(width: 30, height: 30)
+                    .background(.ultraThinMaterial, in: Circle())
+            }
+            .frame(width: 60, height: 60)
+            .clipShape(RoundedRectangle(cornerRadius: LoooprTheme.Radius.md))
+
+            VStack(alignment: .leading, spacing: 4) {
+                Text(L10n.RouteSelection.lockedRowTitle)
+                    .font(.system(size: 15, weight: .bold, design: .rounded))
+                    .foregroundStyle(LoooprTheme.Colors.textPrimary)
+                Text("\(route.distanceKilometers.formattedDistanceFromKm()) · \(route.paceAdjustedDurationLabel)")
+                    .font(.system(size: 13, weight: .medium, design: .rounded))
+                    .foregroundStyle(LoooprTheme.Colors.textSecondary)
+            }
+
+            Spacer(minLength: 0)
+
+            Text("PRO")
+                .font(.system(size: 10, weight: .heavy, design: .rounded))
+                .tracking(0.8)
+                .foregroundStyle(LoooprTheme.Colors.primary)
+                .padding(.horizontal, 8)
+                .padding(.vertical, 4)
+                .background(LoooprTheme.Colors.primaryLight.opacity(0.5))
+                .clipShape(Capsule())
+        }
+        .padding(.horizontal, LoooprTheme.Spacing.md)
+        .padding(.vertical, LoooprTheme.Spacing.sm)
+        .contentShape(Rectangle())
+        .accessibilityElement(children: .combine)
+        .accessibilityAddTraits(.isButton)
+        .accessibilityHint(L10n.RouteSelection.lockedCTA)
+    }
+}
+
 private struct UpgradeCard: View {
     let onTap: () -> Void
 
@@ -410,13 +529,9 @@ private struct RouteSelectionCard: View {
         AppTheme.routeColor(for: route.colorIndex)
     }
 
-    private var difficultyLabel: String {
-        route.difficulty.localizedLabel
-    }
-
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            // ── Map Image with Difficulty Badge ──
+            // ── Map Image ──
             Button(action: onTapCard) {
                 ZStack(alignment: .topTrailing) {
                     RouteMapPreview(route: route, color: routeColor)
@@ -437,27 +552,11 @@ private struct RouteSelectionCard: View {
                         .frame(height: 60)
                     }
 
-                    // Glassmorphic difficulty badge
-                    VStack(alignment: .trailing, spacing: 1) {
-                        Text(L10n.RouteSelection.difficulty)
-                            .font(.system(size: 9, weight: .bold, design: .rounded))
-                            .tracking(0.8)
-                            .textCase(.uppercase)
-                            .foregroundStyle(LoooprTheme.Colors.textSecondary)
-
-                        Text(difficultyLabel)
-                            .font(.system(size: 13, weight: .heavy, design: .rounded))
-                            .foregroundStyle(LoooprTheme.Colors.primary)
-                    }
-                    .padding(.horizontal, 14)
-                    .padding(.vertical, 8)
-                    .background(.ultraThinMaterial)
-                    .clipShape(RoundedRectangle(cornerRadius: 14))
-                    .padding(14)
                 }
                 .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
+            .accessibilityIdentifier("routeCardMap")
 
             // ── Content Area ──
             VStack(alignment: .leading, spacing: LoooprTheme.Spacing.md) {
@@ -503,11 +602,6 @@ private struct RouteSelectionCard: View {
                         value: route.paceAdjustedDurationLabel
                     )
 
-                    RouteStatItem(
-                        icon: "arrow.up.right",
-                        label: L10n.RouteSelection.statElevation,
-                        value: Double(RouteSelectionViewModel.estimatedElevation(for: route)).formattedElevation()
-                    )
                 }
                 .padding(.vertical, LoooprTheme.Spacing.md)
                 .overlay(alignment: .top) {

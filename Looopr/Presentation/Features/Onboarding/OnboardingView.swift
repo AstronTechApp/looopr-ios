@@ -25,7 +25,7 @@ struct OnboardingView: View {
                 HStack {
                     Spacer()
                     if page < pageCount - 1 {
-                        Button(L10n.Onboarding.skip) { finish() }
+                        Button(L10n.Onboarding.skip) { finish(skipped: true) }
                             .font(.system(size: 15, weight: .semibold, design: .rounded))
                             .foregroundStyle(LoooprTheme.Colors.primary)
                             .padding(.vertical, 8)
@@ -80,7 +80,7 @@ struct OnboardingView: View {
                         if page < pageCount - 1 {
                             withAnimation(LoooprTheme.Animation.standard) { page += 1 }
                         } else {
-                            finish()
+                            finish(skipped: false)
                         }
                     } label: {
                         HStack(spacing: 10) {
@@ -98,6 +98,14 @@ struct OnboardingView: View {
             }
         }
         .preferredColorScheme(.light)
+        .onAppear { track(.onboardingPageViewed(page: page + 1)) }
+        .onChange(of: page) { _, newPage in
+            track(.onboardingPageViewed(page: newPage + 1))
+        }
+    }
+
+    private func track(_ event: AnalyticsEvent) {
+        ServiceContainer.shared.resolve(AnalyticsTracking.self).track(event)
     }
 
     private var pageDots: some View {
@@ -113,7 +121,8 @@ struct OnboardingView: View {
         .accessibilityLabel(L10n.Onboarding.pageIndicator(page + 1, pageCount))
     }
 
-    private func finish() {
+    private func finish(skipped: Bool) {
+        track(.onboardingCompleted(skipped: skipped, lastPage: page + 1))
         OnboardingState.shared.markCompleted()
         onFinish()
     }

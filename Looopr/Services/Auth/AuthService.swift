@@ -201,7 +201,9 @@ final class AuthService: @unchecked Sendable {
 /// server-side identity — cloud sync, route sharing, feedback, data export
 /// and account deletion — ask for an account, via `AccountPrompt`.
 ///
-/// Stored in UserDefaults so a guest goes straight to Home on the next launch.
+/// Since 1.5 everyone who isn't signed in is a guest: the intro leads
+/// straight to Home, and the sign-in sheet only appears when a feature needs
+/// an account or after the first walk. Stored in UserDefaults.
 @Observable
 final class GuestSession {
     static let shared = GuestSession()
@@ -224,8 +226,8 @@ final class GuestSession {
         defaults.set(true, forKey: Self.key)
     }
 
-    /// Called once a real session exists. Signing out later returns to the
-    /// sign-in screen (which still offers to continue without an account).
+    /// Called once a real session exists. Signing out later makes the person
+    /// a guest again (since 1.5 there is no sign-in screen at launch).
     func end() {
         guard isActive else { return }
         isActive = false
@@ -244,6 +246,18 @@ final class AccountPrompt {
         case settings
         case shareRoute
         case feedback
+        /// The one-time "back up your walks" card after the first walk.
+        case afterWalk
+
+        /// Value of the `reason` property on the account analytics events.
+        var analyticsName: String {
+            switch self {
+            case .settings: return "settings"
+            case .shareRoute: return "share"
+            case .feedback: return "feedback"
+            case .afterWalk: return "after_walk"
+            }
+        }
     }
 
     var reason: Reason?

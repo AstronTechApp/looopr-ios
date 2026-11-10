@@ -127,7 +127,6 @@ struct OnboardingRouteIllustration: View {
                 HStack(spacing: 8) {
                     statPill("figure.walk", "4.0 km")
                     statPill("clock", "49 min")
-                    statPill("arrow.up.right", "+72 m")
                 }
 
                 Text(L10n.Onboarding.pointsOfInterest)

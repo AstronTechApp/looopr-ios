@@ -100,12 +100,6 @@ enum L10n {
         }
     }
 
-    // MARK: - Route Difficulty
-    enum RouteDifficulty {
-        static var easy: String { String(localized: "routeDifficulty.easy", defaultValue: "Easy", bundle: LocalizationManager.shared.localizedBundle) }
-        static var moderate: String { String(localized: "routeDifficulty.moderate", defaultValue: "Moderate", bundle: LocalizationManager.shared.localizedBundle) }
-        static var challenging: String { String(localized: "routeDifficulty.challenging", defaultValue: "Challenging", bundle: LocalizationManager.shared.localizedBundle) }
-    }
 
     // MARK: - Route Selection
     enum RouteSelection {
@@ -132,18 +126,25 @@ enum L10n {
             String(format: NSLocalizedString("routeSelection.tryLongerWalk", tableName: nil, bundle: LocalizationManager.shared.localizedBundle, value: "Try a %@ walk", comment: ""), duration)
         }
         static var upgradeTitle: String { String(localized: "routeSelection.upgradeTitle", defaultValue: "Want more options?", bundle: LocalizationManager.shared.localizedBundle) }
-        static var upgradeBody: String { String(localized: "routeSelection.upgradeBody", defaultValue: "Looopr Pro finds up to 8 loops per walk and shows the cafés along the way.", bundle: LocalizationManager.shared.localizedBundle) }
-        static var upgradeCTA: String { String(localized: "routeSelection.upgradeCTA", defaultValue: "See Pro", bundle: LocalizationManager.shared.localizedBundle) }
-        static var difficulty: String { String(localized: "routeSelection.difficulty", defaultValue: "Difficulty", bundle: LocalizationManager.shared.localizedBundle) }
+        static var upgradeBody: String { String(localized: "routeSelection.upgradeBody", defaultValue: "Looopr Pro finds up to 8 loops per walk and shows the cafés along the way. The first week is free.", bundle: LocalizationManager.shared.localizedBundle) }
+        static var upgradeCTA: String { String(localized: "routeSelection.upgradeCTA", defaultValue: "Try Pro free", bundle: LocalizationManager.shared.localizedBundle) }
         static var loopLabel: String { String(localized: "routeSelection.loopLabel", defaultValue: "loop", bundle: LocalizationManager.shared.localizedBundle) }
         static var includesFerry: String { String(localized: "routeSelection.includesFerry", defaultValue: "Includes ferry crossing", bundle: LocalizationManager.shared.localizedBundle) }
         static var startWalk: String { String(localized: "routeSelection.startWalk", defaultValue: "Start Walk", bundle: LocalizationManager.shared.localizedBundle) }
         static var statDistance: String { String(localized: "routeSelection.statDistance", defaultValue: "Distance", bundle: LocalizationManager.shared.localizedBundle) }
         static var statTime: String { String(localized: "routeSelection.statTime", defaultValue: "Time", bundle: LocalizationManager.shared.localizedBundle) }
-        static var statElevation: String { String(localized: "routeSelection.statElevation", defaultValue: "Elevation", bundle: LocalizationManager.shared.localizedBundle) }
         static func subtitleFinding(_ value: String) -> String {
             String(format: NSLocalizedString("routeSelection.subtitleFinding", tableName: nil, bundle: LocalizationManager.shared.localizedBundle, value: "Finding routes · %@ walk", comment: ""), value)
         }
+        static func lockedTitle(count: Int) -> String {
+            if count == 1 {
+                return NSLocalizedString("routeSelection.lockedTitle.one", tableName: nil, bundle: LocalizationManager.shared.localizedBundle, value: "1 more loop with Pro", comment: "")
+            }
+            return String(format: NSLocalizedString("routeSelection.lockedTitle.other", tableName: nil, bundle: LocalizationManager.shared.localizedBundle, value: "%@ more loops with Pro", comment: ""), "\(count)")
+        }
+        static var lockedBody: String { String(localized: "routeSelection.lockedBody", defaultValue: "Looopr found these for your walk too. Pro unlocks them, plus the cafés along the way.", bundle: LocalizationManager.shared.localizedBundle) }
+        static var lockedCTA: String { String(localized: "routeSelection.lockedCTA", defaultValue: "Try Pro free for a week", bundle: LocalizationManager.shared.localizedBundle) }
+        static var lockedRowTitle: String { String(localized: "routeSelection.lockedRowTitle", defaultValue: "Another loop", bundle: LocalizationManager.shared.localizedBundle) }
         static func subtitleFound(count: Int, duration: String) -> String {
             if count == 1 {
                 return String(format: NSLocalizedString("routeSelection.subtitleFound.one", tableName: nil, bundle: LocalizationManager.shared.localizedBundle, value: "1 route found · %@ walk", comment: ""), duration)
@@ -206,8 +207,8 @@ enum L10n {
             return String(format: NSLocalizedString("poi.walkTimeHoursMinutes", tableName: nil, bundle: LocalizationManager.shared.localizedBundle, value: "~%1$@h %2$@min", comment: ""), "\(hours)", "\(minutes)")
         }
         static var foodLockedTitle: String { String(localized: "poi.foodLockedTitle", defaultValue: "Cafés & restaurants are Pro", bundle: LocalizationManager.shared.localizedBundle) }
-        static var foodLockedBody: String { String(localized: "poi.foodLockedBody", defaultValue: "See the best coffee and food stops along this route, with ratings, and opening hours.", bundle: LocalizationManager.shared.localizedBundle) }
-        static var foodLockedCTA: String { String(localized: "poi.foodLockedCTA", defaultValue: "See Pro", bundle: LocalizationManager.shared.localizedBundle) }
+        static var foodLockedBody: String { String(localized: "poi.foodLockedBody", defaultValue: "See the best coffee and food stops along this route, with ratings and opening hours. The first week is free.", bundle: LocalizationManager.shared.localizedBundle) }
+        static var foodLockedCTA: String { String(localized: "poi.foodLockedCTA", defaultValue: "Try Pro free", bundle: LocalizationManager.shared.localizedBundle) }
         static var fromRoute: String { String(localized: "poi.fromRoute", defaultValue: "from route", bundle: LocalizationManager.shared.localizedBundle) }
         static var walkTime: String { String(localized: "poi.walkTime", defaultValue: "walk", bundle: LocalizationManager.shared.localizedBundle) }
         static var openNow: String { String(localized: "poi.openNow", defaultValue: "Open now", bundle: LocalizationManager.shared.localizedBundle) }
@@ -335,6 +336,8 @@ enum L10n {
 
     // MARK: - Finish Walk
     enum FinishWalk {
+        static var backupTitle: String { String(localized: "finishWalk.backupTitle", defaultValue: "Keep your walks safe", bundle: LocalizationManager.shared.localizedBundle) }
+        static var backupNotNow: String { String(localized: "finishWalk.backupNotNow", defaultValue: "Not now", bundle: LocalizationManager.shared.localizedBundle) }
         static var title: String { String(localized: "finishWalk.title", defaultValue: "Looopr Complete!", bundle: LocalizationManager.shared.localizedBundle) }
         static var breaks: String { String(localized: "finishWalk.breaks", defaultValue: "BREAKS", bundle: LocalizationManager.shared.localizedBundle) }
 
@@ -707,7 +710,7 @@ enum L10n {
 
         static var page2Eyebrow: String { String(localized: "onboarding.page2.eyebrow", defaultValue: "Along the way", bundle: b) }
         static var page2Title: String { String(localized: "onboarding.page2.title", defaultValue: "Something to see\non every walk", bundle: b) }
-        static var page2Body: String { String(localized: "onboarding.page2.body", defaultValue: "Parks, landmarks and local spots along your route, with ratings and opening hours.", bundle: b) }
+        static var page2Body: String { String(localized: "onboarding.page2.body", defaultValue: "Parks, landmarks and local spots along your route, with ratings and opening hours. The first week is free.", bundle: b) }
 
         static var page3Eyebrow: String { String(localized: "onboarding.page3.eyebrow", defaultValue: "Walk it", bundle: b) }
         static var page3Title: String { String(localized: "onboarding.page3.title", defaultValue: "Just walk.\nWe\u{2019}ll guide you.", bundle: b) }

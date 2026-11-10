@@ -159,7 +159,7 @@ struct SettingsView: View {
                     .buttonStyle(.plain)
                 } else {
                     Button {
-                        router.presentPaywall()
+                        router.presentPaywall(source: .settings)
                     } label: {
                         SettingsRow(icon: "crown.fill", title: L10n.Paywall.settingsRow) {
                             Image(systemName: "chevron.right")

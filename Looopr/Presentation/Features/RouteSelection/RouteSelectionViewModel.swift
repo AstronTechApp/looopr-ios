@@ -6,7 +6,11 @@ final class RouteSelectionViewModel {
 
     // MARK: - State
 
+    /// Loops the user can open, shortest first.
     private(set) var routes: [Route] = []
+    /// Free tier only: the extra loops the search found beyond the free
+    /// limit, shown as locked previews (shortest first). Empty for Pro.
+    private(set) var lockedRoutes: [Route] = []
     private(set) var isLoading = true
     /// True once a search has gone `slowHintSeconds` without a first route,
     /// so the screen can say it's still working instead of looking stuck.
@@ -137,15 +141,6 @@ final class RouteSelectionViewModel {
         return rem == 0 ? "\(hours)h" : "\(hours)h \(rem)min"
     }
 
-    /// Approximate elevation from difficulty (Route model has no elevation field)
-    static func estimatedElevation(for route: Route) -> Int {
-        switch route.difficulty {
-        case .easy:        return Int(route.distanceKilometers * 8)
-        case .moderate:    return Int(route.distanceKilometers * 18)
-        case .challenging: return Int(route.distanceKilometers * 30)
-        }
-    }
-
     // MARK: - Dependencies
 
     private let routeGeneration: RouteGenerating
@@ -170,10 +165,26 @@ final class RouteSelectionViewModel {
     /// is off every user is treated as paid, so this is false pre-launch.
     var isFreeTier: Bool { !subscriptionService.isPaidSubscriber }
 
-    private var maxRoutes: Int {
-        subscriptionService.isPaidSubscriber
-            ? configuration.freemium.paidRouteLimit
-            : configuration.freemium.freeRouteLimit
+    /// Every search asks for the Pro number of loops: the generator runs
+    /// the same candidates either way, and the extras are what free users
+    /// see as locked previews.
+    private var maxRoutes: Int { configuration.freemium.paidRouteLimit }
+
+    /// How many of the arrived loops this user may open; nil = all.
+    private var unlockedLimit: Int? {
+        subscriptionService.isPaidSubscriber ? nil : configuration.freemium.freeRouteLimit
+    }
+
+    /// Splits loops in arrival order (the generator sends the closest fit
+    /// to the asked time first) into the ones this user can open and the
+    /// locked rest. Both lists are returned shortest first for display.
+    nonisolated static func split(arrivals: [Route], unlockedLimit: Int?) -> (open: [Route], locked: [Route]) {
+        let byDuration: (Route, Route) -> Bool = { $0.durationMinutes < $1.durationMinutes }
+        guard let limit = unlockedLimit, arrivals.count > limit else {
+            return (arrivals.sorted(by: byDuration), [])
+        }
+        return (Array(arrivals.prefix(limit)).sorted(by: byDuration),
+                Array(arrivals.dropFirst(limit)).sorted(by: byDuration))
     }
 
     /// Optional custom location override (from location search on home screen).
@@ -276,12 +287,15 @@ final class RouteSelectionViewModel {
             for try await route in stream {
                 if Task.isCancelled { break }
                 collected.append(route)
-                collected.sort { $0.durationMinutes < $1.durationMinutes }
                 if progress.firstRouteAt == nil {
                     progress.firstRouteAt = Date()
                     self?.isTakingLong = false
                 }
-                self?.routes = collected
+                if let self {
+                    let split = Self.split(arrivals: collected, unlockedLimit: self.unlockedLimit)
+                    self.routes = split.open
+                    self.lockedRoutes = split.locked
+                }
             }
             return collected
         }
@@ -320,6 +334,7 @@ final class RouteSelectionViewModel {
             if progress.timedOut && collected.isEmpty {
                 logger.error("Route search timed out after \(Int(firstRouteTimeoutSeconds))s without a route")
                 routes = []
+                lockedRoutes = []
                 fail(.timeout)
                 return
             }
@@ -331,7 +346,8 @@ final class RouteSelectionViewModel {
                 firstRouteSeconds: progress.firstRouteAt.map { $0.timeIntervalSince(startedAt) },
                 totalSeconds: Date().timeIntervalSince(startedAt),
                 stoppedEarly: progress.cappedOut,
-                closestOnly: isShowingClosestMatches
+                closestOnly: isShowingClosestMatches,
+                locked: lockedRoutes.count
             ))
             if collected.isEmpty {
                 fail(.noRoutes)
@@ -341,6 +357,7 @@ final class RouteSelectionViewModel {
             if Task.isCancelled { return }
             if progress.timedOut {
                 routes = []
+                lockedRoutes = []
                 fail(.timeout)
             }
             return
@@ -349,10 +366,11 @@ final class RouteSelectionViewModel {
             logger.error("Route generation failed: \(error)")
             if let routeError = error as? RouteError, routeError == .cancelled {
                 // Superseded request, or stopped by the watchdog.
-                if progress.timedOut { routes = []; fail(.timeout) }
+                if progress.timedOut { routes = []; lockedRoutes = []; fail(.timeout) }
                 return
             }
             routes = []
+            lockedRoutes = []
             switch error as? RouteError {
             case .noRoutesFound:
                 fail(.noRoutes)
@@ -366,6 +384,22 @@ final class RouteSelectionViewModel {
             return
         }
         isLoading = false
+    }
+
+    /// True once per install: the first search that found loops for a
+    /// free user. The screen then shows the paywall once on its own, a
+    /// moment after the loops appear. Consumes the flag.
+    func takeFirstSearchPaywall(defaults: UserDefaults = .standard) -> Bool {
+        guard didFindRoutes, isFreeTier,
+              !defaults.bool(forKey: Self.firstSearchPaywallKey) else { return false }
+        defaults.set(true, forKey: Self.firstSearchPaywallKey)
+        return true
+    }
+    static let firstSearchPaywallKey = "paywall.firstSearchShown"
+
+    /// A free user tapped a locked loop or the button under them.
+    func trackLockedRouteTapped() {
+        analytics.track(.lockedFeatureTapped(feature: "locked_route"))
     }
 
     private func fail(_ reason: SearchFailure, detail: String? = nil) {

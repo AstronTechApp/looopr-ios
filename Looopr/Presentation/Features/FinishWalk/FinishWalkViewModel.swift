@@ -132,19 +132,22 @@ final class FinishWalkViewModel {
     // MARK: - App Store rating
 
     /// Decides whether to ask iOS for the App Store rating sheet on this
-    /// finish screen. The ask happens once, after the user's second finished
-    /// walk of at least five minutes, so people who have actually used the
-    /// app are asked at a happy moment (the celebration screen) and never
-    /// after a tap-to-test walk. iOS applies its own limits on top (about
-    /// three sheets a year), so calling it more often would not help. It is
-    /// re-armed for each new app version, which is also when Apple would
-    /// let the sheet appear again.
+    /// finish screen: after the first finished walk of at least ten
+    /// minutes, once per app version. Until 1.4 it waited for the second
+    /// walk of five minutes, and never fired: almost nobody had two. Ten
+    /// minutes keeps tap-to-test walks out. iOS applies its own limits on
+    /// top (about three sheets a year).
     func shouldRequestAppReview() -> Bool {
-        guard session.durationSeconds >= 300 else { return false }
-        let defaults = UserDefaults.standard
         let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "0"
-        if defaults.string(forKey: Self.reviewPromptedVersionKey) == version { return false }
-        return completedWalkCount() >= 2
+        return Self.shouldAskForReview(
+            durationSeconds: session.durationSeconds,
+            completedWalks: completedWalkCount(),
+            alreadyAskedThisVersion: UserDefaults.standard.string(forKey: Self.reviewPromptedVersionKey) == version
+        )
+    }
+
+    nonisolated static func shouldAskForReview(durationSeconds: TimeInterval, completedWalks: Int, alreadyAskedThisVersion: Bool) -> Bool {
+        durationSeconds >= 600 && completedWalks >= 1 && !alreadyAskedThisVersion
     }
 
     /// Records that the rating sheet was requested so it is not asked again

@@ -79,7 +79,15 @@ final class LiveLocationService: NSObject, LocationProviding, CLLocationManagerD
         manager.distanceFilter = enabled ? kCLDistanceFilterNone : Self.idleDistanceFilter
     }
 
+    /// True between showing the system location prompt and its answer,
+    /// so the answer is reported once (`location_permission`) and later
+    /// changes in Settings are not.
+    private var awaitingPermissionAnswer = false
+
     func requestAuthorization() {
+        if manager.authorizationStatus == .notDetermined {
+            awaitingPermissionAnswer = true
+        }
         manager.requestWhenInUseAuthorization()
     }
 
@@ -113,6 +121,18 @@ final class LiveLocationService: NSObject, LocationProviding, CLLocationManagerD
     }
 
     func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
-        authorizationSubject.send(manager.authorizationStatus)
+        let status = manager.authorizationStatus
+        authorizationSubject.send(status)
+        if awaitingPermissionAnswer, status != .notDetermined {
+            awaitingPermissionAnswer = false
+            let answer: String
+            switch status {
+            case .authorizedWhenInUse, .authorizedAlways: answer = "granted"
+            case .restricted: answer = "restricted"
+            default: answer = "denied"
+            }
+            ServiceContainer.shared.resolveOptional(AnalyticsTracking.self)?
+                .track(.locationPermission(status: answer))
+        }
     }
 }

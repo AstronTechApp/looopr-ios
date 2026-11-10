@@ -526,10 +526,6 @@ struct RouteDetailView: View {
                 icon: "clock",
                 value: viewModel.route.paceAdjustedDurationLabel
             )
-            DetailStatChip(
-                icon: "arrow.up.right",
-                value: Double(RouteSelectionViewModel.estimatedElevation(for: viewModel.route)).formattedElevation()
-            )
         }
     }
 
@@ -684,7 +680,11 @@ struct RouteDetailView: View {
                     isLoadingFood: viewModel.isLoadingFood,
                     hasFetchedFood: viewModel.hasFetchedFood,
                     isFoodLocked: viewModel.isFoodLocked,
-                    onUnlockFood: { router.presentPaywall() },
+                    onUnlockFood: {
+                        ServiceContainer.shared.resolve(AnalyticsTracking.self)
+                            .track(.lockedFeatureTapped(feature: "food"))
+                        router.presentPaywall(source: .foodLock)
+                    },
                     departureDate: viewModel.plannedDepartureDate,
                     selectedTab: $selectedPOITab,
                     focusedPOIID: $focusedPOIID
