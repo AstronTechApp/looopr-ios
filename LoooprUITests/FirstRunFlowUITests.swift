@@ -51,6 +51,34 @@ final class FirstRunFlowUITests: XCTestCase {
         try runFirstRunFlow()
     }
 
+    /// Settings in the longest-label languages: no row value may wrap.
+    func testSettingsInDutchAndGerman() throws {
+        for lang in ["nl", "de"] {
+            XCUIDevice.shared.appearance = .light
+            shotPrefix = "settings-"
+            app = XCUIApplication()
+            app.launchArguments += [
+                "-onboarding.hasCompleted", "YES",
+                "-auth.continuedAsGuest", "YES",
+                "-AppleLanguages", "(\(lang))", "-AppleLocale", lang == "nl" ? "nl_NL" : "de_DE",
+                "-uiTest.appearance", "light"
+            ]
+            app.launch()
+            let profile = app.buttons[lang == "nl" ? "Profiel" : "Profil"].firstMatch
+            XCTAssertTrue(profile.waitForExistence(timeout: 10))
+            profile.tap()
+            let gear = app.buttons["profileSettingsButton"]
+            XCTAssertTrue(gear.waitForExistence(timeout: 5))
+            gear.tap()
+            sleep(2)
+            shot(lang)
+            app.swipeUp()
+            sleep(1)
+            shot("\(lang)-2")
+            app.terminate()
+        }
+    }
+
     private func runFirstRunFlow() throws {
         // 1 · Intro, three pages.
         XCTAssertTrue(app.buttons["Next"].waitForExistence(timeout: 10), "intro should open on first launch")

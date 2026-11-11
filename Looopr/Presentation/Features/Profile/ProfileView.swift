@@ -26,6 +26,8 @@ struct ProfileView: View {
                         .font(.system(size: LoooprTheme.Typography.lg))
                         .foregroundStyle(LoooprTheme.Colors.textSecondary)
                 }
+                .accessibilityIdentifier("profileSettingsButton")
+                .accessibilityLabel(L10n.Settings.title)
             }
             .padding(.horizontal, LoooprTheme.Spacing.screenHorizontal)
             .padding(.top, LoooprTheme.Spacing.sm)

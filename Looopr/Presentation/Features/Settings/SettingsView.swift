@@ -194,7 +194,7 @@ struct SettingsView: View {
         SettingsSectionCard(title: L10n.Settings.walkPreferences) {
             VStack(spacing: 0) {
                 // Distance Units picker (System Default / Metric / Imperial)
-                SettingsRow(icon: "ruler", title: L10n.Settings.distanceUnits) {
+                SettingsRow(icon: "ruler", title: L10n.Settings.units) {
                     Menu {
                         ForEach(UnitPreference.allCases, id: \.self) { pref in
                             Button {
@@ -210,9 +210,10 @@ struct SettingsView: View {
                         }
                     } label: {
                         HStack(spacing: LoooprTheme.Spacing.xxs) {
-                            Text(settings.unitPreference.label)
+                            Text(settings.unitPreference.shortLabel)
                                 .font(LoooprTheme.Typography.body)
                                 .foregroundStyle(LoooprTheme.Colors.textSecondary)
+                                .lineLimit(1)
                             Image(systemName: "chevron.up.chevron.down")
                                 .font(.system(size: 10, weight: .semibold))
                                 .foregroundStyle(LoooprTheme.Colors.textTertiary)
@@ -263,6 +264,8 @@ struct SettingsView: View {
                             Text(localization.currentLanguage.displayName)
                                 .font(LoooprTheme.Typography.body)
                                 .foregroundStyle(LoooprTheme.Colors.textSecondary)
+                                .lineLimit(1)
+                                .minimumScaleFactor(0.8)
                             Image(systemName: "chevron.up.chevron.down")
                                 .font(.system(size: 10, weight: .semibold))
                                 .foregroundStyle(LoooprTheme.Colors.textTertiary)
@@ -592,6 +595,7 @@ private struct SettingsSectionCard<Content: View>: View {
             Text(title)
                 .font(LoooprTheme.Typography.label)
                 .foregroundStyle(LoooprTheme.Colors.textTertiary)
+                .textCase(.uppercase)
 
             VStack(spacing: 0) {
                 content()
@@ -620,8 +624,10 @@ private struct SettingsRow<Trailing: View>: View {
             Text(title)
                 .font(LoooprTheme.Typography.body)
                 .foregroundStyle(LoooprTheme.Colors.textPrimary)
+                .lineLimit(1)
+                .layoutPriority(1)
 
-            Spacer()
+            Spacer(minLength: LoooprTheme.Spacing.xs)
 
             trailing()
         }

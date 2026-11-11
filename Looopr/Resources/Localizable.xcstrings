@@ -2303,7 +2303,7 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Looopr Teilen"
+            "value" : "Looopr teilen"
           }
         },
         "en" : {
@@ -20677,7 +20677,7 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Nicht Verbunden"
+            "value" : "Nicht verbunden"
           }
         },
         "en" : {
@@ -20713,7 +20713,7 @@
         "nl" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Niet Verbonden"
+            "value" : "Niet verbonden"
           }
         },
         "pt-BR" : {
@@ -20949,7 +20949,7 @@
         "nl" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Voorkeuseenheden"
+            "value" : "Voorkeurseenheden"
           }
         },
         "pt-BR" : {
@@ -21327,7 +21327,7 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Looopr Teilen"
+            "value" : "Looopr teilen"
           }
         },
         "en" : {
@@ -21800,7 +21800,7 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Spaziergang Erinnerung"
+            "value" : "Spaziergang-Erinnerung"
           }
         },
         "en" : {
@@ -21954,7 +21954,7 @@
         "nl" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Wekelijkse Samenvatting"
+            "value" : "Wekelijkse samenvatting"
           }
         },
         "pt-BR" : {
@@ -26181,6 +26181,124 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Parei em %@ cafés e restaurantes."
+          }
+        }
+      }
+    },
+    "settings.units" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Einheiten"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Units"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Unidades"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Unidades"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Unités"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Unità"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Eenheden"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Unidades"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Unidades"
+          }
+        }
+      }
+    },
+    "settings.unitPreference.systemShort" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Automatisch (%@)"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Auto (%@)"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Automático (%@)"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Automático (%@)"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Auto (%@)"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Automatico (%@)"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Automatisch (%@)"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Automático (%@)"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Automático (%@)"
           }
         }
       }

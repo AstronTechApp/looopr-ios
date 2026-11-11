@@ -13,6 +13,19 @@ enum UnitPreference: String, CaseIterable {
         }
     }
 
+    /// Short value for the Settings row, where the full label wraps in
+    /// longer languages ("Systeemstandaard"). Auto shows the unit it picked.
+    var shortLabel: String {
+        switch self {
+        case .system:
+            let format = NSLocalizedString("settings.unitPreference.systemShort", tableName: nil,
+                                           bundle: LocalizationManager.bundle, value: "Auto (%@)", comment: "")
+            return String(format: format, resolved.distanceUnit)
+        case .metric: return "km"
+        case .imperial: return "mi"
+        }
+    }
+
     /// Resolves .system to metric or imperial based on device locale
     var resolved: ResolvedUnitSystem {
         switch self {

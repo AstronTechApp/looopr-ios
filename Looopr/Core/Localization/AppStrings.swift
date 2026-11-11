@@ -457,6 +457,7 @@ enum L10n {
         static var preferredUnits: String { String(localized: "settings.preferredUnits", defaultValue: "Preferred Units", bundle: LocalizationManager.bundle) }
         static var walkingPace: String { String(localized: "settings.walkingPace", defaultValue: "Walking Pace", bundle: LocalizationManager.bundle) }
         static var distanceUnits: String { String(localized: "settings.distanceUnits", defaultValue: "Distance Units", bundle: LocalizationManager.bundle) }
+        static var units: String { String(localized: "settings.units", defaultValue: "Units", bundle: LocalizationManager.bundle) }
         static var language: String { String(localized: "settings.language", defaultValue: "Language", bundle: LocalizationManager.bundle) }
         static var health: String { String(localized: "settings.health", defaultValue: "HEALTH", bundle: LocalizationManager.bundle) }
         static var appleHealth: String { String(localized: "settings.appleHealth", defaultValue: "Apple Health", bundle: LocalizationManager.bundle) }
