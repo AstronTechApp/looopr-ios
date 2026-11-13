@@ -1,4 +1,5 @@
 import XCTest
+import SwiftUI
 import Combine
 import CoreLocation
 @testable import Looopr
@@ -487,6 +488,52 @@ final class AppRouterNavigationTests: XCTestCase {
         router.pop()
         XCTAssertEqual(router.routeStack.count, 1)
         XCTAssertEqual(router.path.count, 1)
+    }
+
+    /// 13 Nov: after a search started from Home, going back to Home showed
+    /// a blank screen with a back button first. The search must land in
+    /// Explore's own stack only; Home's stack stays at its root.
+    func testSearchFromHomeLandsOnlyInExplore() {
+        let router = AppRouter()
+        router.navigate(to: .routeSelection(walkMinutes: 30))
+        XCTAssertEqual(router.activeTab, .explore)
+        XCTAssertEqual(router.path(for: .explore).count, 1)
+        XCTAssertTrue(router.path(for: .home).isEmpty, "nothing pushed onto Home")
+        XCTAssertTrue(router.isOnRouteSelection)
+    }
+
+    func testGoingHomeLeavesHomeAtItsRoot() {
+        let router = AppRouter()
+        router.navigate(to: .routeSelection(walkMinutes: 30))
+        router.navigate(to: .settings)
+        // What tapping the Home tab does (AppRootView): switch, pop to root.
+        router.activeTab = .home
+        router.popToRoot()
+        XCTAssertTrue(router.routeStack.isEmpty)
+        XCTAssertTrue(router.path(for: .home).isEmpty)
+        // Explore keeps its route list for when the user goes back there.
+        XCTAssertEqual(router.path(for: .explore).count, 2)
+    }
+
+    func testANewSearchReplacesTheOldOneInExplore() {
+        let router = AppRouter()
+        router.navigate(to: .routeSelection(walkMinutes: 30))
+        router.navigate(to: .settings)
+        let firstID = router.exploreStackID
+        router.activeTab = .home
+        router.popToRoot()
+
+        router.navigate(to: .routeSelection(walkMinutes: 30))
+        XCTAssertEqual(router.routeStack, [.routeSelection(walkMinutes: 30)], "a fresh search, not the old stack")
+        XCTAssertNotEqual(router.exploreStackID, firstID, "Explore's stack is rebuilt")
+    }
+
+    func testSwipeBackOnAnotherTabTrimsOnlyThatTab() {
+        let router = AppRouter()
+        router.activeTab = .savedRoutes
+        router.navigate(to: .settings)
+        router.setPath(NavigationPath(), for: .savedRoutes)
+        XCTAssertTrue(router.routeStack.isEmpty)
     }
 }
 

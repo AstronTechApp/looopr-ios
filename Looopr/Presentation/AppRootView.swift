@@ -109,18 +109,15 @@ struct AppRootView: View {
 
     // MARK: - Shared Navigation Destination
 
-    /// Every tab's `NavigationStack` is bound to the same `router.path`, so
-    /// a push lands in all of them at once. On iOS 26's `TabView` the
-    /// hidden tabs still build and run their destinations, which meant two
-    /// `RouteSelectionView`s per search: two Mapbox requests, and a bogus
-    /// "0 routes" event when the hidden copy was torn down. Only the tab
-    /// that will show a destination hosts it; the others get a blank.
-    /// Route selection always lives in Explore — `onChange(of: routeStack)`
-    /// switches there the moment it is pushed.
+    /// Each tab's `NavigationStack` has its own path in the router, so a
+    /// push only lands in the tab it belongs to. Route selection always
+    /// lives in Explore (the router switches there when it is pushed), so a
+    /// copy of it in any other stack would be a bug: a second Mapbox search.
+    /// That case gets a blank as a safety net; it should not be reachable.
     private func hosts(_ route: AppRoute, in tab: LoooprTab?) -> Bool {
         guard let tab else { return true }
         if case .routeSelection = route { return tab == .explore }
-        return tab == selectedTab
+        return true
     }
 
     @ViewBuilder
@@ -160,11 +157,20 @@ struct AppRootView: View {
 
     // MARK: - iOS 26+ · Native Liquid Glass TabView
 
+    /// A tab's own path in the router.
+    @available(iOS 26, *)
+    private func path(for tab: LoooprTab) -> Binding<NavigationPath> {
+        Binding(
+            get: { router.path(for: tab) },
+            set: { router.setPath($0, for: tab) }
+        )
+    }
+
     @available(iOS 26, *)
     private var liquidGlassContent: some View {
         TabView(selection: $selectedTab) {
             Tab(L10n.Tab.home, systemImage: "house", value: LoooprTab.home) {
-                NavigationStack(path: $router.path) {
+                NavigationStack(path: path(for: .home)) {
                     HomeView()
                         .navigationDestination(for: AppRoute.self) { route in
                             destinationView(for: route, in: .home)
@@ -173,16 +179,18 @@ struct AppRootView: View {
             }
 
             Tab(L10n.Tab.explore, systemImage: "location", value: LoooprTab.explore) {
-                NavigationStack(path: $router.path) {
+                NavigationStack(path: path(for: .explore)) {
                     HomeView()
                         .navigationDestination(for: AppRoute.self) { route in
                             destinationView(for: route, in: .explore)
                         }
                 }
+                // A new search rebuilds Explore's stack (see AppRouter).
+                .id(router.exploreStackID)
             }
 
             Tab(L10n.Tab.savedRoutes, systemImage: "bookmark", value: LoooprTab.savedRoutes) {
-                NavigationStack(path: $router.path) {
+                NavigationStack(path: path(for: .savedRoutes)) {
                     SavedRoutesView()
                         .navigationDestination(for: AppRoute.self) { route in
                             destinationView(for: route, in: .savedRoutes)
@@ -191,7 +199,7 @@ struct AppRootView: View {
             }
 
             Tab(L10n.Tab.profile, systemImage: "person", value: LoooprTab.profile) {
-                NavigationStack(path: $router.path) {
+                NavigationStack(path: path(for: .profile)) {
                     ProfileView()
                         .navigationDestination(for: AppRoute.self) { route in
                             destinationView(for: route, in: .profile)
@@ -282,6 +290,7 @@ private struct SharedNavigation: ViewModifier {
             .environment(router)
             .environment(authService)
             .onChange(of: selectedTab) { _, tab in
+                router.activeTab = tab
                 if tab == .explore {
                     if router.isOnRouteSelection { return }
                     router.popToRoot()

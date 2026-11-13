@@ -358,6 +358,7 @@ struct RouteDetailView: View {
                 .clipShape(Circle())
                 .loooprShadow(LoooprTheme.Shadows.sm)
         }
+        .accessibilityIdentifier("routeDetailBack")
     }
 
     // MARK: - Toolbar Buttons

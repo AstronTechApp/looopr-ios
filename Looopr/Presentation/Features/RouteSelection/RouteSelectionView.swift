@@ -76,6 +76,7 @@ struct RouteSelectionView: View {
                     .background(LoooprTheme.Colors.surfaceSecondary)
                     .clipShape(Circle())
             }
+            .accessibilityIdentifier("routeListBack")
 
             VStack(alignment: .leading, spacing: 2) {
                 Text(L10n.RouteSelection.yourRoutes)

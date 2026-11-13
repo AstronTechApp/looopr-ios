@@ -180,34 +180,59 @@ struct LocationSearchView: View {
         }
     }
 
-    /// Turns a completion into a map item. Tries the completion directly first;
-    /// generic completions (a bare city name) sometimes come back empty that
-    /// way, so it retries as a free-text query built from title and subtitle.
-    /// Returns nil only when both fail, and says so in the log.
+    /// Turns a completion into a map item. Tries the completion directly
+    /// first; generic completions (a bare city name) sometimes come back
+    /// empty that way, so it retries as a free-text query built from title
+    /// and subtitle. MapKit also fails now and then for a moment (network
+    /// blip, request throttling; seen 13 Nov: "Amsterdam Centraal" failed,
+    /// worked after an app restart), so the text query gets one more try
+    /// after a short pause. Returns nil only when all of that fails, and
+    /// then reports the MapKit error to Sentry so the cause is visible.
     private func resolve(_ completion: MKLocalSearchCompletion) async -> MKMapItem? {
         let logger = AppLogger(category: "LocationSearch")
+        var lastError: Error?
 
         do {
             let response = try await MKLocalSearch(request: MKLocalSearch.Request(completion: completion)).start()
             if let item = response.mapItems.first { return item }
             logger.info("Completion '\(completion.title)' resolved to no map items; retrying as text")
         } catch {
-            logger.info("Completion '\(completion.title)' failed directly: \(error.localizedDescription); retrying as text")
+            lastError = error
+            logger.info("Completion '\(completion.title)' failed directly: \(Self.describe(error)); retrying as text")
         }
 
-        let request = MKLocalSearch.Request()
-        request.naturalLanguageQuery = completion.subtitle.isEmpty
+        let query = completion.subtitle.isEmpty
             ? completion.title
             : "\(completion.title), \(completion.subtitle)"
 
-        do {
-            let response = try await MKLocalSearch(request: request).start()
-            if let item = response.mapItems.first { return item }
-            logger.warning("Could not resolve '\(completion.title)': no map items from either path")
-        } catch {
-            logger.warning("Could not resolve '\(completion.title)': \(error.localizedDescription)")
+        for attempt in 1...2 {
+            if attempt == 2 {
+                try? await Task.sleep(for: .seconds(1))
+            }
+            let request = MKLocalSearch.Request()
+            request.naturalLanguageQuery = query
+            do {
+                let response = try await MKLocalSearch(request: request).start()
+                if let item = response.mapItems.first { return item }
+            } catch {
+                lastError = error
+                logger.info("Text search for '\(completion.title)' failed (attempt \(attempt)): \(Self.describe(error))")
+            }
         }
+
+        logger.warning("Could not resolve '\(completion.title)': \(lastError.map(Self.describe) ?? "no map items")")
+        CrashReporter.capture(
+            lastError ?? LocationResolveError.noMapItems,
+            category: "LocationSearch"
+        )
         return nil
+    }
+
+    /// Domain and code, e.g. `MKErrorDomain 3`: `localizedDescription` alone
+    /// ("The operation couldn't be completed") doesn't say what went wrong.
+    private static func describe(_ error: Error) -> String {
+        let nsError = error as NSError
+        return "\(nsError.domain) \(nsError.code): \(nsError.localizedDescription)"
     }
 
     /// Hands a resolved map item back to the caller and closes the sheet.
@@ -257,6 +282,12 @@ final class SearchCompleterCoordinator: NSObject, MKLocalSearchCompleterDelegate
         // Empty results are the right UI, but the reason belongs in the log.
         AppLogger(category: "LocationSearch").warning("Completer failed: \(error.localizedDescription)")
     }
+}
+
+/// Reported to Sentry when MapKit answered without an error but also
+/// without a single place, on every attempt.
+enum LocationResolveError: Error {
+    case noMapItems
 }
 
 // MARK: - Selected Location

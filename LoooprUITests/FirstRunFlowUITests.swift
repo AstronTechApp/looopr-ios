@@ -79,6 +79,79 @@ final class FirstRunFlowUITests: XCTestCase {
         }
     }
 
+    // MARK: - 13 Nov: blank screen in front of Home after a search
+    //
+    // After a search, going back to Home showed a blank screen with only
+    // the system back button; Home appeared after pressing back once more.
+
+    func testHomeTabFromRouteListShowsHome() throws {
+        try searchAsGuest(shot: "a")
+        app.buttons["Home"].firstMatch.tap()
+        assertHomeShown(shot: "a")
+        // The blank screen came and went; repeat the round trip.
+        for round in 2...5 {
+            sleep(1)
+            app.buttons["Find My Looopr"].tap()
+            let loaded = app.buttons["routeCardMap"].firstMatch.waitForExistence(timeout: 60)
+            shot("a\(round)-loops")
+            XCTAssertTrue(loaded, "loops should load (round \(round))")
+            app.buttons["Home"].firstMatch.tap()
+            assertHomeShown(shot: "a\(round)")
+        }
+    }
+
+    func testHomeTabFromRouteDetailShowsHome() throws {
+        try searchAsGuest(shot: "b")
+        app.buttons.matching(identifier: "routeCardMap").firstMatch.tap()
+        sleep(2)
+        shot("b-detail")
+        app.buttons["Home"].firstMatch.tap()
+        assertHomeShown(shot: "b")
+    }
+
+    func testBackFromRouteListShowsHome() throws {
+        try searchAsGuest(shot: "c")
+        app.buttons["routeListBack"].tap()
+        assertHomeShown(shot: "c")
+    }
+
+    func testBackFromDetailThenListShowsHome() throws {
+        try searchAsGuest(shot: "d")
+        app.buttons.matching(identifier: "routeCardMap").firstMatch.tap()
+        sleep(2)
+        app.buttons["routeDetailBack"].tap()
+        sleep(1)
+        app.buttons["routeListBack"].tap()
+        assertHomeShown(shot: "d")
+    }
+
+    private func searchAsGuest(shot prefix: String) throws {
+        XCUIDevice.shared.appearance = .light
+        shotPrefix = "home-after-search-"
+        XCUIDevice.shared.location = XCUILocation(location: CLLocation(latitude: 52.0907, longitude: 5.1214))
+        app = XCUIApplication()
+        app.launchArguments += [
+            "-onboarding.hasCompleted", "YES",
+            "-auth.continuedAsGuest", "YES",
+            "-paywall.firstSearchShown", "YES",
+            "-AppleLanguages", "(en)", "-AppleLocale", "en_GB",
+            "-uiTest.appearance", "light"
+        ]
+        app.launch()
+        let find = app.buttons["Find My Looopr"]
+        XCTAssertTrue(find.waitForExistence(timeout: 10))
+        find.tap()
+        allowLocationIfAsked()
+        XCTAssertTrue(app.buttons["routeCardMap"].firstMatch.waitForExistence(timeout: 60), "loops should load")
+    }
+
+    private func assertHomeShown(shot prefix: String) {
+        let find = app.buttons["Find My Looopr"]
+        let shown = find.waitForExistence(timeout: 3) && find.isHittable
+        shot("\(prefix)-after")
+        XCTAssertTrue(shown, "Home must show straight away, not a blank screen with a back button")
+    }
+
     private func runFirstRunFlow() throws {
         // 1 · Intro, three pages.
         XCTAssertTrue(app.buttons["Next"].waitForExistence(timeout: 10), "intro should open on first launch")

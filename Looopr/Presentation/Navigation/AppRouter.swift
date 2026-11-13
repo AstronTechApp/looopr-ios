@@ -3,17 +3,48 @@ import SwiftUI
 @MainActor
 @Observable
 final class AppRouter {
-    var path = NavigationPath() {
-        didSet {
-            // A swipe-back or system back button shortens `path` through the
-            // NavigationStack binding without going through pop(). Trim the
-            // shadow stack to match, so `routeStack.last` is always the
-            // screen actually on top.
-            if routeStack.count > path.count {
-                routeStack.removeLast(routeStack.count - path.count)
-            }
+    /// Every tab has its own navigation path (iOS 26 TabView, where each
+    /// tab has its own `NavigationStack`). `path` and `routeStack` are those
+    /// of `activeTab`, the tab on screen.
+    ///
+    /// Until 1.5 all four stacks were bound to one shared path. A search
+    /// started from Home then also landed in the (hidden) Home stack as a
+    /// blank placeholder; hidden stacks don't always follow a pop, so after
+    /// a search, going back to Home showed a blank screen with a back button
+    /// first (13 Nov). With separate paths a stack only ever holds its own
+    /// tab's screens.
+    var activeTab: LoooprTab = .home
+
+    private var paths: [LoooprTab: NavigationPath] = [:]
+    private var stacks: [LoooprTab: [AppRoute]] = [:]
+
+    /// Bumped whenever Explore's stack is reset for a new search, so its
+    /// `NavigationStack` is rebuilt fresh rather than trusted to follow a
+    /// change it may have made while hidden.
+    private(set) var exploreStackID = 0
+
+    var path: NavigationPath {
+        get { path(for: activeTab) }
+        set { setPath(newValue, for: activeTab) }
+    }
+
+    func path(for tab: LoooprTab) -> NavigationPath {
+        paths[tab] ?? NavigationPath()
+    }
+
+    /// What a tab's `NavigationStack` writes back (a swipe-back or the
+    /// system back button shortens it without going through pop()). The
+    /// shadow stack is trimmed to match, so `routeStack.last` is always the
+    /// screen actually on top.
+    func setPath(_ newPath: NavigationPath, for tab: LoooprTab) {
+        paths[tab] = newPath
+        var stack = stacks[tab] ?? []
+        if stack.count > newPath.count {
+            stack.removeLast(stack.count - newPath.count)
+            stacks[tab] = stack
         }
     }
+
     var presentedSheet: AppRoute?
 
     /// The paywall is presented as a full-screen cover, never pushed.
@@ -30,8 +61,9 @@ final class AppRouter {
         isPaywallPresented = true
     }
 
-    /// Tracks pushed routes so we can inspect the stack (NavigationPath is type-erased).
-    private(set) var routeStack: [AppRoute] = []
+    /// Pushed routes of the active tab, so the stack can be inspected
+    /// (NavigationPath is type-erased).
+    var routeStack: [AppRoute] { stacks[activeTab] ?? [] }
 
     /// Remembers the last route-selection parameters so switching tabs can restore them.
     var lastExploreMinutes: Int = 30
@@ -75,9 +107,24 @@ final class AppRouter {
         if case .routeSelection(let minutes, let location) = route {
             lastExploreMinutes = minutes
             lastExploreLocation = location
+            // Route search always lives in Explore. Started from another
+            // tab, it replaces whatever Explore held (an older search) and
+            // Explore becomes the active tab; AppRootView follows.
+            if activeTab != .explore {
+                paths[.explore] = NavigationPath()
+                stacks[.explore] = []
+                exploreStackID += 1
+                activeTab = .explore
+            }
         }
-        path.append(route)
-        routeStack.append(route)
+        push(route)
+    }
+
+    private func push(_ route: AppRoute) {
+        var newPath = path(for: activeTab)
+        newPath.append(route)
+        paths[activeTab] = newPath
+        stacks[activeTab, default: []].append(route)
     }
 
     func present(_ route: AppRoute) {
@@ -92,19 +139,19 @@ final class AppRouter {
             lastExploreMinutes = minutes
             lastExploreLocation = location
         }
-        // Removing from `path` trims `routeStack` too (see didSet).
+        // Removing from `path` trims `routeStack` too (see setPath).
         if !path.isEmpty { path.removeLast() }
-        path.append(route)
-        routeStack.append(route)
+        push(route)
     }
 
     func pop() {
         guard !path.isEmpty else { return }
-        path.removeLast() // trims routeStack too (see didSet)
+        path.removeLast() // trims routeStack too (see setPath)
     }
 
+    /// Pops the active tab back to its root screen. Other tabs keep theirs.
     func popToRoot() {
-        path = NavigationPath()
-        routeStack.removeAll()
+        paths[activeTab] = NavigationPath()
+        stacks[activeTab] = []
     }
 }
