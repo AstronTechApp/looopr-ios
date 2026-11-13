@@ -55,7 +55,9 @@ enum AnalyticsEvent: Sendable {
     /// `not_converged:6,water:2`); nil when not applicable. Coordinates as
     /// in `routeSearchStarted`.
     case routeSearchFailed(minutes: Int, reason: String, detail: String?, latitude: Double?, longitude: Double?)
-    case routeSelected(routeId: UUID, durationMinutes: Int, distanceKm: Double)
+    /// A route card was opened. `source` is the part of the card that was
+    /// tapped: `map` or `poi_row` (the "along this loop" row).
+    case routeSelected(routeId: UUID, durationMinutes: Int, distanceKm: Double, source: String)
     /// The route detail screen was left without starting a walk.
     case routeDismissed(routeId: UUID, secondsOnScreen: Double, saved: Bool)
     /// A route was bookmarked / un-bookmarked. `source`: route_detail, finish_walk, saved_routes.
@@ -206,11 +208,12 @@ enum AnalyticsEvent: Sendable {
             if let detail { props["detail"] = .string(String(detail.prefix(120))) }
             Self.addCoarseLocation(latitude, longitude, to: &props)
             return props
-        case .routeSelected(let routeId, let duration, let distanceKm):
+        case .routeSelected(let routeId, let duration, let distanceKm, let source):
             return [
                 "route_id": .string(routeId.uuidString),
                 "duration_minutes": .int(duration),
-                "distance_km": .double(distanceKm)
+                "distance_km": .double(distanceKm),
+                "source": .string(source)
             ]
         case .walkStarted(let routeId, let plannedMinutes, let plannedKm):
             return [

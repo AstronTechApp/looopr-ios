@@ -156,7 +156,9 @@ struct AppConfiguration: Sendable {
             foodMaxDistanceMeters: 400,
             maxPOIsPerRoute: 20,
             searchRadiusCapMeters: 2000,
-            cacheTTLSeconds: 300,
+            // A loop's sights are kept for the session (6 h), so reopening
+            // it shows the same list without hitting MapKit's search limit.
+            cacheTTLSeconds: 21_600,
             googlePlacesCacheTTLSeconds: 3600,
             searchIntervalMeters: 350,
             searchRadiusPerPointMeters: 300,

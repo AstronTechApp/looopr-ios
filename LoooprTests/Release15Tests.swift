@@ -98,4 +98,166 @@ final class Release15Tests: XCTestCase {
         XCTAssertEqual(AccountPrompt.Reason.feedback.analyticsName, "feedback")
         XCTAssertEqual(AccountPrompt.Reason.settings.analyticsName, "settings")
     }
+
+    // MARK: - Route card row and equal POI tabs
+
+    func testRouteCardRowSaysCafesComeWithProOnTheFreeTier() {
+        XCTAssertEqual(RouteCardPOIRowText.title(isFreeTier: true), L10n.RouteSelection.poiRowTitleFree)
+        XCTAssertEqual(RouteCardPOIRowText.subtitle(isFreeTier: true), L10n.RouteSelection.poiRowSubtitleFree)
+        XCTAssertEqual(RouteCardPOIRowText.title(isFreeTier: false), L10n.RouteSelection.poiRowTitlePro)
+        XCTAssertEqual(RouteCardPOIRowText.subtitle(isFreeTier: false), L10n.RouteSelection.poiRowSubtitlePro)
+        XCTAssertNotEqual(RouteCardPOIRowText.title(isFreeTier: true), RouteCardPOIRowText.title(isFreeTier: false))
+    }
+
+    func testFoodTabShowsProInsteadOfACountOnTheFreeTier() {
+        // Free: nothing is fetched from Google, so there is no number.
+        XCTAssertEqual(POIListView.foodCountLabel(isLocked: true, hasFetched: false, count: 0), "Pro")
+        XCTAssertEqual(POIListView.foodCountLabel(isLocked: true, hasFetched: true, count: 7), "Pro")
+        // Pro: a teaser until the places are in, then the real count.
+        XCTAssertEqual(POIListView.foodCountLabel(isLocked: false, hasFetched: false, count: 0), "10+")
+        XCTAssertEqual(POIListView.foodCountLabel(isLocked: false, hasFetched: true, count: 7), "7")
+    }
+
+    // MARK: - Appearance setting
+
+    func testAppearanceFollowsThePhoneUnlessTheUserChooses() {
+        XCTAssertEqual(SettingsManager.Appearance.allCases, [.system, .light, .dark])
+        XCTAssertEqual(SettingsManager.Appearance.system.interfaceStyle, .unspecified)
+        XCTAssertEqual(SettingsManager.Appearance.light.interfaceStyle, .light)
+        XCTAssertEqual(SettingsManager.Appearance.dark.interfaceStyle, .dark)
+        // Stored values must not change: they are what is saved on the phone.
+        XCTAssertEqual(SettingsManager.Appearance.allCases.map(\.rawValue), ["system", "light", "dark"])
+    }
+
+    func testAppearanceChoiceIsSaved() {
+        let settings = SettingsManager.shared
+        let before = settings.appearance
+        defer { settings.appearance = before }
+        settings.appearance = .dark
+        XCTAssertEqual(UserDefaults.standard.string(forKey: "settings.appearance"), "dark")
+        settings.appearance = .system
+        XCTAssertEqual(UserDefaults.standard.string(forKey: "settings.appearance"), "system")
+    }
+
+    func testRouteSelectedSaysWhichPartOfTheCardWasTapped() {
+        let event = AnalyticsEvent.routeSelected(routeId: UUID(), durationMinutes: 30, distanceKm: 2.8, source: "poi_row")
+        XCTAssertEqual(event.name, "route_selected")
+        guard case .string(let source)? = event.properties["source"] else {
+            return XCTFail("route_selected carries the tapped part of the card")
+        }
+        XCTAssertEqual(source, "poi_row")
+    }
+
+    // MARK: - Sights: failed search vs "no sights", per-loop cache
+
+    private func loop(offset: Double = 0) -> [CLLocationCoordinate2D] {
+        (0..<12).map { i in
+            CLLocationCoordinate2D(latitude: 52.3600 + offset + Double(i) * 0.0008,
+                                   longitude: 4.8850 + Double(i % 4) * 0.0008)
+        }
+    }
+
+    private func park(near c: CLLocationCoordinate2D, _ name: String) -> POI {
+        POI(name: name, location: Location(c), category: .park, googlePlaceId: "mapkit:\(name)")
+    }
+
+    func testFailedSightSearchIsReportedAndNotCached() async {
+        let discovery = StubDiscovery(outcome: .failure(POIError.searchUnavailable))
+        let aggregator = POIAggregatorService(discovery: discovery, enrichment: StubEnrichment())
+        for _ in 0..<2 {
+            do {
+                _ = try await aggregator.fetchPOIs(nearPolyline: loop(), maxDistance: 500, limit: 20)
+                XCTFail("Expected searchUnavailable")
+            } catch {
+                XCTAssertEqual(error as? POIError, .searchUnavailable)
+            }
+        }
+        let calls = await discovery.calls
+        XCTAssertEqual(calls, 2, "A failure must not be cached: Try again has to search again")
+    }
+
+    func testNoSightsIsAnEmptyListNotAnError() async throws {
+        let aggregator = POIAggregatorService(discovery: StubDiscovery(outcome: .success([])), enrichment: StubEnrichment())
+        let pois = try await aggregator.fetchPOIs(nearPolyline: loop(), maxDistance: 500, limit: 20)
+        XCTAssertTrue(pois.isEmpty)
+    }
+
+    func testReopeningALoopUsesItsCachedSights() async throws {
+        let path = loop()
+        let discovery = StubDiscovery(outcome: .success([park(near: path[3], "Vondelpark")]))
+        let aggregator = POIAggregatorService(discovery: discovery, enrichment: StubEnrichment())
+        let first = try await aggregator.fetchPOIs(nearPolyline: path, maxDistance: 500, limit: 20)
+        let second = try await aggregator.fetchPOIs(nearPolyline: path, maxDistance: 500, limit: 20)
+        XCTAssertEqual(first.map(\.name), ["Vondelpark"])
+        XCTAssertEqual(second.map(\.name), first.map(\.name))
+        let calls = await discovery.calls
+        XCTAssertEqual(calls, 1)
+    }
+
+    func testTwoNearbyLoopsDoNotShareCachedSights() {
+        // Middle points ~100 m apart: the old key (centre rounded to 0.01°)
+        // gave both loops the same cached list.
+        let a = POIAggregatorService.cacheKey(for: loop())
+        let b = POIAggregatorService.cacheKey(for: loop(offset: 0.0009))
+        XCTAssertNotNil(a)
+        XCTAssertNotEqual(a, b)
+    }
+
+    func testFirstPassSightsArePassedOnWhileRetrying() async throws {
+        let path = loop()
+        let early = [park(near: path[2], "Sarphatipark")]
+        let all = early + [park(near: path[8], "Oosterpark")]
+        let discovery = StubDiscovery(outcome: .success(all), partial: early)
+        let aggregator = POIAggregatorService(discovery: discovery, enrichment: StubEnrichment())
+        let received = Received()
+        let final = try await aggregator.fetchPOIs(
+            nearPolyline: path, maxDistance: 500, limit: 20,
+            onPartialResults: { await received.add($0) }
+        )
+        let partials = await received.lists
+        XCTAssertEqual(partials.map { $0.map(\.name) }, [["Sarphatipark"]])
+        XCTAssertEqual(Set(final.map(\.name)), ["Sarphatipark", "Oosterpark"])
+    }
+
+    func testThrottleRetriesWaitLongEnoughForMapKitToRecover() {
+        // MapKit's search limit is per time window; retries spread over
+        // ~26 s, each pause longer than the last.
+        let delays = AppleMapKitDiscoveryService.throttleRetryDelaysSeconds
+        XCTAssertEqual(delays, delays.sorted())
+        XCTAssertGreaterThanOrEqual(delays.reduce(0, +), 20)
+    }
+}
+
+// MARK: - Sight search stubs
+
+private actor StubDiscovery: POIDiscovering {
+    let outcome: Result<[POI], POIError>
+    let partial: [POI]?
+    private(set) var calls = 0
+
+    init(outcome: Result<[POI], POIError>, partial: [POI]? = nil) {
+        self.outcome = outcome
+        self.partial = partial
+    }
+
+    func discoverPOIs(alongRoute polyline: [CLLocationCoordinate2D], searchIntervalMeters: Double, searchRadiusMeters: Double) async throws -> [POI] {
+        try await discoverPOIs(alongRoute: polyline, searchIntervalMeters: searchIntervalMeters,
+                               searchRadiusMeters: searchRadiusMeters, onPartialResults: nil)
+    }
+
+    func discoverPOIs(alongRoute polyline: [CLLocationCoordinate2D], searchIntervalMeters: Double, searchRadiusMeters: Double,
+                      onPartialResults: (@Sendable ([POI]) async -> Void)?) async throws -> [POI] {
+        calls += 1
+        if let partial, let onPartialResults { await onPartialResults(partial) }
+        return try outcome.get()
+    }
+}
+
+private struct StubEnrichment: POIEnriching {
+    func enrich(poi: POI, minRating: Double?) async -> POI? { poi }
+}
+
+private actor Received {
+    private(set) var lists: [[POI]] = []
+    func add(_ pois: [POI]) { lists.append(pois) }
 }

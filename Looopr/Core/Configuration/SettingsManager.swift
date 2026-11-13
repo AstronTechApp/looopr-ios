@@ -11,6 +11,7 @@ final class SettingsManager {
         _preferredUnits = Units(rawValue: UserDefaults.standard.string(forKey: Keys.preferredUnits) ?? Units.kilometres.rawValue) ?? .kilometres
         _unitPreference = UnitPreference(rawValue: UserDefaults.standard.string(forKey: Keys.unitPreference) ?? UnitPreference.system.rawValue) ?? .system
         _walkingPace = WalkingPace(rawValue: UserDefaults.standard.string(forKey: Keys.walkingPace) ?? WalkingPace.moderate.rawValue) ?? .moderate
+        _appearance = Appearance(rawValue: UserDefaults.standard.string(forKey: Keys.appearance) ?? Appearance.system.rawValue) ?? .system
 
         _walkReminderEnabled = UserDefaults.standard.bool(forKey: Keys.walkReminderEnabled)
 
@@ -35,6 +36,7 @@ final class SettingsManager {
         static let preferredUnits = "settings.preferredUnits"
         static let unitPreference = "settings.unitPreference"
         static let walkingPace = "settings.walkingPace"
+        static let appearance = "settings.appearance"
         static let walkReminderEnabled = "settings.walkReminderEnabled"
         static let walkReminderTime = "settings.walkReminderTime"
         static let weeklyProgressEnabled = "settings.weeklyProgressEnabled"
@@ -51,6 +53,31 @@ final class SettingsManager {
             switch self {
             case .kilometres: return String(localized: "settings.units.kilometres", defaultValue: "Kilometres (km)", bundle: LocalizationManager.bundle)
             case .miles: return String(localized: "settings.units.miles", defaultValue: "Miles (mi)", bundle: LocalizationManager.bundle)
+            }
+        }
+    }
+
+    // MARK: - Appearance
+
+    /// Light or dark look of the app. `system` follows the phone's setting
+    /// and is the default.
+    enum Appearance: String, CaseIterable {
+        case system, light, dark
+
+        var label: String {
+            switch self {
+            case .system: return L10n.Settings.appearanceSystem
+            case .light: return L10n.Settings.appearanceLight
+            case .dark: return L10n.Settings.appearanceDark
+            }
+        }
+
+        /// `.unspecified` for `system`: the phone decides.
+        var interfaceStyle: UIUserInterfaceStyle {
+            switch self {
+            case .system: return .unspecified
+            case .light: return .light
+            case .dark: return .dark
             }
         }
     }
@@ -115,6 +142,10 @@ final class SettingsManager {
             UserDefaults.standard.set(preferredUnits.rawValue, forKey: Keys.preferredUnits)
             NotificationCenter.default.post(name: .unitsDidChange, object: nil)
         }
+    }
+
+    var appearance: Appearance {
+        didSet { UserDefaults.standard.set(appearance.rawValue, forKey: Keys.appearance) }
     }
 
     var walkingPace: WalkingPace {

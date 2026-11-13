@@ -42,7 +42,15 @@ extension ServiceContainer {
         // Subscription — RevenueCat when a key is configured, otherwise a
         // permissive stub. Note: `paywallEnabled` in AppConfiguration.Freemium
         // is the master switch; while false everyone is premium either way.
-        if Secrets.hasRevenueCatKey {
+        // UI tests only: `-uiTest.pro YES` runs the app as a Pro user
+        // without a purchase, by taking the permissive stub below. Always
+        // false in Release.
+        #if DEBUG
+        let runsAsProForUITest = UserDefaults.standard.bool(forKey: "uiTest.pro")
+        #else
+        let runsAsProForUITest = false
+        #endif
+        if Secrets.hasRevenueCatKey && !runsAsProForUITest {
             let subscriptionService = RevenueCatSubscriptionService(
                 apiKey: Secrets.revenueCatAPIKey,
                 paywallEnabled: config.freemium.paywallEnabled

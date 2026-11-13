@@ -113,20 +113,33 @@ struct POIListView: View {
         }
     }
 
-    /// Badge text for each tab. Food tab shows "10+" as a teaser before data loads.
-    private func tabCountLabel(for tab: POICategoryFilter) -> String? {
+    /// Count shown on top of each tab.
+    private func tabCountLabel(for tab: POICategoryFilter) -> String {
         switch tab {
         case .onRoute: return "\(filteredOnRoute.count)"
         case .nearRoute: return "\(filteredNearRoute.count)"
-        case .food: return hasFetchedFood ? "\(cafes.count + restaurants.count)" : "10+"
+        case .food:
+            return Self.foodCountLabel(
+                isLocked: isFoodLocked,
+                hasFetched: hasFetchedFood,
+                count: cafes.count + restaurants.count
+            )
         }
     }
 
-    private func tabIcon(for tab: POICategoryFilter) -> String {
+    /// What the Food & Drinks tab shows where the other tabs show a count.
+    /// Free tier: "Pro" (nothing is fetched, so there is no number to
+    /// show). Pro: "10+" as a teaser until the places have loaded.
+    static func foodCountLabel(isLocked: Bool, hasFetched: Bool, count: Int) -> String {
+        if isLocked { return "Pro" }
+        return hasFetched ? "\(count)" : "10+"
+    }
+
+    private func tabIdentifier(for tab: POICategoryFilter) -> String {
         switch tab {
-        case .onRoute: return "mappin.circle.fill"
-        case .nearRoute: return "arrow.triangle.turn.up.right.circle.fill"
-        case .food: return "fork.knife.circle.fill"
+        case .onRoute: return "poiTab.onRoute"
+        case .nearRoute: return "poiTab.nearRoute"
+        case .food: return "poiTab.food"
         }
     }
 
@@ -154,29 +167,36 @@ struct POIListView: View {
         let activeTab = tabs.contains(selectedTab) ? selectedTab : (tabs.first ?? .onRoute)
 
         VStack(spacing: 0) {
-            // Primary tab bar
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 6) {
-                    ForEach(tabs, id: \.self) { tab in
-                        POITabButton(
-                            label: tabLabel(for: tab),
-                            countLabel: tabCountLabel(for: tab),
-                            icon: tabIcon(for: tab),
-                            isSelected: tab == activeTab
-                        ) {
-                            withAnimation(.easeInOut(duration: 0.2)) {
-                                selectedTab = tab
-                            }
-                            // Trigger on-demand food fetch when Food tab is tapped
-                            if tab == .food {
-                                onFoodTabSelected?()
-                            }
+            // Primary tab bar: equal-width tabs across the sheet, so all
+            // of them are visible at once. (As scrolling pills, Food &
+            // Drinks sat cut off on the right when there were three.)
+            HStack(spacing: 6) {
+                ForEach(tabs, id: \.self) { tab in
+                    POITabButton(
+                        label: tabLabel(for: tab),
+                        countLabel: tabCountLabel(for: tab),
+                        isLocked: tab == .food && isFoodLocked,
+                        isSelected: tab == activeTab
+                    ) {
+                        withAnimation(.easeInOut(duration: 0.2)) {
+                            selectedTab = tab
+                        }
+                        // Trigger on-demand food fetch when Food tab is tapped
+                        if tab == .food {
+                            onFoodTabSelected?()
                         }
                     }
+                    .accessibilityIdentifier(tabIdentifier(for: tab))
                 }
-                .padding(.horizontal, LoooprTheme.Spacing.md)
-                .padding(.vertical, LoooprTheme.Spacing.sm)
+                // A lone tab (no sights found) takes half the row, not all of it.
+                if tabs.count == 1 {
+                    Color.clear.frame(maxWidth: .infinity, maxHeight: 1)
+                }
             }
+            // Same height for every tab, set by the tallest label.
+            .fixedSize(horizontal: false, vertical: true)
+            .padding(.horizontal, LoooprTheme.Spacing.md)
+            .padding(.vertical, LoooprTheme.Spacing.sm)
 
             // Food sub-filter (Cafes / Restaurants) — only after food has been loaded
             if activeTab == .food && hasFetchedFood && !(cafes.isEmpty && restaurants.isEmpty) {
@@ -284,41 +304,50 @@ struct POIListView: View {
     /// Premium prompt shown in place of the food list on the free tier.
     /// Same card language as the rest of the sheet — a locked slot, not an ad.
     private var foodLockedState: some View {
-        VStack(spacing: LoooprTheme.Spacing.sm) {
-            Image(systemName: "crown.fill")
-                .font(.system(size: 22, weight: .semibold))
-                .foregroundStyle(LoooprTheme.Colors.primary)
-                .frame(width: 48, height: 48)
-                .background(LoooprTheme.Colors.primaryLight)
-                .clipShape(Circle())
+        // Kept short on purpose: in the longer languages a taller card
+        // pushed the button under "Start This Looopr".
+        VStack(alignment: .leading, spacing: 10) {
+            VStack(alignment: .leading, spacing: 3) {
+                HStack(alignment: .firstTextBaseline, spacing: 6) {
+                    Image(systemName: "lock.fill")
+                        .font(.system(size: 12, weight: .bold))
+                        .foregroundStyle(LoooprTheme.Colors.primary)
+                        .accessibilityHidden(true)
+                    Text(L10n.POI.foodLockedTitle)
+                        .font(.system(size: 15, weight: .bold, design: .rounded))
+                        .foregroundStyle(LoooprTheme.Colors.textPrimary)
+                }
 
-            Text(L10n.POI.foodLockedTitle)
-                .font(LoooprTheme.Typography.headline)
-                .foregroundStyle(LoooprTheme.Colors.textPrimary)
+                Text(L10n.POI.foodLockedBody)
+                    .font(LoooprTheme.Typography.subheadline)
+                    .foregroundStyle(LoooprTheme.Colors.textSecondary)
+            }
+            .multilineTextAlignment(.leading)
+            .fixedSize(horizontal: false, vertical: true)
 
-            Text(L10n.POI.foodLockedBody)
-                .font(LoooprTheme.Typography.subheadline)
-                .foregroundStyle(LoooprTheme.Colors.textSecondary)
-                .multilineTextAlignment(.center)
-                .fixedSize(horizontal: false, vertical: true)
-
+            // Outlined, not filled: "Start This Looopr" stays the one
+            // filled button on this screen.
             Button {
                 onUnlockFood?()
             } label: {
                 Text(L10n.POI.foodLockedCTA)
                     .font(LoooprTheme.Typography.button)
-                    .foregroundStyle(LoooprTheme.Colors.textOnPrimary)
-                    .padding(.horizontal, LoooprTheme.Spacing.lg)
-                    .padding(.vertical, 10)
-                    .background(LoooprTheme.Colors.primary)
-                    .clipShape(Capsule())
+                    .foregroundStyle(LoooprTheme.Colors.primary)
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 44)
+                    .background(LoooprTheme.Colors.surface, in: Capsule())
+                    .overlay(Capsule().strokeBorder(LoooprTheme.Colors.primary, lineWidth: 1.5))
+                    .contentShape(Capsule())
             }
             .buttonStyle(.plain)
-            .padding(.top, LoooprTheme.Spacing.xxs)
         }
-        .frame(maxWidth: .infinity)
-        .padding(.vertical, LoooprTheme.Spacing.lg)
         .padding(.horizontal, LoooprTheme.Spacing.md)
+        .padding(.vertical, LoooprTheme.Spacing.sm)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(LoooprTheme.Colors.surfaceTint)
+        .clipShape(RoundedRectangle(cornerRadius: LoooprTheme.Radius.lg))
+        .padding(.horizontal, LoooprTheme.Spacing.md)
+        .padding(.bottom, LoooprTheme.Spacing.lg)
     }
 
     private var foodFilterBar: some View {
@@ -408,46 +437,53 @@ private struct LocationGroupHeader: View {
 
 // MARK: - Primary Tab Button
 
+/// One of up to three equal-width tabs: the count on top, the name under
+/// it. The name may take two lines (the longest translations need them)
+/// and never leaves the tab.
 private struct POITabButton: View {
     let label: String
-    let countLabel: String?
-    let icon: String
+    let countLabel: String
+    /// Free tier, Food & Drinks: a lock next to the count slot.
+    let isLocked: Bool
     let isSelected: Bool
     let action: () -> Void
 
     var body: some View {
         Button(action: action) {
-            HStack(spacing: 5) {
-                Image(systemName: icon)
-                    .font(.caption2)
+            VStack(spacing: 1) {
+                HStack(spacing: 4) {
+                    if isLocked {
+                        Image(systemName: "lock.fill")
+                            .font(.system(size: 11, weight: .bold))
+                    }
+                    Text(countLabel)
+                        .font(.system(size: 16, weight: .heavy, design: .rounded))
+                        .lineLimit(1)
+                }
+                .foregroundStyle(isSelected ? LoooprTheme.Colors.textOnPrimary : LoooprTheme.Colors.textPrimary)
 
                 Text(label)
-                    .font(.subheadline.weight(isSelected ? .semibold : .regular))
-
-                if let countLabel {
-                    Text(countLabel)
-                        .font(.caption2.weight(.bold))
-                        .padding(.horizontal, 5)
-                        .padding(.vertical, 2)
-                        .background(
-                            isSelected
-                                ? Color.white.opacity(0.3)
-                                : LoooprTheme.Colors.border
-                        )
-                        .clipShape(Capsule())
-                }
+                    .font(.system(size: 12, weight: isSelected ? .semibold : .medium, design: .rounded))
+                    .foregroundStyle(isSelected ? LoooprTheme.Colors.textOnPrimary : LoooprTheme.Colors.textSecondary)
+                    .lineLimit(2)
+                    .minimumScaleFactor(0.85)
+                    .multilineTextAlignment(.center)
             }
-            .padding(.horizontal, LoooprTheme.Spacing.sm)
-            .padding(.vertical, LoooprTheme.Spacing.xs)
+            .padding(.horizontal, 6)
+            .padding(.vertical, 7)
+            .frame(maxWidth: .infinity, minHeight: 50, maxHeight: .infinity)
             .background(isSelected ? LoooprTheme.Colors.primary : Color.clear)
-            .foregroundStyle(isSelected ? LoooprTheme.Colors.textOnPrimary : LoooprTheme.Colors.textSecondary)
-            .clipShape(Capsule())
+            .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
             .overlay(
-                Capsule()
+                RoundedRectangle(cornerRadius: 14, style: .continuous)
                     .strokeBorder(isSelected ? Color.clear : LoooprTheme.Colors.borderStrong, lineWidth: 1)
             )
+            .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("\(label), \(countLabel)")
+        .accessibilityAddTraits(isSelected ? [.isButton, .isSelected] : .isButton)
     }
 }
 

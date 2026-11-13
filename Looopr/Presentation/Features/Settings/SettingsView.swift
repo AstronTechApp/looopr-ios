@@ -272,6 +272,38 @@ struct SettingsView: View {
                         }
                     }
                 }
+
+                Divider()
+                    .padding(.leading, 44)
+
+                // Appearance (System / Light / Dark)
+                SettingsRow(icon: "circle.lefthalf.filled", title: L10n.Settings.appearance) {
+                    Menu {
+                        ForEach(SettingsManager.Appearance.allCases, id: \.self) { appearance in
+                            Button {
+                                settings.appearance = appearance
+                            } label: {
+                                HStack {
+                                    Text(appearance.label)
+                                    if settings.appearance == appearance {
+                                        Image(systemName: "checkmark")
+                                    }
+                                }
+                            }
+                        }
+                    } label: {
+                        HStack(spacing: LoooprTheme.Spacing.xxs) {
+                            Text(settings.appearance.label)
+                                .font(LoooprTheme.Typography.body)
+                                .foregroundStyle(LoooprTheme.Colors.textSecondary)
+                                .lineLimit(1)
+                            Image(systemName: "chevron.up.chevron.down")
+                                .font(.system(size: 10, weight: .semibold))
+                                .foregroundStyle(LoooprTheme.Colors.textTertiary)
+                        }
+                    }
+                    .accessibilityIdentifier("settingsAppearanceMenu")
+                }
             }
         }
     }

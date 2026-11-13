@@ -16,6 +16,12 @@ final class RouteDetailViewModel {
     private(set) var route: Route
     private(set) var isLoadingPOIs = false
     private(set) var hasCompletedInitialPOILoad = false
+    /// Sights from the first search pass are on screen, but throttled
+    /// searches are still being retried (shows "Finding more sights…").
+    private(set) var isLoadingMoreSights = false
+    /// The sight search failed and found nothing — show "Try again" rather
+    /// than an empty state that reads as "no sights here".
+    private(set) var sightsFailedToLoad = false
     private(set) var isLoadingFood = false
     private(set) var hasFetchedFood = false
     /// True on the free tier: the Food & Drinks tab shows a Premium prompt
@@ -246,20 +252,55 @@ final class RouteDetailViewModel {
     }
 
     func loadPOIsIfNeeded() {
-        guard route.pois.isEmpty, !isLoadingPOIs else { return }
+        guard route.attractions.isEmpty, !isLoadingPOIs, !isLoadingMoreSights else { return }
         isLoadingPOIs = true
+        sightsFailedToLoad = false
 
         Task {
-            let pois = await poiAggregator.fetchPOIs(
-                nearPolyline: route.pathCoordinates,
-                maxDistance: configuration.poi.maxDistanceFromRouteMeters,
-                limit: configuration.poi.maxPOIsPerRoute
-            )
-            route = route.withPOIs(pois)
+            do {
+                let pois = try await poiAggregator.fetchPOIs(
+                    nearPolyline: route.pathCoordinates,
+                    maxDistance: configuration.poi.maxDistanceFromRouteMeters,
+                    limit: configuration.poi.maxPOIsPerRoute,
+                    onPartialResults: { partial in
+                        await self.showPartialSights(partial)
+                    }
+                )
+                applySights(pois)
+                logger.info("Loaded \(pois.count) POIs for route \(route.name) (\(route.onRouteAttractions.count) on-route, \(route.nearRouteAttractions.count) near-route)")
+            } catch {
+                // Keep anything already shown from the first pass.
+                sightsFailedToLoad = route.attractions.isEmpty
+                logger.warning("Sights could not be loaded for route \(route.name): \(error.localizedDescription)")
+            }
             isLoadingPOIs = false
+            isLoadingMoreSights = false
             hasCompletedInitialPOILoad = true
-            logger.info("Loaded \(pois.count) POIs for route \(route.name) (\(route.onRouteAttractions.count) on-route, \(route.nearRouteAttractions.count) near-route)")
         }
+    }
+
+    /// "Try again" after the sight search failed.
+    func retryLoadingSights() {
+        guard sightsFailedToLoad else { return }
+        loadPOIsIfNeeded()
+    }
+
+    /// Sights found so far, while the rest of the searches (and any
+    /// throttled retries) are still running. Called several times.
+    private func showPartialSights(_ pois: [POI]) {
+        guard isLoadingPOIs || isLoadingMoreSights else { return }
+        applySights(pois)
+        isLoadingPOIs = false
+        isLoadingMoreSights = true
+        hasCompletedInitialPOILoad = true
+        logger.info("Showing \(pois.count) sights so far; still searching")
+    }
+
+    /// Replace the sights, keeping any food already loaded from Google.
+    private func applySights(_ pois: [POI]) {
+        let sights = pois.filter { !$0.category.isFood }
+        let food = hasFetchedFood ? route.foodSpots : pois.filter { $0.category.isFood }
+        route = route.withPOIs(sights + food)
     }
 
     /// Fetch cafes and restaurants on-demand via Google Places (New) API.

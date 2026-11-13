@@ -167,16 +167,9 @@ struct RouteSelectionView: View {
                 ForEach(Array(viewModel.routes.enumerated()), id: \.element.id) { index, route in
                     RouteSelectionCard(
                         route: route,
-                        onTapCard: {
-                            ServiceContainer.shared.resolve(AnalyticsTracking.self).track(
-                                .routeSelected(
-                                    routeId: route.id,
-                                    durationMinutes: route.durationMinutes,
-                                    distanceKm: route.distanceKilometers
-                                )
-                            )
-                            router.navigate(to: .routeDetail(route))
-                        },
+                        isFreeTier: viewModel.isFreeTier,
+                        onTapCard: { openDetail(route, source: "map") },
+                        onTapPOIRow: { openDetail(route, source: "poi_row") },
                         onStartWalk: { router.navigate(to: .walkNavigation(route)) }
                     )
                     .offset(y: hasAppeared ? 0 : 40)
@@ -206,6 +199,20 @@ struct RouteSelectionView: View {
             }
             .padding(.horizontal, LoooprTheme.Spacing.screenHorizontal)
         }
+    }
+
+    /// Opens the route detail screen. `source` records which part of the
+    /// card was tapped (`map` or `poi_row`).
+    private func openDetail(_ route: Route, source: String) {
+        ServiceContainer.shared.resolve(AnalyticsTracking.self).track(
+            .routeSelected(
+                routeId: route.id,
+                durationMinutes: route.durationMinutes,
+                distanceKm: route.distanceKilometers,
+                source: source
+            )
+        )
+        router.navigate(to: .routeDetail(route))
     }
 
     // MARK: - Empty / failed search
@@ -523,7 +530,11 @@ private struct UpgradeCard: View {
 
 private struct RouteSelectionCard: View {
     let route: Route
+    /// Free tier: the "along this loop" row says cafés come with Pro.
+    let isFreeTier: Bool
     let onTapCard: () -> Void
+    /// The "along this loop" row. Opens the same route detail as the map.
+    let onTapPOIRow: () -> Void
     let onStartWalk: () -> Void
 
     private var routeColor: Color {
@@ -534,7 +545,7 @@ private struct RouteSelectionCard: View {
         VStack(alignment: .leading, spacing: 0) {
             // ── Map Image ──
             Button(action: onTapCard) {
-                ZStack(alignment: .topTrailing) {
+                ZStack(alignment: .bottomTrailing) {
                     RouteMapPreview(route: route, color: routeColor)
                         .frame(height: 200)
                         .clipped()
@@ -553,6 +564,10 @@ private struct RouteSelectionCard: View {
                         .frame(height: 60)
                     }
 
+                    // Says the map opens: without it the map read as a
+                    // picture and people missed the route detail screen.
+                    ViewMapPill()
+                        .padding(LoooprTheme.Spacing.sm)
                 }
                 .contentShape(Rectangle())
             }
@@ -616,6 +631,9 @@ private struct RouteSelectionCard: View {
                         .frame(height: 1)
                 }
 
+                // ── What the map screen holds ──
+                RoutePOIRow(isFreeTier: isFreeTier, action: onTapPOIRow)
+
                 // ── Start Walk CTA (Gradient) ──
                 Button(action: onStartWalk) {
                     HStack(spacing: 10) {
@@ -652,6 +670,107 @@ private struct RouteSelectionCard: View {
             x: 0,
             y: 12
         )
+    }
+}
+
+// MARK: - View Map Pill
+
+private struct ViewMapPill: View {
+    var body: some View {
+        HStack(spacing: 6) {
+            Text(L10n.RouteSelection.viewMap)
+                .font(.system(size: 13, weight: .semibold, design: .rounded))
+                .foregroundStyle(LoooprTheme.Colors.textPrimary)
+            Image(systemName: "arrow.up.left.and.arrow.down.right")
+                .font(.system(size: 11, weight: .bold))
+                .foregroundStyle(LoooprTheme.Colors.primary)
+        }
+        .padding(.horizontal, 12)
+        .frame(height: 32)
+        .background(LoooprTheme.Colors.surface, in: Capsule())
+        .shadow(color: Color.black.opacity(0.16), radius: 6, y: 2)
+    }
+}
+
+// MARK: - "Along this loop" row
+
+/// Texts of the route card's "along this loop" row. No counts on purpose:
+/// sights and cafés are only fetched on the route detail screen (cafés
+/// only for Pro), so the card names what is there, not how many.
+enum RouteCardPOIRowText {
+    static func title(isFreeTier: Bool) -> String {
+        isFreeTier ? L10n.RouteSelection.poiRowTitleFree : L10n.RouteSelection.poiRowTitlePro
+    }
+
+    static func subtitle(isFreeTier: Bool) -> String {
+        isFreeTier ? L10n.RouteSelection.poiRowSubtitleFree : L10n.RouteSelection.poiRowSubtitlePro
+    }
+}
+
+private struct RoutePOIRow: View {
+    let isFreeTier: Bool
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            HStack(spacing: LoooprTheme.Spacing.sm) {
+                icons
+
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(RouteCardPOIRowText.title(isFreeTier: isFreeTier))
+                        .font(.system(size: 15, weight: .bold, design: .rounded))
+                        .foregroundStyle(LoooprTheme.Colors.textPrimary)
+                    Text(RouteCardPOIRowText.subtitle(isFreeTier: isFreeTier))
+                        .font(.system(size: 13, weight: .medium, design: .rounded))
+                        .foregroundStyle(LoooprTheme.Colors.textSecondary)
+                }
+                .multilineTextAlignment(.leading)
+                .fixedSize(horizontal: false, vertical: true)
+
+                Spacer(minLength: 0)
+
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 14, weight: .bold))
+                    .foregroundStyle(LoooprTheme.Colors.primary)
+            }
+            .padding(.horizontal, LoooprTheme.Spacing.sm)
+            .padding(.vertical, 10)
+            .frame(maxWidth: .infinity, minHeight: 60, alignment: .leading)
+            .background(LoooprTheme.Colors.surfaceTint)
+            .clipShape(RoundedRectangle(cornerRadius: LoooprTheme.Radius.lg))
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityElement(children: .combine)
+        .accessibilityAddTraits(.isButton)
+        .accessibilityIdentifier("routeCardPOIRow")
+    }
+
+    /// A sight star (the same yellow star as on the route map) and, next
+    /// to it, a cup for Pro or a lock on the free tier.
+    private var icons: some View {
+        HStack(spacing: -10) {
+            Image(systemName: "star.fill")
+                .font(.system(size: 14, weight: .bold))
+                .foregroundStyle(.white)
+                .frame(width: 34, height: 34)
+                .background(Color.yellow, in: Circle())
+                .overlay(Circle().stroke(LoooprTheme.Colors.surfaceTint, lineWidth: 2))
+                .zIndex(isFreeTier ? 0 : 1)
+
+            Image(systemName: isFreeTier ? "lock.fill" : "cup.and.saucer.fill")
+                .font(.system(size: 13, weight: .semibold))
+                .foregroundStyle(isFreeTier ? LoooprTheme.Colors.textSecondary : LoooprTheme.Colors.routeDot)
+                .frame(width: 34, height: 34)
+                .background(LoooprTheme.Colors.surface, in: Circle())
+                .overlay(
+                    Circle().strokeBorder(
+                        isFreeTier ? LoooprTheme.Colors.borderStrong : LoooprTheme.Colors.routeDot,
+                        lineWidth: 1.5
+                    )
+                )
+        }
+        .accessibilityHidden(true)
     }
 }
 

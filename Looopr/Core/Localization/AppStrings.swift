@@ -145,6 +145,11 @@ enum L10n {
         static var lockedBody: String { String(localized: "routeSelection.lockedBody", defaultValue: "Looopr found these for your walk too. Pro unlocks them, plus the cafés along the way.", bundle: LocalizationManager.bundle) }
         static var lockedCTA: String { String(localized: "routeSelection.lockedCTA", defaultValue: "Try Pro free for a week", bundle: LocalizationManager.bundle) }
         static var lockedRowTitle: String { String(localized: "routeSelection.lockedRowTitle", defaultValue: "Another loop", bundle: LocalizationManager.bundle) }
+        static var viewMap: String { String(localized: "routeSelection.viewMap", defaultValue: "View map", bundle: LocalizationManager.bundle) }
+        static var poiRowTitlePro: String { String(localized: "routeSelection.poiRowTitlePro", defaultValue: "Sights and cafés along this loop", bundle: LocalizationManager.bundle) }
+        static var poiRowSubtitlePro: String { String(localized: "routeSelection.poiRowSubtitlePro", defaultValue: "See them on the map", bundle: LocalizationManager.bundle) }
+        static var poiRowTitleFree: String { String(localized: "routeSelection.poiRowTitleFree", defaultValue: "Sights along this loop", bundle: LocalizationManager.bundle) }
+        static var poiRowSubtitleFree: String { String(localized: "routeSelection.poiRowSubtitleFree", defaultValue: "Cafés unlock with Pro", bundle: LocalizationManager.bundle) }
         static func subtitleFound(count: Int, duration: String) -> String {
             if count == 1 {
                 return String(format: NSLocalizedString("routeSelection.subtitleFound.one", tableName: nil, bundle: LocalizationManager.bundle, value: "1 route found · %@ walk", comment: ""), duration)
@@ -171,6 +176,8 @@ enum L10n {
         static var includeFerryDescription: String { String(localized: "routeDetail.includeFerryDescription", defaultValue: "This route includes a ferry crossing", bundle: LocalizationManager.bundle) }
         static var leavingTime: String { String(localized: "routeDetail.leavingTime", defaultValue: "Leaving time", bundle: LocalizationManager.bundle) }
         static var findingNearbyAttractions: String { String(localized: "routeDetail.findingNearbyAttractions", defaultValue: "Finding nearby attractions...", bundle: LocalizationManager.bundle) }
+        static var sightsUnavailable: String { String(localized: "routeDetail.sightsUnavailable", defaultValue: "Couldn't load the sights along this loop.", bundle: LocalizationManager.bundle) }
+        static var findingMoreSights: String { String(localized: "routeDetail.findingMoreSights", defaultValue: "Finding more sights…", bundle: LocalizationManager.bundle) }
         static var pointsOfInterest: String { String(localized: "routeDetail.pointsOfInterest", defaultValue: "POINTS OF INTEREST", bundle: LocalizationManager.bundle) }
     }
 
@@ -459,6 +466,10 @@ enum L10n {
         static var distanceUnits: String { String(localized: "settings.distanceUnits", defaultValue: "Distance Units", bundle: LocalizationManager.bundle) }
         static var units: String { String(localized: "settings.units", defaultValue: "Units", bundle: LocalizationManager.bundle) }
         static var language: String { String(localized: "settings.language", defaultValue: "Language", bundle: LocalizationManager.bundle) }
+        static var appearance: String { String(localized: "settings.appearance", defaultValue: "Appearance", bundle: LocalizationManager.bundle) }
+        static var appearanceSystem: String { String(localized: "settings.appearance.system", defaultValue: "System", bundle: LocalizationManager.bundle) }
+        static var appearanceLight: String { String(localized: "settings.appearance.light", defaultValue: "Light", bundle: LocalizationManager.bundle) }
+        static var appearanceDark: String { String(localized: "settings.appearance.dark", defaultValue: "Dark", bundle: LocalizationManager.bundle) }
         static var health: String { String(localized: "settings.health", defaultValue: "HEALTH", bundle: LocalizationManager.bundle) }
         static var appleHealth: String { String(localized: "settings.appleHealth", defaultValue: "Apple Health", bundle: LocalizationManager.bundle) }
         static var notConnected: String { String(localized: "settings.notConnected", defaultValue: "Not Connected", bundle: LocalizationManager.bundle) }

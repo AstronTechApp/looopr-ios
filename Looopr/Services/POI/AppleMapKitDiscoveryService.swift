@@ -51,7 +51,7 @@ actor AppleMapKitDiscoveryService: POIDiscovering {
     /// Each query has a `fallbackCategory` used when the returned MKMapItem
     /// has no `pointOfInterestCategory` or when its category doesn't map to
     /// a known attraction type.
-    private struct AttractionQuery {
+    private struct AttractionQuery: Sendable {
         let query: String
         let fallbackCategory: POICategory
     }
@@ -93,6 +93,13 @@ actor AppleMapKitDiscoveryService: POIDiscovering {
         return rejected
     }
 
+    /// The broad catch-all query first (whole loop covered in the first
+    /// batch), then the specific ones.
+    private static var queriesInSearchOrder: [AttractionQuery] {
+        let broad = attractionQueries.filter { $0.fallbackCategory == .landmark }
+        return broad + attractionQueries.filter { $0.fallbackCategory != .landmark }
+    }
+
     /// Distance in metres between search sample points along the route.
     /// 500 m gives good overlap with a 600 m search region span (300 m radius).
     private static let sampleIntervalMeters: Double = 500
@@ -116,6 +123,25 @@ actor AppleMapKitDiscoveryService: POIDiscovering {
     /// that causes silent zero-result responses across all searches.
     private static let searchBatchSize = 15
 
+    /// Pauses (seconds) before each retry round for searches that MapKit
+    /// throttled (`MKError.loadingThrottled`). MapKit limits searches per app
+    /// per time window; a long loop (5 km ≈ 90 searches) can exceed it in one
+    /// go, so the waits grow until the window has had time to reset.
+    /// Worst case adds about 26 s, during which the sights found so far are
+    /// already on screen (see `onPartialResults`).
+    static let throttleRetryDelaysSeconds: [Double] = [3, 8, 15]
+
+    /// Smaller batches in retry rounds so a retry doesn't trip the limit again.
+    private static let retryBatchSize = 8
+
+    /// Outcome of one MKLocalSearch, so throttling and other failures are no
+    /// longer indistinguishable from "nothing here".
+    enum SearchOutcome: Sendable {
+        case found([POI])
+        case throttled
+        case failed
+    }
+
     init(configuration: AppConfiguration = .current) {
         self.configuration = configuration
     }
@@ -126,6 +152,20 @@ actor AppleMapKitDiscoveryService: POIDiscovering {
         alongRoute polyline: [CLLocationCoordinate2D],
         searchIntervalMeters: Double,
         searchRadiusMeters: Double
+    ) async throws -> [POI] {
+        try await discoverPOIs(
+            alongRoute: polyline,
+            searchIntervalMeters: searchIntervalMeters,
+            searchRadiusMeters: searchRadiusMeters,
+            onPartialResults: nil
+        )
+    }
+
+    func discoverPOIs(
+        alongRoute polyline: [CLLocationCoordinate2D],
+        searchIntervalMeters: Double,
+        searchRadiusMeters: Double,
+        onPartialResults: (@Sendable ([POI]) async -> Void)?
     ) async throws -> [POI] {
         guard polyline.count >= 2 else { throw POIError.discoveryFailed }
 
@@ -138,84 +178,148 @@ actor AppleMapKitDiscoveryService: POIDiscovering {
         let totalSearches = points.count * queryCount
         logger.info("Sampled \(points.count) search points along route (\(polyline.count) waypoints), \(queryCount) queries → \(totalSearches) total searches")
 
-        // 2. Run searches for every (point × query) pair in batches.
-        let allResults = await searchAllQueries(
-            at: points,
-            radiusMeters: searchRadiusMeters
-        )
-        logger.info("MapKit returned \(allResults.count) raw results across \(queryCount) queries and \(points.count) points")
-        if allResults.isEmpty {
-            logger.warning("⚠️ MapKit returned ZERO results for ALL \(totalSearches) searches — this likely indicates MKLocalSearch is failing silently (check network, entitlements, or simulator limitations)")
+        // Query-major order, broad query first: the first batch already
+        // covers the whole loop with "tourist attraction landmark", so the
+        // first sights on screen are spread along the route, not bunched at
+        // the start. The specific queries (museum, park, ...) fill in after.
+        let tasks = Self.queriesInSearchOrder.flatMap { query in
+            points.map { SearchTask(point: $0, query: query) }
         }
 
-        // 3. Deduplicate — the same landmark will appear from multiple
-        //    overlapping search circles and from different queries.
-        let unique = deduplicate(allResults)
-        logger.info("After deduplication: \(unique.count) unique POIs")
+        // Each batch that finds something is shown straight away, so the
+        // first sights appear after about one batch instead of after all
+        // searches (which, with retries, could take half a minute).
+        let report: (@Sendable ([POI]) async -> Void)? = onPartialResults.map { forward in
+            { @Sendable [weak self] (raw: [POI]) async in
+                guard let self else { return }
+                let validated = await self.validate(raw, polyline: polyline)
+                if !validated.isEmpty { await forward(validated) }
+            }
+        }
 
-        // 4. Corridor filter — discard anything too far from the route.
+        // 2. First pass over every (point × query) pair.
+        var pass = await runSearches(tasks, batchSize: Self.searchBatchSize, radiusMeters: searchRadiusMeters,
+                                     foundSoFar: [], onProgress: report)
+        var allResults = pass.results
+        var failedCount = pass.failedCount
+        var pending = pass.throttled
+        logger.info("First pass: \(allResults.count) raw results, \(pending.count) throttled, \(failedCount) failed of \(totalSearches)")
+
+        // 3. Retry throttled searches after growing pauses. What was found so
+        //    far is already on screen.
+        if !pending.isEmpty {
+            for (round, delay) in Self.throttleRetryDelaysSeconds.enumerated() {
+                guard !pending.isEmpty else { break }
+                try? await Task.sleep(for: .seconds(delay))
+                if Task.isCancelled { break }
+                pass = await runSearches(pending, batchSize: Self.retryBatchSize, radiusMeters: searchRadiusMeters,
+                                         foundSoFar: allResults, onProgress: report)
+                allResults.append(contentsOf: pass.results)
+                failedCount += pass.failedCount
+                logger.info("Retry round \(round + 1) after \(Int(delay))s: \(pending.count - pass.throttled.count) of \(pending.count) went through, \(pass.results.count) raw results")
+                pending = pass.throttled
+            }
+            if !pending.isEmpty {
+                logger.warning("⚠️ \(pending.count) of \(totalSearches) MapKit searches still throttled after all retries")
+            }
+        }
+
+        let unsuccessful = failedCount + pending.count
+        if allResults.isEmpty && unsuccessful > 0 {
+            // Nothing found AND some searches never got through: we can't
+            // tell the user "no sights here". Let the caller say so instead.
+            logger.warning("⚠️ MapKit returned no results and \(unsuccessful) of \(totalSearches) searches failed — reporting searchUnavailable")
+            throw POIError.searchUnavailable
+        }
+
+        let validated = validate(allResults, polyline: polyline)
+        logger.info("Discovered \(validated.count) POIs from \(allResults.count) raw (\(unsuccessful) of \(totalSearches) searches unsuccessful)")
+        return validated
+    }
+
+    /// Deduplicate (the same landmark appears from overlapping circles and
+    /// different queries), then drop anything outside the route corridor.
+    private func validate(_ results: [POI], polyline: [CLLocationCoordinate2D]) -> [POI] {
+        let unique = deduplicate(results)
         let maxCorridor = configuration.poi.maxCorridorDistanceMeters
-        let validated = unique.filter { poi in
+        return unique.filter { poi in
             RouteGeometry.minimumDistance(
                 from: poi.location.clCoordinate,
                 toPolyline: polyline
             ) <= maxCorridor
         }
-
-        logger.info("Discovered \(validated.count) POIs (from \(allResults.count) raw, \(unique.count) unique, \(validated.count) corridor-validated)")
-        return validated
     }
 
     // MARK: - Batched Query Search
 
-    /// Search every query at every sample point using structured concurrency,
-    /// batched to avoid MKLocalSearch rate limits.
-    ///
-    /// Each batch of `searchBatchSize` searches runs concurrently; batches
-    /// are sequential. Individual failures are swallowed (logged) so one bad
-    /// search doesn't kill the whole discovery pass.
-    private func searchAllQueries(
-        at points: [CLLocationCoordinate2D],
-        radiusMeters: Double
-    ) async -> [POI] {
-        struct SearchTask {
-            let point: CLLocationCoordinate2D
-            let query: AttractionQuery
-        }
+    private struct SearchTask: Sendable {
+        let point: CLLocationCoordinate2D
+        let query: AttractionQuery
+    }
 
-        let allTasks = points.flatMap { point in
-            Self.attractionQueries.map { SearchTask(point: point, query: $0) }
-        }
+    private struct PassResult {
+        var results: [POI] = []
+        var throttled: [SearchTask] = []
+        var failedCount = 0
+    }
 
-        var allResults: [POI] = []
+    /// Run the given searches using structured concurrency, in batches to
+    /// stay under MKLocalSearch rate limits. Each batch runs concurrently;
+    /// batches are sequential. Throttled searches are handed back so the
+    /// caller can retry them; other failures are counted.
+    private func runSearches(
+        _ tasks: [SearchTask],
+        batchSize: Int,
+        radiusMeters: Double,
+        foundSoFar: [POI] = [],
+        onProgress: (@Sendable ([POI]) async -> Void)? = nil
+    ) async -> PassResult {
+        var pass = PassResult()
 
-        for batchStart in stride(from: 0, to: allTasks.count, by: Self.searchBatchSize) {
-            let batchEnd = min(batchStart + Self.searchBatchSize, allTasks.count)
-            let batch = allTasks[batchStart..<batchEnd]
+        for batchStart in stride(from: 0, to: tasks.count, by: batchSize) {
+            let batchEnd = min(batchStart + batchSize, tasks.count)
+            let batch = tasks[batchStart..<batchEnd]
 
-            let batchResults = await withTaskGroup(of: [POI].self) { group in
+            let outcomes = await withTaskGroup(of: (SearchTask, SearchOutcome).self) { group in
                 for task in batch {
                     group.addTask {
-                        await self.search(
+                        let outcome = await self.search(
                             query: task.query.query,
                             fallbackCategory: task.query.fallbackCategory,
                             center: task.point,
                             radiusMeters: radiusMeters
                         )
+                        return (task, outcome)
                     }
                 }
 
-                var results: [POI] = []
-                for await pois in group {
-                    results.append(contentsOf: pois)
+                var collected: [(SearchTask, SearchOutcome)] = []
+                for await item in group {
+                    collected.append(item)
                 }
-                return results
+                return collected
             }
 
-            allResults.append(contentsOf: batchResults)
+            var batchFound = 0
+            for (task, outcome) in outcomes {
+                switch outcome {
+                case .found(let pois):
+                    pass.results.append(contentsOf: pois)
+                    batchFound += pois.count
+                case .throttled: pass.throttled.append(task)
+                case .failed: pass.failedCount += 1
+                }
+            }
+
+            // Report progress unless this was the very last batch (the
+            // caller gets the full set as the return value anyway).
+            let isLastBatch = batchEnd == tasks.count
+            if let onProgress, batchFound > 0, !isLastBatch || !pass.throttled.isEmpty {
+                await onProgress(foundSoFar + pass.results)
+            }
         }
 
-        return allResults
+        return pass
     }
 
     /// Single MKLocalSearch for one query at one point.
@@ -234,7 +338,7 @@ actor AppleMapKitDiscoveryService: POIDiscovering {
         fallbackCategory: POICategory,
         center: CLLocationCoordinate2D,
         radiusMeters: Double
-    ) async -> [POI] {
+    ) async -> SearchOutcome {
         let request = MKLocalSearch.Request()
         request.naturalLanguageQuery = query
         request.resultTypes = .pointOfInterest
@@ -277,15 +381,22 @@ actor AppleMapKitDiscoveryService: POIDiscovering {
             if pois.isEmpty {
                 logger.debug("MapKit returned 0 items for '\(query)' at (\(String(format: "%.4f", center.latitude)), \(String(format: "%.4f", center.longitude)))")
             }
-            return pois
+            return .found(pois)
         } catch let error as MKError {
-            // Separate MKError handling for better diagnostics:
-            // .placemarkNotFound (code 4), .serverFailure (code 2), .loadingThrottled (code 3)
-            logger.warning("MapKit search failed for '\(query)' at (\(String(format: "%.4f", center.latitude)), \(String(format: "%.4f", center.longitude))): MKError code=\(error.errorCode) \(error.localizedDescription)")
-            return []
+            switch error.code {
+            case .placemarkNotFound:
+                // MapKit's way of saying "no results here" — not a failure.
+                return .found([])
+            case .loadingThrottled:
+                logger.debug("MapKit throttled '\(query)' at (\(String(format: "%.4f", center.latitude)), \(String(format: "%.4f", center.longitude)))")
+                return .throttled
+            default:
+                logger.warning("MapKit search failed for '\(query)' at (\(String(format: "%.4f", center.latitude)), \(String(format: "%.4f", center.longitude))): MKError code=\(error.errorCode) \(error.localizedDescription)")
+                return .failed
+            }
         } catch {
             logger.warning("MapKit search failed for '\(query)' at (\(String(format: "%.4f", center.latitude)), \(String(format: "%.4f", center.longitude))): \(error.localizedDescription)")
-            return []
+            return .failed
         }
     }
 

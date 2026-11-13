@@ -670,6 +670,18 @@ struct RouteDetailView: View {
                     .font(LoooprTheme.Typography.label)
                     .foregroundStyle(LoooprTheme.Colors.textTertiary)
 
+                if viewModel.sightsFailedToLoad {
+                    sightsUnavailableNotice
+                } else if viewModel.isLoadingMoreSights {
+                    HStack(spacing: LoooprTheme.Spacing.xs) {
+                        ProgressView().scaleEffect(0.7)
+                        Text(L10n.RouteDetail.findingMoreSights)
+                            .font(LoooprTheme.Typography.caption)
+                            .foregroundStyle(LoooprTheme.Colors.textSecondary)
+                    }
+                    .accessibilityIdentifier("routeDetail.findingMoreSights")
+                }
+
                 // Full POI list with filter tabs and cards
                 POIListView(
                     onRouteAttractions: viewModel.onRouteAttractions,
@@ -692,6 +704,46 @@ struct RouteDetailView: View {
                 )
             }
         }
+    }
+}
+
+// MARK: - Sights unavailable
+
+private extension RouteDetailView {
+    /// Shown when the sight search failed (for example MapKit throttled
+    /// every search), so an empty list doesn't read as "no sights here".
+    /// Outlined button: "Start This Looopr" stays the one filled button.
+    var sightsUnavailableNotice: some View {
+        HStack(spacing: LoooprTheme.Spacing.sm) {
+            Text(L10n.RouteDetail.sightsUnavailable)
+                .font(LoooprTheme.Typography.subheadline)
+                .foregroundStyle(LoooprTheme.Colors.textSecondary)
+                .fixedSize(horizontal: false, vertical: true)
+                .frame(maxWidth: .infinity, alignment: .leading)
+
+            Button {
+                viewModel.retryLoadingSights()
+            } label: {
+                Text(L10n.RouteSelection.tryAgain)
+                    .font(LoooprTheme.Typography.button)
+                    .foregroundStyle(LoooprTheme.Colors.primary)
+                    .lineLimit(1)
+                    .fixedSize()
+                    .padding(.horizontal, LoooprTheme.Spacing.md)
+                    .frame(height: 36)
+                    .background(LoooprTheme.Colors.surface, in: Capsule())
+                    .overlay(Capsule().strokeBorder(LoooprTheme.Colors.primary, lineWidth: 1.5))
+                    .contentShape(Capsule())
+            }
+            .buttonStyle(.plain)
+            .accessibilityIdentifier("routeDetail.sightsTryAgain")
+        }
+        .padding(.horizontal, LoooprTheme.Spacing.md)
+        .padding(.vertical, LoooprTheme.Spacing.sm)
+        .background(LoooprTheme.Colors.surfaceTint)
+        .clipShape(RoundedRectangle(cornerRadius: LoooprTheme.Radius.lg))
+        .accessibilityElement(children: .contain)
+        .accessibilityIdentifier("routeDetail.sightsUnavailable")
     }
 }
 

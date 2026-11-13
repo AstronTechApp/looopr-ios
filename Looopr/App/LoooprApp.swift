@@ -17,8 +17,7 @@ struct LoooprApp: App {
 
     var body: some Scene {
         WindowGroup {
-            AppRootView()
-                .preferredColorScheme(Self.uiTestColorScheme)
+            AppearanceRoot()
         }
         .onChange(of: scenePhase) { _, newPhase in
             if newPhase == .background {
@@ -35,7 +34,7 @@ struct LoooprApp: App {
     /// UI tests only: `-uiTest.appearance dark` forces the scheme, because the
     /// simulator's own appearance can't be switched reliably from a test.
     /// Always nil in Release, so the app follows the system setting.
-    private static var uiTestColorScheme: ColorScheme? {
+    fileprivate static var uiTestColorScheme: ColorScheme? {
         #if DEBUG
         switch UserDefaults.standard.string(forKey: "uiTest.appearance") {
         case "dark": return .dark
@@ -45,5 +44,26 @@ struct LoooprApp: App {
         #else
         return nil
         #endif
+    }
+}
+
+/// The app's root with the look chosen in Settings > Appearance applied
+/// (System follows the phone). A view of its own so a change of the setting
+/// redraws it. The UI-test override, when present, wins.
+private struct AppearanceRoot: View {
+    var body: some View {
+        let appearance = SettingsManager.shared.appearance
+        AppRootView()
+            .preferredColorScheme(LoooprApp.uiTestColorScheme ?? appearance.colorScheme)
+    }
+}
+
+private extension SettingsManager.Appearance {
+    var colorScheme: ColorScheme? {
+        switch self {
+        case .system: return nil
+        case .light: return .light
+        case .dark: return .dark
+        }
     }
 }

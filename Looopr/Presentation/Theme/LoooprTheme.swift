@@ -54,6 +54,8 @@ extension LoooprTheme {
         static let surfaceContainer = Color(light: "#e6e9e5", dark: "#2a302b")
         /// High-contrast surface
         static let surfaceContainerHigh = Color(light: "#e0e3df", dark: "#333a34")
+        /// Soft green wash for a tappable row or callout on a surface
+        static let surfaceTint    = Color(light: "#eef5ea", dark: "#222b24")
 
         // ── Text ───────────────────────────────────────────────
         /// Headings, primary labels

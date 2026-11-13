@@ -20,38 +20,81 @@ actor POIAggregatorService {
         self.cache = CacheManager(ttl: configuration.poi.cacheTTLSeconds)
     }
 
+    /// Sights (and, from discovery, any food) along a loop.
+    ///
+    /// - `onPartialResults` receives a first, processed list while throttled
+    ///   searches are still being retried, so the screen can show it early.
+    /// - Throws `POIError.searchUnavailable` when searches failed and nothing
+    ///   was found; returns `[]` only when the searches worked and there is
+    ///   genuinely nothing along the route.
+    /// - Successful results are cached per loop (see `cacheKey(for:)`) for
+    ///   `configuration.poi.cacheTTLSeconds`, so reopening a loop shows the
+    ///   same sights without searching again. Failures are never cached.
     func fetchPOIs(
         nearPolyline polyline: [CLLocationCoordinate2D],
         maxDistance: Double,
-        limit: Int
-    ) async -> [POI] {
-        guard let center = polylineCenter(polyline) else { return [] }
-
-        let cacheKey = "\(Int(center.latitude * 100)),\(Int(center.longitude * 100))"
+        limit: Int,
+        onPartialResults: (@Sendable ([POI]) async -> Void)? = nil
+    ) async throws -> [POI] {
+        guard let cacheKey = Self.cacheKey(for: polyline) else { return [] }
         if let cached = await cache.get(cacheKey) {
             return cached
         }
 
-        // Step 1: Discover POIs along the route corridor using Nearby Search.
-        // Uses multiple search points sampled at regular intervals, with a
-        // strict geographic radius per point — no text/keyword matching.
+        // Step 1: Discover POIs along the route corridor.
         logger.info("Starting POI aggregation for route with \(polyline.count) waypoints, maxDistance=\(Int(maxDistance))m, limit=\(limit)")
         let rawPOIs: [POI]
         do {
             rawPOIs = try await discovery.discoverPOIs(
                 alongRoute: polyline,
                 searchIntervalMeters: configuration.poi.searchIntervalMeters,
-                searchRadiusMeters: configuration.poi.searchRadiusPerPointMeters
+                searchRadiusMeters: configuration.poi.searchRadiusPerPointMeters,
+                onPartialResults: onPartialResults.map { forward in
+                    { @Sendable [weak self] (partial: [POI]) async in
+                        guard let self, !partial.isEmpty else { return }
+                        let processed = await self.process(partial, polyline: polyline, limit: limit)
+                        await forward(processed)
+                    }
+                }
             )
+        } catch POIError.searchUnavailable {
+            logger.warning("⚠️ Sight search unavailable (searches failed, nothing found)")
+            throw POIError.searchUnavailable
         } catch {
             logger.warning("⚠️ Discovery failed: \(error.localizedDescription) — returning 0 POIs")
             return []
         }
 
         guard !rawPOIs.isEmpty else {
-            logger.warning("⚠️ Discovery returned 0 POIs — check POIMapKit/Overpass logs for search failures. Route has \(polyline.count) waypoints, maxDistance=\(Int(maxDistance))m")
+            logger.info("Discovery returned 0 POIs — searches succeeded, nothing along this route")
+            await cache.set(cacheKey, value: [])
             return []
         }
+
+        let result = process(rawPOIs, polyline: polyline, limit: limit)
+        await cache.set(cacheKey, value: result)
+        return result
+    }
+
+    /// Cache key for one loop: the number of waypoints plus its first, middle
+    /// and last coordinates at ~1 m precision. Two different loops never
+    /// share a key (the old key was the loop's middle point rounded to
+    /// 0.01°, about 1 km, so nearby loops could share one cached list).
+    static func cacheKey(for polyline: [CLLocationCoordinate2D]) -> String? {
+        guard let first = polyline.first, let last = polyline.last else { return nil }
+        let middle = polyline[polyline.count / 2]
+        func fmt(_ c: CLLocationCoordinate2D) -> String {
+            "\(Int((c.latitude * 100_000).rounded())),\(Int((c.longitude * 100_000).rounded()))"
+        }
+        return "\(polyline.count)|\(fmt(first))|\(fmt(middle))|\(fmt(last))"
+    }
+
+    /// Steps 2–7: dedupe, corridor filter, quality filter, spatial selection.
+    private func process(
+        _ rawPOIs: [POI],
+        polyline: [CLLocationCoordinate2D],
+        limit: Int
+    ) -> [POI] {
         logger.info("Discovered \(rawPOIs.count) raw POIs")
 
         // Step 2: Deduplicate by place_id
@@ -123,8 +166,6 @@ actor POIAggregatorService {
         let sortedFood = sortByRoutePosition(qualifiedFood, polyline: polyline)
         let result = sortedAttractions + sortedFood
         logger.info("Selected \(sortedAttractions.count) attractions (spatially distributed) from \(qualifiedAttractions.count) qualified")
-
-        await cache.set(cacheKey, value: result)
         logger.info("Returning \(result.count) qualified POIs (\(sortedAttractions.count) attractions, \(sortedFood.count) food)")
         return result
     }
@@ -321,14 +362,27 @@ actor POIAggregatorService {
 
         for tier in sortedTierKeys {
             guard selected.count < limit else { break }
-            var tierPOIs = tiers[tier] ?? []
-            tierPOIs.shuffle()
+            // Stable pseudo-random order (not `shuffle()`): sights now arrive
+            // in several updates while the screen is open, and a fresh
+            // shuffle each time would reorder the list under the user.
+            let tierPOIs = (tiers[tier] ?? []).sorted { Self.stableOrder($0) < Self.stableOrder($1) }
 
             let remaining = limit - selected.count
             selected.append(contentsOf: tierPOIs.prefix(remaining))
         }
 
         return selected
+    }
+
+    /// FNV-1a hash of the place name: a fixed, evenly spread order that
+    /// doesn't favour the route start or the alphabet.
+    static func stableOrder(_ poi: POI) -> UInt64 {
+        var hash: UInt64 = 0xcbf29ce484222325
+        for byte in poi.name.lowercased().utf8 {
+            hash ^= UInt64(byte)
+            hash = hash &* 0x100000001b3
+        }
+        return hash
     }
 
     // MARK: - Route Position Sorting
@@ -492,9 +546,4 @@ actor POIAggregatorService {
         }
     }
 
-    private func polylineCenter(_ polyline: [CLLocationCoordinate2D]) -> CLLocationCoordinate2D? {
-        guard !polyline.isEmpty else { return nil }
-        let midIndex = polyline.count / 2
-        return polyline[midIndex]
-    }
 }
