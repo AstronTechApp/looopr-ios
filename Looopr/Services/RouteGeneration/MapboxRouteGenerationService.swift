@@ -163,18 +163,21 @@ final class MapboxRouteGenerationService: RouteGenerating, @unchecked Sendable {
 
         // Loops of the asked length win. Only when there are none (sparse or
         // hilly areas where no short loop exists) do the closest matches
-        // show, so the user gets a walk, not nothing. Either way the loops
-        // come out closest to the asked time first: the free tier shows the
-        // first two that arrive, and those must be the best fits, not the
-        // shortest (before 1.5 a 30-min ask could get the 20- and 22-min
-        // loops while a 30-min one existed).
-        let fitting = candidateRoutes.filter { $0.result.fitsLength }
-        if fitting.isEmpty {
-            logger.info("Mapbox: no \(minutes)-min loop, showing \(candidateRoutes.count) closest matches")
+        // show, so the user gets a walk, not nothing. Out-and-back walks
+        // come last: only when no loop of any usable length exists (App
+        // Review of 1.5, hillside in Los Altos Hills: every short walk went
+        // down one road and back). Either way the walks come out closest to
+        // the asked time first: the free tier shows the first two that
+        // arrive, and those must be the best fits, not the shortest (before
+        // 1.5 a 30-min ask could get the 20- and 22-min loops while a
+        // 30-min one existed).
+        let pool = Self.bestTier(candidateRoutes.map(\.result))
+        if pool.first?.isOutAndBack == true {
+            logger.info("Mapbox: no loop from here at all, showing \(pool.count) out-and-back walks")
+        } else if pool.first?.fitsLength == false {
+            logger.info("Mapbox: no \(minutes)-min loop, showing \(pool.count) closest matches")
         }
-        let sorted = Self.closestFirst(
-            fitting.isEmpty ? candidateRoutes.map(\.result) : fitting.map(\.result)
-        )
+        let sorted = Self.closestFirst(pool)
 
         // Deduplicate: keep routes that aren't too similar to already-accepted ones
         var accepted: [Route] = []
@@ -208,6 +211,16 @@ final class MapboxRouteGenerationService: RouteGenerating, @unchecked Sendable {
     /// Orders candidates by how many minutes their walking time is off the
     /// asked time (ratio 1.0 = exact): for a 30-minute ask, 27 and 34 come
     /// before 22, which comes before 40. Ties keep the shorter loop first.
+    /// The candidates the list shows: loops of the asked length if any,
+    /// else the closest clean loops, else the out-and-back walks.
+    static func bestTier(_ candidates: [PentagonResult]) -> [PentagonResult] {
+        let loops = candidates.filter { !$0.isOutAndBack }
+        let fitting = loops.filter(\.fitsLength)
+        if !fitting.isEmpty { return fitting }
+        if !loops.isEmpty { return loops }
+        return candidates
+    }
+
     static func closestFirst(_ candidates: [PentagonResult]) -> [Route] {
         candidates
             .sorted {
@@ -235,6 +248,10 @@ final class MapboxRouteGenerationService: RouteGenerating, @unchecked Sendable {
         // Why the last attempt was rejected, reported if none succeeds.
         var lastRejection = "not_converged"
         var closestMatch: (route: Route, ratio: Double)?
+        // Last resort when no clean loop of any usable length comes back:
+        // the attempt that goes out and back on the same road(s), nearest
+        // the asked time. Water crossings never qualify.
+        var outAndBackMatch: (response: MapboxRoute, polyline: [CLLocationCoordinate2D], ratio: Double)?
 
         for attempt in 0..<3 {
             try Task.checkCancellation()
@@ -324,6 +341,13 @@ final class MapboxRouteGenerationService: RouteGenerating, @unchecked Sendable {
                 shapeProblem = nil
             }
 
+            if let shapeProblem, shapeProblem != "water",
+               ratio >= Self.closestMatchRatioRange.lowerBound,
+               ratio <= Self.closestMatchRatioRange.upperBound,
+               outAndBackMatch.map({ abs(ratio - 1) < abs($0.ratio - 1) }) ?? true {
+                outAndBackMatch = (response, fullPolyline, ratio)
+            }
+
             if !lengthFits {
                 if shapeProblem == nil,
                    ratio >= Self.closestMatchRatioRange.lowerBound,
@@ -361,6 +385,12 @@ final class MapboxRouteGenerationService: RouteGenerating, @unchecked Sendable {
             logger.info("Pentagon: no loop of the asked length for bearing \(Int(primaryBearing))°, keeping closest (ratio \(String(format: "%.2f", closestMatch.ratio)))")
             return PentagonResult(route: closestMatch.route, ratio: closestMatch.ratio, fitsLength: false)
         }
+        if let outAndBackMatch {
+            logger.info("Pentagon: no loop for bearing \(Int(primaryBearing))°, keeping out-and-back (ratio \(String(format: "%.2f", outAndBackMatch.ratio)))")
+            let route = makeRoute(outAndBackMatch.response, polyline: outAndBackMatch.polyline, start: start,
+                                  bearing: primaryBearing, routeIndex: routeIndex, isOutAndBack: true)
+            return PentagonResult(route: route, ratio: outAndBackMatch.ratio, fitsLength: false)
+        }
         logger.debug("Pentagon failed to converge after 3 attempts for bearing \(Int(primaryBearing))°")
         throw CandidateFailure(lastRejection)
     }
@@ -371,6 +401,7 @@ final class MapboxRouteGenerationService: RouteGenerating, @unchecked Sendable {
         let route: Route
         let ratio: Double
         let fitsLength: Bool
+        var isOutAndBack: Bool { route.isOutAndBack }
     }
 
     /// How far off the asked length a closest match may be (0.4× to 3×):
@@ -382,7 +413,8 @@ final class MapboxRouteGenerationService: RouteGenerating, @unchecked Sendable {
         polyline: [CLLocationCoordinate2D],
         start: CLLocationCoordinate2D,
         bearing: Double,
-        routeIndex: Int
+        routeIndex: Int,
+        isOutAndBack: Bool = false
     ) -> Route {
         let steps: [NavigationStep] = response.legs.flatMap { leg in
             leg.steps.compactMap { step -> NavigationStep? in
@@ -411,7 +443,8 @@ final class MapboxRouteGenerationService: RouteGenerating, @unchecked Sendable {
             navigationSteps: steps,
             startLocation: Location(start),
             colorIndex: routeIndex,
-            containsFerry: routeContainsFerry(response)
+            containsFerry: routeContainsFerry(response),
+            isOutAndBack: isOutAndBack
         )
     }
 

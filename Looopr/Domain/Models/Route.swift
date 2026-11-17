@@ -16,6 +16,10 @@ struct Route: Identifiable, Codable, Sendable, Hashable {
     /// Whether this route includes a ferry or water taxi segment.
     /// Used to display a notice on the route card so walkers know in advance.
     let containsFerry: Bool
+    /// True when no loop could be made from the start point and this walk
+    /// goes out and back along (mostly) the same road instead. The route
+    /// list says so above the cards.
+    let isOutAndBack: Bool
 
     enum Difficulty: String, Codable, CaseIterable, Sendable {
         // Stored and synced only. Not shown since 1.5: it was derived from
@@ -26,7 +30,7 @@ struct Route: Identifiable, Codable, Sendable, Hashable {
     private enum CodingKeys: String, CodingKey {
         case id, name, description, durationMinutes, distanceKilometers
         case difficulty, pois, coordinates, navigationSteps
-        case generatedAt, startLocation, colorIndex, containsFerry
+        case generatedAt, startLocation, colorIndex, containsFerry, isOutAndBack
     }
 
     var pathCoordinates: [CLLocationCoordinate2D] {
@@ -73,7 +77,8 @@ struct Route: Identifiable, Codable, Sendable, Hashable {
             generatedAt: generatedAt,
             startLocation: startLocation,
             colorIndex: colorIndex,
-            containsFerry: containsFerry
+            containsFerry: containsFerry,
+            isOutAndBack: isOutAndBack
         )
     }
 
@@ -110,7 +115,8 @@ struct Route: Identifiable, Codable, Sendable, Hashable {
         generatedAt: Date = Date(),
         startLocation: Location,
         colorIndex: Int = 0,
-        containsFerry: Bool = false
+        containsFerry: Bool = false,
+        isOutAndBack: Bool = false
     ) {
         self.id = id
         self.name = name
@@ -125,6 +131,7 @@ struct Route: Identifiable, Codable, Sendable, Hashable {
         self.startLocation = startLocation
         self.colorIndex = colorIndex
         self.containsFerry = containsFerry
+        self.isOutAndBack = isOutAndBack
     }
 
     // MARK: - Resilient Decoder
@@ -148,6 +155,7 @@ struct Route: Identifiable, Codable, Sendable, Hashable {
                         longitude: coordinates.first?.longitude ?? 0)
         colorIndex = try container.decodeIfPresent(Int.self, forKey: .colorIndex) ?? 0
         containsFerry = try container.decodeIfPresent(Bool.self, forKey: .containsFerry) ?? false
+        isOutAndBack = try container.decodeIfPresent(Bool.self, forKey: .isOutAndBack) ?? false
     }
 }
 

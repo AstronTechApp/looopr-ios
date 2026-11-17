@@ -278,6 +278,44 @@ final class SmoothedLocationTrackerTests: XCTestCase {
         XCTAssertEqual(projection.distanceAlongRouteMeters, 130, accuracy: 0.3)
     }
 
+    // MARK: - Out-and-back (1.6)
+
+    /// 200 m north and back along the same street.
+    private var outAndBack: [CLLocationCoordinate2D] { street + street.reversed().dropFirst() }
+
+    func testProjectionPrefersTheSideOfTheRoadThatMatchesTravel() {
+        let point = origin.coordinate(at: 50, bearing: 0)
+        // Without a direction both sides are equally near (which one wins
+        // is down to rounding), so the direction of travel decides.
+        let northbound = try! XCTUnwrap(SmoothedLocationTracker.project(point, onto: outAndBack, preferringBearing: 0))
+        XCTAssertEqual(northbound.segmentBearing, 0, accuracy: 0.5)
+        XCTAssertEqual(northbound.distanceAlongRouteMeters, 50, accuracy: 1)
+
+        let southbound = try! XCTUnwrap(SmoothedLocationTracker.project(point, onto: outAndBack, preferringBearing: 180))
+        XCTAssertEqual(southbound.segmentBearing, 180, accuracy: 0.5)
+        XCTAssertEqual(southbound.distanceAlongRouteMeters, 350, accuracy: 1)
+
+        // A one-way street has nothing to choose between: still the street.
+        let onStreet = try! XCTUnwrap(SmoothedLocationTracker.project(point, onto: street, preferringBearing: 180))
+        XCTAssertEqual(onStreet.segmentBearing, 0, accuracy: 0.5)
+    }
+
+    func testWalkingBackOnAnOutAndBackRouteIsNotAReversal() {
+        let tracker = makeTracker()
+        tracker.setRoute(outAndBack)
+        let end = walk(tracker, from: origin, bearing: 0, seconds: 120, startingAt: 0)
+        XCTAssertFalse(tracker.isReversed)
+        walk(tracker, from: origin.coordinate(at: 1.4 * 120, bearing: 0), bearing: 180, seconds: 30, startingAt: end + 1)
+        XCTAssertFalse(tracker.isReversed, "heading back is the route, not the route backwards")
+    }
+
+    func testWalkingBackOnALoopRouteIsStillAReversal() {
+        let tracker = makeTracker()   // the one-way street
+        let top = origin.coordinate(at: 150, bearing: 0)
+        walk(tracker, from: top, bearing: 180, seconds: 6, startingAt: 0)
+        XCTAssertTrue(tracker.isReversed)
+    }
+
     func testAngleDelta() {
         XCTAssertEqual(SmoothedLocationTracker.angleDelta(350, 10), 20)
         XCTAssertEqual(SmoothedLocationTracker.angleDelta(10, 350), -20)

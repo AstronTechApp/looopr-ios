@@ -1034,6 +1034,10 @@ final class WalkNavigationViewModel {
     /// Uses a *windowed forward search* rather than a global nearest-point
     /// search so loop routes (where start and end coordinates coincide)
     /// don't accidentally jump from the start of the loop to the end.
+    /// Points within this distance of the nearest one count as tied for
+    /// route progress (metres).
+    static let progressTieMeters = 2.0
+
     private func updateRouteProgress() {
         guard activePolyline.count >= 2 else {
             remainingMeters = 0
@@ -1063,14 +1067,21 @@ final class WalkNavigationViewModel {
                 upperBound = min(activePolyline.count - 1, lastClosestPolylineIndex + backBuffer)
             }
 
-            var bestIdx = lastClosestPolylineIndex
             var bestDist = Double.infinity
             for i in lowerBound ... upperBound {
-                let d = userCoord.distance(to: activePolyline[i])
-                if d < bestDist {
-                    bestDist = d
-                    bestIdx = i
-                }
+                bestDist = min(bestDist, userCoord.distance(to: activePolyline[i]))
+            }
+            // Of the points about as near as the nearest, take the one
+            // closest to the last progress index. Where the route uses the
+            // same road twice (an out-and-back walk near its turning point)
+            // both sides are equally near, and progress must not jump to
+            // the way back before the user gets there.
+            var bestIdx = lastClosestPolylineIndex
+            var bestGap = Int.max
+            for i in lowerBound ... upperBound
+            where userCoord.distance(to: activePolyline[i]) <= bestDist + Self.progressTieMeters {
+                let gap = abs(i - lastClosestPolylineIndex)
+                if gap < bestGap { bestGap = gap; bestIdx = i }
             }
             lastClosestPolylineIndex = bestIdx
         }

@@ -76,9 +76,9 @@ final class RouteSelectionViewModelTests: XCTestCase {
         func stopUpdating() {}
     }
 
-    private func makeRoute(_ minutes: Int) -> Route {
+    private func makeRoute(_ minutes: Int, outAndBack: Bool = false) -> Route {
         Route(name: "Loop \(minutes)", durationMinutes: minutes, distanceKilometers: Double(minutes) / 12,
-              startLocation: Location(latitude: 52.37, longitude: 4.89))
+              startLocation: Location(latitude: 52.37, longitude: 4.89), isOutAndBack: outAndBack)
     }
 
     private func makeViewModel(minutes: Int = 30,
@@ -200,7 +200,7 @@ final class RouteSelectionViewModelTests: XCTestCase {
         await vm.loadRoutes()
 
         XCTAssertFalse(vm.isShowingClosestMatches)
-        if case .routeGenerated(_, _, _, _, _, let closestOnly, _) = analytics.events.last! {
+        if case .routeGenerated(_, _, _, _, _, let closestOnly, _, _) = analytics.events.last! {
             XCTAssertFalse(closestOnly)
         } else { XCTFail("expected route_generated") }
     }
@@ -218,10 +218,47 @@ final class RouteSelectionViewModelTests: XCTestCase {
         XCTAssertTrue(vm.isShowingClosestMatches)
         XCTAssertNil(vm.failure)
         XCTAssertTrue(vm.didFindRoutes)
-        if case .routeGenerated(let count, _, _, _, _, let closestOnly, _) = analytics.events.last! {
+        if case .routeGenerated(let count, _, _, _, _, let closestOnly, _, _) = analytics.events.last! {
             XCTAssertEqual(count, 2)
             XCTAssertTrue(closestOnly)
         } else { XCTFail("expected route_generated") }
+    }
+
+    /// App Review of 1.5 (Los Altos Hills): no loop at all starts from the
+    /// spot. 1.6 shows the out-and-back walks, says so, and flags it.
+    func testOutAndBackWalksAreAnnouncedAndFlagged() async {
+        let service = ScriptedRouteService()
+        service.routes = [makeRoute(31, outAndBack: true), makeRoute(26, outAndBack: true), makeRoute(40, outAndBack: true)]
+        let analytics = RecordingAnalytics()
+        let vm = makeViewModel(service: service, analytics: analytics, location: amsterdam)
+
+        await vm.loadRoutes()
+
+        XCTAssertTrue(vm.isShowingOutAndBack)
+        XCTAssertTrue(vm.didFindRoutes)
+        XCTAssertNil(vm.failure)
+        guard case .routeGenerated(let count, _, _, _, _, _, _, let outAndBack) = analytics.events.last! else {
+            return XCTFail("expected route_generated")
+        }
+        XCTAssertEqual(count, 3)
+        XCTAssertTrue(outAndBack)
+        guard case .bool(true)? = analytics.events.last!.properties["out_and_back"] else {
+            return XCTFail("route_generated carries out_and_back")
+        }
+    }
+
+    func testLoopsAreNotAnnouncedAsOutAndBack() async {
+        let service = ScriptedRouteService()
+        service.routes = [makeRoute(28), makeRoute(55)]
+        let analytics = RecordingAnalytics()
+        let vm = makeViewModel(service: service, analytics: analytics, location: amsterdam)
+
+        await vm.loadRoutes()
+
+        XCTAssertFalse(vm.isShowingOutAndBack)
+        guard case .bool(false)? = analytics.events.last!.properties["out_and_back"] else {
+            return XCTFail("route_generated carries out_and_back = false")
+        }
     }
 
     func testGenerationErrorIsReportedAsGenerationFailure() async {
@@ -383,7 +420,7 @@ final class RouteSelectionViewModelTests: XCTestCase {
         XCTAssertFalse(vm.isLoading)
         XCTAssertFalse(vm.isTakingLong, "a route arrived, so no waiting hint")
         XCTAssertEqual(analytics.names, ["route_search_started", "route_generated"])
-        if case .routeGenerated(let count, _, let first, let total, let stoppedEarly, _, _) = analytics.events.last! {
+        if case .routeGenerated(let count, _, let first, let total, let stoppedEarly, _, _, _) = analytics.events.last! {
             XCTAssertEqual(count, 1)
             XCTAssertNotNil(first)
             XCTAssertGreaterThanOrEqual(total, 0.4)
@@ -421,7 +458,7 @@ final class RouteSelectionViewModelTests: XCTestCase {
 
         XCTAssertEqual(vm.routes.map(\.durationMinutes), [29, 33])
         XCTAssertEqual(vm.lockedRoutes.map(\.durationMinutes), [21, 24, 40])
-        guard case .routeGenerated(let count, _, _, _, _, _, let locked) = analytics.events.last! else {
+        guard case .routeGenerated(let count, _, _, _, _, _, let locked, _) = analytics.events.last! else {
             return XCTFail("expected route_generated")
         }
         XCTAssertEqual(count, 5)
@@ -615,6 +652,49 @@ final class MapboxGenerationFailureTests: XCTestCase {
         CannedMapbox.body = circleRoute(durationSeconds: 120 * 60) // 4x a 30-min ask
         let error = await run(lat: 52.375)
         XCTAssertEqual(error as? RouteError, .noUsableRoutes(detail: "too_long:8"))
+    }
+
+    /// One road out and straight back (10 m steps), 3 km in all: what every
+    /// short walk looked like at 37.31, −122.11 in the 1.5 review.
+    private func outAndBackRoute(durationSeconds: Double, start: CLLocationCoordinate2D) -> Data {
+        let out = (0...150).map { start.coordinate(at: Double($0) * 10, bearing: 20) }
+        let points = (out + out.reversed().dropFirst()).map { [$0.longitude, $0.latitude] }
+        let legs = (0..<5).map { _ in ["distance": 600.0, "duration": durationSeconds / 5, "steps": [] as [Any]] as [String: Any] }
+        let body: [String: Any] = ["code": "Ok", "routes": [[
+            "distance": 3000.0, "duration": durationSeconds,
+            "geometry": ["coordinates": points], "legs": legs
+        ]]]
+        return try! JSONSerialization.data(withJSONObject: body)
+    }
+
+    func testNoLoopAnywhereReturnsTheOutAndBackWalk() async throws {
+        let start = CLLocationCoordinate2D(latitude: 52.376, longitude: 4.89)
+        CannedMapbox.status = 200
+        CannedMapbox.body = outAndBackRoute(durationSeconds: 36 * 60, start: start)
+        let service = MapboxRouteGenerationService(accessToken: "test")
+        let routes = try await service.generateLoopRoutes(start: start, minutes: 30, walkingSpeedKmH: 5)
+        XCTAssertEqual(routes.map(\.durationMinutes), [36])
+        XCTAssertEqual(routes.map(\.isOutAndBack), [true])
+    }
+
+    func testFarTooLongOutAndBackIsStillNoRoutes() async {
+        let start = CLLocationCoordinate2D(latitude: 52.377, longitude: 4.89)
+        CannedMapbox.status = 200
+        CannedMapbox.body = outAndBackRoute(durationSeconds: 120 * 60, start: start) // 4x a 30-min ask
+        let error = await run(lat: 52.377)
+        XCTAssertEqual(error as? RouteError, .noUsableRoutes(detail: "too_long:8"))
+    }
+
+    func testAnyLoopBeatsAnOutAndBackWalk() {
+        let start = Location(latitude: 52.37, longitude: 4.89)
+        let loop = MapboxRouteGenerationService.PentagonResult(
+            route: Route(name: "Loop", durationMinutes: 55, distanceKilometers: 4.5, startLocation: start),
+            ratio: 55.0 / 30, fitsLength: false)
+        let outAndBack = MapboxRouteGenerationService.PentagonResult(
+            route: Route(name: "Out", durationMinutes: 30, distanceKilometers: 2.5, startLocation: start, isOutAndBack: true),
+            ratio: 1.0, fitsLength: false)
+        XCTAssertEqual(MapboxRouteGenerationService.bestTier([outAndBack, loop]).map(\.route.name), ["Loop"])
+        XCTAssertEqual(MapboxRouteGenerationService.bestTier([outAndBack]).map(\.route.name), ["Out"])
     }
 
     func testOkWithoutRoutesIsNoRoute() async {

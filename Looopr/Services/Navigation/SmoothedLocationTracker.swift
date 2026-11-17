@@ -159,9 +159,15 @@ final class SmoothedLocationTracker: NSObject {
         latestFix = location
         latestFixTime = now
 
-        // Snap to the route when close enough.
+        // Snap to the route when close enough. Where the route runs along
+        // the same road twice in opposite directions (out-and-back walks,
+        // shared stretches of a loop) the side that matches the direction
+        // of travel wins, so walking back isn't read as walking the route
+        // backwards.
         let threshold = max(snapThresholdMeters, location.horizontalAccuracy)
-        if let projection = Self.project(location.coordinate, onto: polyline),
+        let travelCourse: CLLocationDirection? = (location.course >= 0 && speed >= movingSpeedThreshold)
+            ? location.course : nil
+        if let projection = Self.project(location.coordinate, onto: polyline, preferringBearing: travelCourse),
            projection.distanceMeters <= threshold {
             anchor = projection.coordinate
             anchorRouteBearing = projection.segmentBearing
@@ -245,7 +251,7 @@ final class SmoothedLocationTracker: NSObject {
             if let bearing = travelRouteBearing ?? courseBearing {
                 target = anchor.coordinate(at: smoothedSpeed * sinceFix, bearing: bearing)
                 if isSnappedToRoute,
-                   let reprojected = Self.project(target, onto: polyline),
+                   let reprojected = Self.project(target, onto: polyline, preferringBearing: bearing),
                    reprojected.distanceMeters <= snapThresholdMeters {
                     target = reprojected.coordinate
                 }
@@ -299,10 +305,20 @@ final class SmoothedLocationTracker: NSObject {
         let distanceAlongRouteMeters: Double
     }
 
+    /// Segments this close to the nearest one count as "the same place"
+    /// when `preferringBearing` picks between them (metres).
+    static let overlapToleranceMeters = 3.0
+
     /// Nearest point on `polyline` to `point`, computed in a local
     /// equirectangular frame (accurate to centimetres at walking scales).
+    ///
+    /// With `preferringBearing`, segments within `overlapToleranceMeters`
+    /// of the nearest compete on direction instead: the one whose bearing
+    /// is closest to it wins. That separates the two directions of a road
+    /// the route uses twice; elsewhere the nearest segment still wins.
     static func project(_ point: CLLocationCoordinate2D,
-                        onto polyline: [CLLocationCoordinate2D]) -> RouteProjection? {
+                        onto polyline: [CLLocationCoordinate2D],
+                        preferringBearing preferred: CLLocationDirection? = nil) -> RouteProjection? {
         guard polyline.count >= 2 else { return nil }
         let metersPerDegLat = 111_320.0
         let metersPerDegLon = 111_320.0 * cos(point.latitude * .pi / 180)
@@ -312,6 +328,7 @@ final class SmoothedLocationTracker: NSObject {
         }
 
         var best: RouteProjection?
+        var all: [RouteProjection] = []
         var walked = 0.0
         for i in 0..<(polyline.count - 1) {
             let a = toXY(polyline[i]), b = toXY(polyline[i + 1])
@@ -322,19 +339,26 @@ final class SmoothedLocationTracker: NSObject {
             if len2 > 0 { t = min(max((-a.x * dx + -a.y * dy) / len2, 0), 1) }
             let px = a.x + dx * t, py = a.y + dy * t
             let dist = (px * px + py * py).squareRoot()
-            if best == nil || dist < best!.distanceMeters {
+            if preferred != nil || best == nil || dist < best!.distanceMeters {
                 let coord = CLLocationCoordinate2D(
                     latitude: point.latitude + py / metersPerDegLat,
                     longitude: point.longitude + px / metersPerDegLon
                 )
                 let bearing = normalize(atan2(dx, dy) * 180 / .pi)
-                best = RouteProjection(coordinate: coord, distanceMeters: dist,
-                                       segmentBearing: bearing,
-                                       distanceAlongRouteMeters: walked + len * t)
+                let projection = RouteProjection(coordinate: coord, distanceMeters: dist,
+                                                 segmentBearing: bearing,
+                                                 distanceAlongRouteMeters: walked + len * t)
+                if best == nil || dist < best!.distanceMeters { best = projection }
+                if preferred != nil { all.append(projection) }
             }
             walked += len
         }
-        return best
+        guard let preferred, let nearest = best else { return best }
+        let limit = nearest.distanceMeters + overlapToleranceMeters
+        return all
+            .filter { $0.distanceMeters <= limit }
+            .min { abs(angleDelta($0.segmentBearing, preferred)) < abs(angleDelta($1.segmentBearing, preferred)) }
+            ?? nearest
     }
 
     static func normalize(_ degrees: Double) -> Double {

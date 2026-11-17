@@ -76,7 +76,7 @@ final class Release15Tests: XCTestCase {
             return XCTFail("onboarding_completed carries skipped")
         }
         guard case .int(3)? = AnalyticsEvent.routeGenerated(count: 5, minutes: 30, firstRouteSeconds: 1, totalSeconds: 2,
-                                                              stoppedEarly: false, closestOnly: false, locked: 3).properties["locked"] else {
+                                                              stoppedEarly: false, closestOnly: false, locked: 3, outAndBack: false).properties["locked"] else {
             return XCTFail("route_generated carries the locked count")
         }
     }

@@ -59,6 +59,14 @@ final class RouteSelectionViewModel {
         !routes.isEmpty && !routes.contains { Self.fitsAskedLength($0.durationMinutes, asked: walkDurationMinutes) }
     }
 
+    /// True when no loop at all starts from here and the list shows walks
+    /// that go out and back on the same road. The screen says so, in place
+    /// of the closest-matches notice.
+    var isShowingOutAndBack: Bool {
+        let all = routes + lockedRoutes
+        return !all.isEmpty && all.allSatisfy(\.isOutAndBack)
+    }
+
     /// A bit looser than the generator's 0.65–1.45 band, because route
     /// durations are rounded down to whole minutes.
     nonisolated static func fitsAskedLength(_ minutes: Int, asked: Int) -> Bool {
@@ -347,7 +355,8 @@ final class RouteSelectionViewModel {
                 totalSeconds: Date().timeIntervalSince(startedAt),
                 stoppedEarly: progress.cappedOut,
                 closestOnly: isShowingClosestMatches,
-                locked: lockedRoutes.count
+                locked: lockedRoutes.count,
+                outAndBack: isShowingOutAndBack
             ))
             if collected.isEmpty {
                 fail(.noRoutes)

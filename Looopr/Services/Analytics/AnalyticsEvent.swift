@@ -47,7 +47,9 @@ enum AnalyticsEvent: Sendable {
     /// `closestOnly` is true when no loop of the asked length existed and
     /// the list shows the closest matches instead.
     /// `locked` is how many of the `count` loops were shown locked (free tier).
-    case routeGenerated(count: Int, minutes: Int, firstRouteSeconds: Double?, totalSeconds: Double, stoppedEarly: Bool, closestOnly: Bool, locked: Int)
+    /// `outAndBack` is true when no loop existed at all and the walks go
+    /// out and back on the same road (1.6).
+    case routeGenerated(count: Int, minutes: Int, firstRouteSeconds: Double?, totalSeconds: Double, stoppedEarly: Bool, closestOnly: Bool, locked: Int, outAndBack: Bool)
     /// A search ended without routes to show: `reason` is one of
     /// `no_routes`, `location_unavailable`, `generation_error`. Cancelled
     /// searches (the user left the screen) are not reported at all.
@@ -184,14 +186,15 @@ enum AnalyticsEvent: Sendable {
             var props: [String: AnalyticsValue] = ["minutes": .int(minutes), "custom_location": .bool(custom)]
             Self.addCoarseLocation(latitude, longitude, to: &props)
             return props
-        case .routeGenerated(let count, let minutes, let firstRouteSeconds, let totalSeconds, let stoppedEarly, let closestOnly, let locked):
+        case .routeGenerated(let count, let minutes, let firstRouteSeconds, let totalSeconds, let stoppedEarly, let closestOnly, let locked, let outAndBack):
             var props: [String: AnalyticsValue] = [
                 "count": .int(count),
                 "locked": .int(locked),
                 "minutes": .int(minutes),
                 "total_seconds": .double((totalSeconds * 10).rounded() / 10),
                 "stopped_early": .bool(stoppedEarly),
-                "closest_only": .bool(closestOnly)
+                "closest_only": .bool(closestOnly),
+                "out_and_back": .bool(outAndBack)
             ]
             if let firstRouteSeconds { props["first_route_seconds"] = .double((firstRouteSeconds * 10).rounded() / 10) }
             return props

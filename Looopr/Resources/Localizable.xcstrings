@@ -26657,6 +26657,66 @@
         }
       }
     },
+    "routeSelection.outAndBack" : {
+      "comment" : "Above the route list when no loop at all starts from the start point and the walks shown go out and back along the same road.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Von hier beginnt keine Runde. Dieser Weg führt hin und auf derselben Straße zurück."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No loop starts from here. This walk goes out and back on the same road."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Desde aquí no sale ninguna ruta circular. Este paseo es de ida y vuelta por el mismo camino."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Desde aquí no sale ninguna ruta circular. Esta caminata es de ida y vuelta por el mismo camino."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aucune boucle ne part d'ici. Cette balade fait l'aller-retour sur la même route."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Da qui non parte nessun giro. Questa passeggiata va e torna sulla stessa strada."
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vanaf hier begint geen rondje. Deze wandeling gaat heen en terug over dezelfde weg."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Daqui não sai nenhum percurso circular. Esta caminhada é de ida e volta pela mesma rua."
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Daqui não parte nenhum percurso circular. Esta caminhada é de ida e volta pela mesma estrada."
+          }
+        }
+      }
+    },
     "routeSelection.poiRowSubtitleFree" : {
       "extractionState" : "manual",
       "localizations" : {

@@ -148,15 +148,18 @@ struct RouteSelectionView: View {
             emptyState
         } else {
             LazyVStack(spacing: LoooprTheme.Spacing.xl) {
-                if viewModel.isShowingClosestMatches {
+                if viewModel.isShowingOutAndBack || viewModel.isShowingClosestMatches {
                     // No loop of the asked length exists from here (sparse
                     // or hilly area): say so instead of silently showing
-                    // a 55-min walk for a 30-min ask.
+                    // a 55-min walk for a 30-min ask. With no loop at all,
+                    // say the walk goes out and back on the same road.
                     HStack(alignment: .top, spacing: LoooprTheme.Spacing.sm) {
                         Image(systemName: "info.circle")
                             .foregroundStyle(LoooprTheme.Colors.textSecondary)
-                        Text(L10n.RouteSelection.closestMatches(
-                            RouteSelectionViewModel.formattedMinutes(viewModel.walkDurationMinutes)))
+                        Text(viewModel.isShowingOutAndBack
+                             ? L10n.RouteSelection.outAndBack
+                             : L10n.RouteSelection.closestMatches(
+                                RouteSelectionViewModel.formattedMinutes(viewModel.walkDurationMinutes)))
                             .font(.system(size: 14, weight: .medium, design: .rounded))
                             .foregroundStyle(LoooprTheme.Colors.textSecondary)
                             .fixedSize(horizontal: false, vertical: true)
