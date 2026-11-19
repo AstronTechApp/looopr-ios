@@ -33,6 +33,17 @@ enum AnalyticsValue: Codable, Sendable {
             debugDescription: "Unsupported AnalyticsValue"
         )
     }
+
+    /// Native property value shared with the PostHog capture bridge.
+    var postHogValue: Any {
+        switch self {
+        case .string(let value): return value
+        case .int(let value): return value
+        case .double(let value): return value
+        case .bool(let value): return value
+        case .stringArray(let value): return value
+        }
+    }
 }
 
 enum AnalyticsEvent: Sendable {

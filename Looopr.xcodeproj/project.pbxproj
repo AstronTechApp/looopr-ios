@@ -162,6 +162,7 @@
 		F1BD12893BF00118056E3C2C /* POI.swift in Sources */ = {isa = PBXBuildFile; fileRef = 077BCD193F002395AD7D8174 /* POI.swift */; };
 		F259DB050FEA56708379D360 /* LocationSearchView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 57E03630AD4EA4C83EC83977 /* LocationSearchView.swift */; };
 		F35184E04740DBEE4E516441 /* AppStrings.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4064157810D818E1DD09091 /* AppStrings.swift */; };
+		F6B2D1B0C1DA1D0B26146EDE /* PostHog in Frameworks */ = {isa = PBXBuildFile; productRef = 4567D6BEA72EDC2E35D69C7F /* PostHog */; };
 		F861269CDA9C686E427C7BD4 /* PaywallView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 979FEDED696C73F0B46C00C5 /* PaywallView.swift */; };
 		F90B4055CE1DDE83C026F323 /* Route.swift in Sources */ = {isa = PBXBuildFile; fileRef = 74621340F5C5598C623BF764 /* Route.swift */; };
 		FCBAEF261F32D1177DA2613F /* POICategory.swift in Sources */ = {isa = PBXBuildFile; fileRef = F124AE4F3E4DEEC18B99BBE1 /* POICategory.swift */; };
@@ -387,6 +388,7 @@
 				E55607BA9E4BF61FC585C999 /* RevenueCatUI in Frameworks */,
 				2AF59294269C5B7D79E3B657 /* Sentry in Frameworks */,
 				E6E40137632C834F7DDEB585 /* GoogleSignIn in Frameworks */,
+				F6B2D1B0C1DA1D0B26146EDE /* PostHog in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1092,6 +1094,7 @@
 				4004FB47ADB6CD2F3E25AB3D /* RevenueCatUI */,
 				BB5381D3734C98FB1D057C3E /* Sentry */,
 				16630DCF2FE996CF772E8178 /* GoogleSignIn */,
+				4567D6BEA72EDC2E35D69C7F /* PostHog */,
 			);
 			productName = Looopr;
 			productReference = 6063EA7767E792C6FA9481DB /* Looopr.app */;
@@ -1140,6 +1143,7 @@
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
 				2D7EB4F81E74F2D6402C2C0B /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */,
+				ABAAF2F42F1EF08AFFBB1D62 /* XCRemoteSwiftPackageReference "posthog-ios" */,
 				B8C58F987A725EE46DAA9EB7 /* XCRemoteSwiftPackageReference "purchases-ios-spm" */,
 				0B4C82CB8D18B45F610AD944 /* XCRemoteSwiftPackageReference "sentry-cocoa" */,
 				171DCFB299E507081D1189AC /* XCRemoteSwiftPackageReference "supabase-swift" */,
@@ -1789,6 +1793,14 @@
 				minimumVersion = 9.0.0;
 			};
 		};
+		ABAAF2F42F1EF08AFFBB1D62 /* XCRemoteSwiftPackageReference "posthog-ios" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/PostHog/posthog-ios.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 3.59.3;
+			};
+		};
 		B8C58F987A725EE46DAA9EB7 /* XCRemoteSwiftPackageReference "purchases-ios-spm" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/RevenueCat/purchases-ios-spm";
@@ -1809,6 +1821,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = B8C58F987A725EE46DAA9EB7 /* XCRemoteSwiftPackageReference "purchases-ios-spm" */;
 			productName = RevenueCatUI;
+		};
+		4567D6BEA72EDC2E35D69C7F /* PostHog */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = ABAAF2F42F1EF08AFFBB1D62 /* XCRemoteSwiftPackageReference "posthog-ios" */;
+			productName = PostHog;
 		};
 		BB5381D3734C98FB1D057C3E /* Sentry */ = {
 			isa = XCSwiftPackageProductDependency;

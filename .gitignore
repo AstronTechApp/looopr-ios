@@ -47,3 +47,4 @@ Pods/
 # Morning crash-triage automation: git worktrees + reports
 .worktrees/
 crash-triage/
+.env

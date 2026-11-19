@@ -67,4 +67,27 @@ enum Secrets {
     }
 
     static var hasSentryDSN: Bool { !sentryDSN.isEmpty }
+
+    // MARK: - Product analytics
+
+    /// PostHog's public project token, provided through the target build settings.
+    static var postHogProjectToken: String {
+        Bundle.main.infoDictionary?["POSTHOG_PROJECT_TOKEN"] as? String ?? ""
+    }
+
+    static var postHogHost: String {
+        Bundle.main.infoDictionary?["POSTHOG_HOST"] as? String ?? ""
+    }
+
+    static var hasPostHogProjectToken: Bool {
+        isConfigured(postHogProjectToken)
+    }
+
+    static var hasPostHogHost: Bool {
+        isConfigured(postHogHost)
+    }
+
+    private static func isConfigured(_ value: String) -> Bool {
+        !value.isEmpty && !value.hasPrefix("$(")
+    }
 }

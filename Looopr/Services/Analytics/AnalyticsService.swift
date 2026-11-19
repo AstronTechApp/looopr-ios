@@ -1,4 +1,5 @@
 import Foundation
+import PostHog
 import Supabase
 import os
 
@@ -21,6 +22,18 @@ final class LiveAnalyticsService: AnalyticsTracking, @unchecked Sendable {
 
     func track(_ event: AnalyticsEvent) {
         logger.info("Event: \(event.name, privacy: .public)")
+
+        // Every event also goes to PostHog, same name and properties as in
+        // Supabase. AuthService identifies signed-in users by their Supabase
+        // UUID; guests stay anonymous.
+        if Secrets.hasPostHogProjectToken,
+           Secrets.hasPostHogHost {
+            PostHogSDK.shared.capture(
+                event.name,
+                properties: event.properties.mapValues(\.postHogValue)
+            )
+        }
+
         guard let supabase else { return }
 
         let name = event.name

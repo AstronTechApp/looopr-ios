@@ -20,6 +20,9 @@ packages:
   GoogleSignIn:
     url: https://github.com/google/GoogleSignIn-iOS
     from: "9.0.0"
+  PostHog:
+    url: https://github.com/PostHog/posthog-ios.git
+    from: "3.59.3"
 
 settings:
   base:
@@ -99,6 +102,8 @@ targets:
         SUPABASE_ANON_KEY: $(SUPABASE_ANON_KEY)
         REVENUECAT_API_KEY: $(REVENUECAT_API_KEY)
         SENTRY_DSN: $(SENTRY_DSN)
+        POSTHOG_PROJECT_TOKEN: $(POSTHOG_PROJECT_TOKEN)
+        POSTHOG_HOST: $(POSTHOG_HOST)
     preBuildScripts:
       - name: "XcodeGen — sync project.yml"
         script: |
@@ -163,6 +168,7 @@ targets:
         product: Sentry
       - package: GoogleSignIn
         product: GoogleSignIn
+      - package: PostHog
       - target: LoooprLiveActivity
         embed: true
 

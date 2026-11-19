@@ -1,4 +1,5 @@
 import SwiftUI
+import PostHog
 
 @main
 struct LoooprApp: App {
@@ -7,12 +8,31 @@ struct LoooprApp: App {
     init() {
         // First, so a crash anywhere in startup is still reported.
         CrashReporter.start()
+        configurePostHog()
         ServiceContainer.shared.registerProductionServices()
         SettingsManager.shared.restoreOnLaunch()
 
         // Clean up any orphaned Live Activities from a previous force-quit or crash.
         // This runs on every cold launch so the Dynamic Island never shows stale data.
         LiveActivityManager.shared.endAllActivities()
+    }
+
+    /// Product analytics (PostHog, EU cloud). Crashes stay in Sentry, so
+    /// PostHog's own error capture is off. A missing token only logs: the app
+    /// must never crash or block because analytics isn't configured.
+    private func configurePostHog() {
+        guard Secrets.hasPostHogProjectToken, Secrets.hasPostHogHost else {
+            #if DEBUG
+            print("PostHog not configured (POSTHOG_PROJECT_TOKEN / POSTHOG_HOST in Secrets.xcconfig); analytics goes to Supabase only.")
+            #endif
+            return
+        }
+        let config = PostHogConfig(
+            projectToken: Secrets.postHogProjectToken,
+            host: Secrets.postHogHost
+        )
+        config.errorTrackingConfig.autoCapture = false
+        PostHogSDK.shared.setup(config)
     }
 
     var body: some Scene {

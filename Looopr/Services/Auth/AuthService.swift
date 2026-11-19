@@ -2,6 +2,7 @@ import Foundation
 import AuthenticationServices
 import Supabase
 import GoogleSignIn
+import PostHog
 
 @Observable
 final class AuthService: @unchecked Sendable {
@@ -11,6 +12,9 @@ final class AuthService: @unchecked Sendable {
     @MainActor private(set) var isSignedIn = false
     @MainActor private(set) var userEmail: String?
     @MainActor private(set) var userDisplayName: String?
+    /// Prevents token refreshes and duplicate auth notifications from
+    /// re-identifying an already identified PostHog session.
+    @MainActor private var postHogIdentifiedUserID: UUID?
 
     init(supabase: SupabaseClientProvider) {
         self.supabase = supabase
@@ -172,6 +176,8 @@ final class AuthService: @unchecked Sendable {
         userDisplayName = session.user.userMetadata["full_name"]?.stringValue
             ?? session.user.userMetadata["name"]?.stringValue
 
+        identifyPostHogUserIfNeeded(id: session.user.id)
+
         // Tie the RevenueCat identity to this account so purchases follow
         // the user across devices. No-op when RevenueCat isn't configured.
         ServiceContainer.shared.resolveOptional(RevenueCatSubscriptionService.self)?
@@ -185,10 +191,38 @@ final class AuthService: @unchecked Sendable {
         isSignedIn = false
         userEmail = nil
         userDisplayName = nil
+        resetPostHogUser()
 
         ServiceContainer.shared.resolveOptional(RevenueCatSubscriptionService.self)?
             .syncIdentity(appUserID: nil)
         CrashReporter.setUser(id: nil)
+    }
+
+    /// Identifies the PostHog client by the Supabase user UUID only. No email
+    /// or name goes to PostHog.
+    @MainActor
+    private func identifyPostHogUserIfNeeded(id: UUID) {
+        guard postHogIdentifiedUserID != id,
+              Secrets.hasPostHogProjectToken,
+              Secrets.hasPostHogHost else { return }
+
+        // A different authenticated account without an intervening sign-out
+        // must not inherit the prior account's analytics identity.
+        if postHogIdentifiedUserID != nil {
+            PostHogSDK.shared.reset()
+        }
+
+        PostHogSDK.shared.identify(id.uuidString)
+        postHogIdentifiedUserID = id
+    }
+
+    @MainActor
+    private func resetPostHogUser() {
+        defer { postHogIdentifiedUserID = nil }
+        guard postHogIdentifiedUserID != nil,
+              Secrets.hasPostHogProjectToken,
+              Secrets.hasPostHogHost else { return }
+        PostHogSDK.shared.reset()
     }
 }
 
